@@ -29,7 +29,7 @@ assert_eq!(hasher.finish(), 17498481775468162579);
 
 // a non-inline hasher for when you don't want to force inlining,
 // such as when being careful with WASM binary size.\
-let mut hasher = RapidInlineHasher::default();
+let mut hasher = RapidHasher::default();
 hasher.write(b"hello world");
 assert_eq!(hasher.finish(), 17498481775468162579);
 
