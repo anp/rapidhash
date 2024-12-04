@@ -55,6 +55,22 @@ let mut map = RapidInlineHashMap::default();
 map.insert("hello", "world");
 ```
 
+### CLI
+Rapidhash can also be installed as a CLI tool to hash files or stdin. This is not a cryptographic hash, but should be much faster than cryptographic hashes.
+
+Output is the decimal string of the `u64` hash value.
+
+```shell
+# install
+cargo install rapidhash
+
+# hash stdin (output: 8543579700415218186)
+echo "example" | rapidhash
+
+# hash a file (output: 8543579700415218186)
+rapidhash example.txt
+```
+
 ## Features
 
 - `default`: `std`
