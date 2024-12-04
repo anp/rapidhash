@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.0 (20241204)
+
+- Added rapidhash CLI via `cargo install rapidhash`.
+- Docs typo fix.
+
 ## 1.1.0 (20241003)
 
 - Deprecated `RapidHashBuilder`.
