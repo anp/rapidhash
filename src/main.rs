@@ -45,6 +45,7 @@ pub fn main() {
         Some(filename) => {
             if filename == "--help" {
                 println!("Usage: rapidhash [filename]");
+                println!("Docs: https://github.com/hoxxep/rapidhash?tab=readme-ov-file#cli");
                 return;
             }
 
