@@ -35,9 +35,9 @@ pub struct RapidHasher(RapidInlineHasher);
 /// ```
 /// use std::collections::HashMap;
 /// use std::hash::Hasher;
-/// use rapidhash::RapidHashBuilder;
+/// use rapidhash::RapidBuildHasher;
 ///
-/// let mut map = HashMap::with_hasher(RapidHashBuilder::default());
+/// let mut map = HashMap::with_hasher(RapidBuildHasher::default());
 /// map.insert(42, "the answer");
 /// ```
 pub type RapidBuildHasher = core::hash::BuildHasherDefault<RapidHasher>;
