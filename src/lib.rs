@@ -11,6 +11,7 @@
 mod rapid_const;
 mod rapid_hasher;
 mod rapid_hasher_inline;
+mod rapid_file;
 #[cfg(any(feature = "std", feature = "rand", docsrs))]
 mod random_state;
 mod rng;
@@ -21,6 +22,9 @@ pub use crate::rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, RAPI
 pub use crate::rapid_hasher::*;
 #[doc(inline)]
 pub use crate::rapid_hasher_inline::*;
+#[doc(inline)]
+#[cfg(feature = "std")]
+pub use crate::rapid_file::*;
 #[doc(inline)]
 #[cfg(any(feature = "std", feature = "rand", docsrs))]
 pub use crate::random_state::*;

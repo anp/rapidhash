@@ -1,4 +1,5 @@
-use std::io::Read;
+use std::io::{BufReader, Read};
+use rapidhash::rapidhash_file;
 
 /// Command-line tool for rapidhash.
 ///
@@ -25,17 +26,72 @@ use std::io::Read;
 pub fn main() {
     let hash_arg = std::env::args().nth(1);
 
-    let buffer = match hash_arg {
+    let hash = match hash_arg {
         None => {
             let mut buffer = Vec::with_capacity(1024);
             std::io::stdin().read_to_end(&mut buffer).expect("Could not read from stdin.");
-            buffer
+            rapidhash::rapidhash(&buffer)
         }
         Some(filename) => {
-            std::fs::read(filename).expect("Could not load file.")
+            if filename == "--help" {
+                println!("Usage: rapidhash [filename]");
+                return;
+            }
+
+            let mut file = std::fs::File::open(filename).expect("Could not open file.");
+            rapidhash_file(&mut file).expect("Failed to hash file.")
         }
     };
 
-    let hash = rapidhash::rapidhash(&buffer);
     println!("{hash}");
+}
+
+/// This is some of the least-idiomatic rust I've ever written and is a butchering between
+/// `std::io::Read` and `std::iter::Iterator`. This is a hack to get the `rapidhash_stream` to play
+/// nice because it needs to know the length of the input stream.
+struct ExactSizeBufReader {
+    reader: BufReader<std::fs::File>,
+    position: usize,
+    total_size: usize,
+    status: std::io::Result<()>,
+}
+
+impl ExactSizeBufReader {
+    fn new(file: std::fs::File) -> std::io::Result<Self> {
+        let total_size = file.metadata()?.len() as usize;
+        Ok(Self {
+            reader: BufReader::new(file),
+            position: 0,
+            total_size,
+            status: Ok(()),
+        })
+    }
+}
+
+impl Iterator for ExactSizeBufReader {
+    type Item = u8;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.position == self.total_size {
+            // TODO: check metadata of file hasn't changed underneath us (eg. appends)
+            return None;
+        }
+
+        let mut buffer = [0; 1];
+        if let Err(e) = self.reader.read_exact(&mut buffer) {
+            self.status = Err(e);
+            return None;
+        };
+
+        self.position += 1;
+        Some(buffer[0])
+    }
+}
+
+impl ExactSizeIterator for ExactSizeBufReader {
+    #[inline]
+    fn len(&self) -> usize {
+        self.total_size - self.position
+    }
 }
