@@ -64,11 +64,14 @@ Output is the decimal string of the `u64` hash value.
 # install
 cargo install rapidhash
 
-# hash stdin (output: 8543579700415218186)
-echo "example" | rapidhash
-
 # hash a file (output: 8543579700415218186)
+# this reads the file metadata for the length, and then streams the file
 rapidhash example.txt
+
+# hash stdin (output: 8543579700415218186)
+# this caches the entire stdin in memory before hashing, as rapidhash needs to know
+# the data length before hashing
+echo "example" | rapidhash
 ```
 
 ## Features

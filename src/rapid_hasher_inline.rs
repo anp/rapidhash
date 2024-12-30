@@ -40,9 +40,9 @@ pub struct RapidInlineHasher {
 /// ```
 /// use std::collections::HashMap;
 /// use std::hash::Hasher;
-/// use rapidhash::RapidInlineHashBuilder;
+/// use rapidhash::RapidInlineBuildHasher;
 ///
-/// let mut map = HashMap::with_hasher(RapidInlineHashBuilder::default());
+/// let mut map = HashMap::with_hasher(RapidInlineBuildHasher::default());
 /// map.insert(42, "the answer");
 /// ```
 pub type RapidInlineBuildHasher = core::hash::BuildHasherDefault<RapidInlineHasher>;

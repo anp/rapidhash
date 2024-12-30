@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0 (20241208)
+
+- Added `rapidhash_file` for streaming file hashing. [#10](https://github.com/hoxxep/rapidhash/pull/10)
+- Added file streaming and `--help` to the CLI. [#10](https://github.com/hoxxep/rapidhash/pull/10)
+
 ## 1.2.0 (20241204)
 
 - Added rapidhash CLI via `cargo install rapidhash`.
