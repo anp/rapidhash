@@ -40,7 +40,6 @@ mod tests {
     use std::hash::{Hash, Hasher};
     use std::collections::BTreeSet;
     use rand::Rng;
-    use rand::rngs::OsRng;
     use super::*;
 
     #[derive(Hash)]
@@ -86,7 +85,7 @@ mod tests {
 
         for size in 0..=1024 {
             let mut data = std::vec![0; size];
-            OsRng.fill(data.as_mut_slice());
+            rand::rng().fill(data.as_mut_slice());
 
             let hash1 = rapidhash(&data);
             let mut hasher = RapidHasher::default();
@@ -126,7 +125,7 @@ mod tests {
 
         for len in 1..=256 {
             let mut data = std::vec![0; len];
-            rand::thread_rng().fill(&mut data[..]);
+            rand::rng().fill(&mut data[..]);
 
             let hash = rapidhash(&data);
             for byte in 0..len {
@@ -171,7 +170,7 @@ mod tests {
 
         for len in 1..=256 {
             let mut data = std::vec![0; len];
-            rand::thread_rng().fill(&mut data[..]);
+            rand::rng().fill(&mut data[..]);
 
             let hash = streaming_hash(&data);
             for byte in 0..len {

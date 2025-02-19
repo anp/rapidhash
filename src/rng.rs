@@ -1,5 +1,5 @@
 #[cfg(feature = "rng")]
-use rand_core::{RngCore, SeedableRng, Error, impls};
+use rand_core::{RngCore, SeedableRng, impls};
 use crate::rapid_const::{rapid_mix, RAPID_SECRET};
 use crate::RAPID_SEED;
 
@@ -147,12 +147,6 @@ impl RngCore for RapidRng {
     #[inline]
     fn fill_bytes(&mut self, dest: &mut [u8]) {
         impls::fill_bytes_via_next(self, dest)
-    }
-
-    #[inline]
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
-        self.fill_bytes(dest);
-        Ok(())
     }
 }
 
