@@ -155,7 +155,7 @@ const fn read_u32(slice: &[u8], offset: usize) -> u32 {
 pub(crate) const fn read_u64(slice: &[u8], offset: usize) -> u64 {
     debug_assert!(offset as isize >= 0);
     debug_assert!(slice.len() >= 8 + offset);
-    let val = unsafe { std::ptr::read_unaligned(slice.as_ptr().offset(offset as isize) as *const u64) };
+    let val = unsafe { core::ptr::read_unaligned(slice.as_ptr().offset(offset as isize) as *const u64) };
     val.to_le()  // swap bytes on big-endian systems to get the same u64 value
 }
 
@@ -169,7 +169,7 @@ pub(crate) const fn read_u64(slice: &[u8], offset: usize) -> u64 {
 const fn read_u32(slice: &[u8], offset: usize) -> u32 {
     debug_assert!(offset as isize >= 0);
     debug_assert!(slice.len() >= 4 + offset);
-    let val = unsafe { std::ptr::read_unaligned(slice.as_ptr().offset(offset as isize) as *const u32) };
+    let val = unsafe { core::ptr::read_unaligned(slice.as_ptr().offset(offset as isize) as *const u32) };
     val.to_le()  // swap bytes on big-endian systems to get the same u64 value
 }
 
