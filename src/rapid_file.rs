@@ -140,7 +140,7 @@ mod tests {
         const LENGTH: usize = 1024;
         for len in 1..=LENGTH {
             let mut data = vec![0u8; len];
-            rand::thread_rng().fill_bytes(&mut data);
+            rand::rng().fill_bytes(&mut data);
 
             let mut file = tempfile::tempfile().unwrap();
             file.write(&data).unwrap();
