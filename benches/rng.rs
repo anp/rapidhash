@@ -1,4 +1,6 @@
 use criterion::{Bencher, Criterion};
+use rand8::RngCore as RngCore8;
+use rand8::SeedableRng as SeedableRng8;
 use rand_core::{RngCore, SeedableRng};
 
 macro_rules! bench_rng {

@@ -12,13 +12,13 @@ cargo test --no-default-features --lib
 cargo +1.77.0 test --all-features
 
 # Run all benchmarks (assumes cargo-criterion is installed)
-cargo criterion --bench bench --all-features
+RUSTFLAGS="-C target-cpu=native" cargo criterion --bench bench --all-features
 
 # Run all benchmarks, but unsafe=disabled
-cargo criterion --bench bench --features rng
+RUSTFLAGS="-C target-cpu=native" cargo criterion --bench bench --features rng
 
 # Run quality tests across various hash functions
-cargo bench --bench quality --all-features
+RUSTFLAGS="-C target-cpu=native" cargo bench --bench quality --all-features
 ```
 
 ## Fuzzing
