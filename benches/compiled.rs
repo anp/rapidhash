@@ -1,7 +1,6 @@
 use const_random::const_random;
 use criterion::{Bencher, Criterion};
-use rand::Rng;
-use rand::seq::SliceRandom;
+use rand::prelude::*;
 use rapidhash::{rapidhash, RapidHashMap};
 
 /// Benchmark approaches for matching bytes against compile-time known values.
@@ -114,13 +113,13 @@ const HASHES: [u64; INPUT_COUNT] = {
 
 const MISMATCH_PCT: u8 = 20;
 fn random_input() -> [u8; INPUT_LEN] {
-    let mismatch_branch = rand::thread_rng().gen_range(0..100);
+    let mismatch_branch = rand::rng().random_range(0..100);
     if mismatch_branch < MISMATCH_PCT {
         let mut buffer = [0u8; INPUT_LEN];
-        rand::thread_rng().fill(&mut buffer);
+        rand::rng().fill(&mut buffer);
         buffer
     } else {
-        *INPUTS.choose(&mut rand::thread_rng()).unwrap()
+        *INPUTS.choose(&mut rand::rng()).unwrap()
     }
 }
 

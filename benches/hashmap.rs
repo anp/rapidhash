@@ -1,6 +1,7 @@
 use std::hash::BuildHasherDefault;
 use criterion::{Bencher, Criterion, Throughput};
-use rand::distributions::{Alphanumeric, DistString, Distribution, WeightedIndex};
+use rand::distr::weighted::WeightedIndex;
+use rand::distr::{Alphanumeric, Distribution, SampleString};
 use rand::Rng;
 use wyhash::WyHash;
 
@@ -88,8 +89,8 @@ fn sample_string(count: usize, min: usize, max: usize) -> Vec<String> {
 
     (0..count)
         .map(|_| {
-            let len = rand::thread_rng().gen_range(min..=max);
-            let s: String = rand::thread_rng()
+            let len = rand::rng().random_range(min..=max);
+            let s: String = rand::rng()
                 .sample_iter(&Alphanumeric)
                 .take(len)
                 .map(char::from)
@@ -100,7 +101,7 @@ fn sample_string(count: usize, min: usize, max: usize) -> Vec<String> {
 }
 
 fn sample_emails(count: usize) -> Vec<String> {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     // weights roughly estimated from https://atdata.com/blog/long-email-addresses/
     let weights = [
@@ -125,7 +126,7 @@ fn sample_emails(count: usize) -> Vec<String> {
 
 fn sample_u64(count: usize) -> Vec<u64> {
     (0..count)
-        .map(|_| rand::thread_rng().gen_range(0..500000))
+        .map(|_| rand::rng().random_range(0..500000))
         .collect()
 }
 
@@ -141,16 +142,16 @@ struct Object {
 }
 
 fn sample_object(count: usize) -> Vec<Object> {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut objects = Vec::with_capacity(count);
     for _ in 0..count {
-        let url_len = rng.gen_range(30..=70);
-        let event_data_len = rng.gen_range(250..=450);
+        let url_len = rng.random_range(30..=70);
+        let event_data_len = rng.random_range(250..=450);
 
         objects.push(Object {
-            time_sec: rng.gen(),
-            time_ns: rng.gen(),
-            user_id: rng.gen(),
+            time_sec: rng.random(),
+            time_ns: rng.random(),
+            user_id: rng.random(),
             url: Alphanumeric.sample_string(&mut rng, url_len),
             event_source: Alphanumeric.sample_string(&mut rng, 20),
             event_data: Alphanumeric.sample_string(&mut rng, event_data_len),

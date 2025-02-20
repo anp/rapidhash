@@ -1,7 +1,6 @@
 use std::hash::Hasher;
 use criterion::Bencher;
 use rand::Rng;
-use rand::rngs::OsRng;
 use rapidhash::RAPID_SEED;
 
 /// Use .iter_batched_ref to avoid paying the Vec destruction cost, as it's 10x
@@ -10,7 +9,7 @@ pub fn bench_rapidhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             let mut hasher = rapidhash::RapidHasher::default();
@@ -24,7 +23,7 @@ pub fn bench_rapidhash_raw(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             rapidhash::rapidhash_inline(&bytes, RAPID_SEED)
@@ -36,7 +35,7 @@ pub fn bench_default(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             let mut hasher = std::collections::hash_map::DefaultHasher::default();
@@ -50,7 +49,7 @@ pub fn bench_fxhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             let mut hasher = fxhash::FxHasher::default();
@@ -64,7 +63,7 @@ pub fn bench_t1ha(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             let mut hasher = t1ha::T1haHasher::default();
@@ -78,7 +77,7 @@ pub fn bench_wyhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             let mut hasher = wyhash::WyHash::default();
@@ -92,7 +91,7 @@ pub fn bench_wyhash_raw(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             wyhash::wyhash(&bytes, 0)
@@ -104,7 +103,7 @@ pub fn bench_xxhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             let mut hasher = twox_hash::XxHash::default();
@@ -118,7 +117,7 @@ pub fn bench_metrohash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             let mut hasher = metrohash::MetroHash::default();
@@ -132,7 +131,7 @@ pub fn bench_seahash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             let mut hasher = seahash::SeaHasher::default();
@@ -146,7 +145,7 @@ pub fn bench_ahash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             let mut hasher = ahash::AHasher::default();
@@ -160,7 +159,7 @@ pub fn bench_gxhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             let mut hasher = gxhash::GxHasher::default();
@@ -174,7 +173,7 @@ pub fn bench_farmhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             let mut hasher = farmhash::FarmHasher::default();
@@ -188,7 +187,7 @@ pub fn bench_highwayhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             let mut hasher = highway::HighwayHasher::default();
@@ -202,7 +201,7 @@ pub fn bench_rustchash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
-            OsRng.fill(slice.as_mut_slice());
+            rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
             let mut hasher = rustc_hash::FxHasher::default();
