@@ -1,7 +1,7 @@
 #[cfg(feature = "rng")]
 use rand_core::{RngCore, SeedableRng, impls};
-use crate::rapid_const::{rapid_mix, RAPID_SECRET};
-use crate::RAPID_SEED;
+use crate::v2::rapid_const::{rapid_mix, RAPID_SECRET};
+use crate::v2::RAPID_SEED;
 
 /// Generate a random number using rapidhash mixing.
 ///
@@ -43,7 +43,7 @@ pub fn rapidrng_fast(seed: &mut u64) -> u64 {
 ///     println!("{}", rapidrng_fast(&mut seed));
 /// }
 /// ```
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", docsrs))]
 #[inline]
 pub fn rapidrng_time(seed: &mut u64) -> u64 {
     let time = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap();

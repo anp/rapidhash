@@ -23,11 +23,12 @@ def draw_hash():
         ("metrohash", "0.8"),
         ("seahash", "0.8"),
         ("xxhash", "0.8"),
+        ("foldhash", "y"),
     ]
 
     hash_names = [hash_function for hash_function, _ in hash_settings]
 
-    sizes = [2, 8, 16, 64, 256, 1024, 4096]
+    sizes = [2, 8, 16, 25, 50, 64, 160, 256, 1024, 4096]
 
     latency_data = []
     throughput_data = []
@@ -104,6 +105,7 @@ def draw_map():
         ("fxhash", "r"),
         ("gxhash", "m"),
         ("wyhash", "c"),
+        ("foldhash", "y"),
     ]
 
     hash_names = [hash_function.replace("_inline", "") for hash_function, _ in hash_settings]

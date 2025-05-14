@@ -1,0 +1,198 @@
+//! The rapidhash V1 algorithm.
+
+mod rapid_const;
+mod rapid_hasher;
+mod rapid_hasher_inline;
+#[cfg(any(feature = "std", docsrs))]
+mod rapid_file;
+#[cfg(any(feature = "std", feature = "rand", docsrs))]
+mod random_state;
+mod rng;
+
+#[doc(inline)]
+pub use crate::v1::rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, RAPID_SEED};
+#[doc(inline)]
+pub use crate::v1::rapid_hasher::*;
+#[doc(inline)]
+pub use crate::v1::rapid_hasher_inline::*;
+#[doc(inline)]
+#[cfg(any(feature = "std", docsrs))]
+pub use crate::v1::rapid_file::*;
+#[doc(inline)]
+#[cfg(any(feature = "std", feature = "rand", docsrs))]
+pub use crate::v1::random_state::*;
+#[doc(inline)]
+pub use crate::v1::rng::*;
+
+#[cfg(test)]
+mod tests {
+    extern crate std;
+
+    use std::hash::{Hash, Hasher};
+    use std::collections::BTreeSet;
+    use rand::Rng;
+    use super::*;
+
+    #[derive(Hash)]
+    struct Object {
+        bytes: std::vec::Vec<u8>,
+    }
+
+    /// Check the [rapidhash] oneshot function is equivalent to [RapidHasher]
+    #[test]
+    fn hasher_equivalent_to_oneshot() {
+        let hash = rapidhash(b"hello world");
+        assert_ne!(hash, 0);
+        assert_eq!(hash, 17498481775468162579);
+
+        let mut hasher = RapidHasher::default();
+        hasher.write(b"hello world");
+        assert_eq!(hasher.finish(), 17498481775468162579);
+
+        let hash = rapidhash(b"hello world!");
+        assert_eq!(hash, 12238759925102402976);
+    }
+
+    /// `#[derive(Hash)]` writes a length prefix first, check understanding.
+    #[test]
+    fn derive_hash_works() {
+        let object = Object { bytes: b"hello world".to_vec() };
+        let mut hasher = RapidHasher::default();
+        object.hash(&mut hasher);
+        assert_eq!(hasher.finish(), 3415994554582211120);
+
+        let mut hasher = RapidHasher::default();
+        hasher.write_usize(b"hello world".len());
+        hasher.write(b"hello world");
+        assert_eq!(hasher.finish(), 3415994554582211120);
+    }
+
+    /// Check RapidHasher is equivalent to the raw rapidhash for a single byte stream.
+    ///
+    /// Also check that the hash is unique for different byte streams.
+    #[test]
+    fn all_sizes() {
+        let mut hashes = BTreeSet::new();
+
+        for size in 0..=1024 {
+            let mut data = std::vec![0; size];
+            rand::rng().fill(data.as_mut_slice());
+
+            let hash1 = rapidhash(&data);
+            let mut hasher = RapidHasher::default();
+            hasher.write(&data);
+            let hash2 = hasher.finish();
+
+            assert_eq!(hash1, hash2, "Failed on size {}", size);
+            assert!(!hashes.contains(&hash1), "Duplicate for size {}", size);
+
+            hashes.insert(hash1);
+        }
+    }
+
+    /// Ensure that changing a single bit flips at least 10 bits in the resulting hash, and on
+    /// average flips half of the bits.
+    ///
+    /// These tests are not deterministic, but should fail with a very low probability.
+    #[test]
+    fn flip_bit_trial() {
+        use rand::Rng;
+
+        let mut flips = std::vec![];
+
+        for len in 1..=256 {
+            let mut data = std::vec![0; len];
+            rand::rng().fill(&mut data[..]);
+
+            let hash = rapidhash(&data);
+            for byte in 0..len {
+                for bit in 0..8 {
+                    let mut data = data.clone();
+                    data[byte] ^= 1 << bit;
+                    let new_hash = rapidhash(&data);
+                    assert_ne!(hash, new_hash, "Flipping byte {} bit {} did not change hash for input len {}", byte, bit, len);
+                    let xor = hash ^ new_hash;
+                    let flipped = xor.count_ones() as u64;
+                    assert!(xor.count_ones() >= 10, "Flipping bit {byte}:{bit} changed only {flipped} bits");
+
+                    flips.push(flipped);
+                }
+            }
+        }
+
+        let average = flips.iter().sum::<u64>() as f64 / flips.len() as f64;
+        assert!(average > 31.95 && average < 32.05, "Did not flip an average of half the bits. average: {average}, expected: 32.0");
+    }
+
+    /// Helper method for [flip_bit_trial_streaming]. Hashes a byte stream in u8 chunks.
+    fn streaming_hash(data: &[u8]) -> u64 {
+        let mut hasher = RapidHasher::default();
+        for byte in data {
+            hasher.write_u8(*byte);
+        }
+        hasher.finish()
+    }
+
+    /// The same as [flip_bit_trial], but against our streaming implementation, to ensure that
+    /// reusing the `a`, `b`, and `seed` state is not causing glaringly obvious issues.
+    ///
+    /// This test is not a substitute for SMHasher or similar.
+    ///
+    /// These tests are not deterministic, but should fail with a very low probability.
+    #[test]
+    fn flip_bit_trial_streaming() {
+        use rand::Rng;
+
+        let mut flips = std::vec![];
+
+        for len in 1..=256 {
+            let mut data = std::vec![0; len];
+            rand::rng().fill(&mut data[..]);
+
+            let hash = streaming_hash(&data);
+            for byte in 0..len {
+                for bit in 0..8 {
+                    let mut data = data.clone();
+                    data[byte] ^= 1 << bit;
+
+                    // check that the hash changed
+                    let new_hash = streaming_hash(&data);
+                    assert_ne!(hash, new_hash, "Flipping bit {} did not change hash", byte);
+
+                    // track how many bits were flipped
+                    let xor = hash ^ new_hash;
+                    let flipped = xor.count_ones() as u64;
+                    assert!(xor.count_ones() >= 10, "Flipping bit {byte}:{bit} changed only {flipped} bits");
+                    flips.push(flipped);
+                }
+            }
+        }
+
+        // check that on average half of the bits were flipped
+        let average = flips.iter().sum::<u64>() as f64 / flips.len() as f64;
+        assert!(average > 31.95 && average < 32.05, "Did not flip an average of half the bits. average: {average}, expected: 32.0");
+    }
+
+    /// Compare to the C rapidhash implementation to ensure we match perfectly.
+    #[test]
+    fn compare_to_c() {
+        use rand::Rng;
+        use rapidhash_c::rapidhashcc_v1;
+
+        for len in 0..=256 {
+            let mut data = std::vec![0; len];
+            rand::rng().fill(&mut data[..]);
+
+            for byte in 0..len {
+                for bit in 0..8 {
+                    let mut data = data.clone();
+                    data[byte] ^= 1 << bit;
+
+                    let rust_hash = rapidhash_seeded(&data, RAPID_SEED);
+                    let c_hash = rapidhashcc_v1(&data, RAPID_SEED);
+                    assert_eq!(rust_hash, c_hash, "Mismatch with input {} byte {} bit {}", len, byte, bit);
+                }
+            }
+        }
+    }
+}

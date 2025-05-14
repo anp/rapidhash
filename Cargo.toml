@@ -1,6 +1,6 @@
 [package]
 name = "rapidhash"
-version = "1.4.0"
+version = "2.0.0"
 edition = "2021"
 rust-version = "1.77.0"
 authors = ["Liam Gray <gmail@liamg.me>"]
@@ -11,7 +11,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 keywords = ["hash", "rapidhash"]
 categories = ["algorithms", "no-std"]
-exclude = ["Cargo.lock", ".github", "fuzz", "docs"]
+exclude = ["Cargo.lock", ".github", "fuzz", "docs", "rapidhash-c", "examples"]
 
 [lib]
 
@@ -30,10 +30,13 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["std"]
+default = ["std", "vlatest"]
 std = []  # enable std library for RapidHashMap and RapidHashSet helpers
 rand = ["dep:rand", "std"]  # enable the rand library for random seed initialisation and RapidRandomState
 rng = ["dep:rand_core"]  # fast random number generator using rapidhash
+v1 = []  # expose the old v1 algorithm module
+v2 = []  # expose the current v2 algorithm module
+vlatest = []  # expose the latest algorithm as default exports - exclude this feature to make all versions explicit
 unsafe = []  # enable unsafe pointer arithmetic to skip unnecessary bounds checks
 
 [dependencies]
@@ -52,6 +55,8 @@ ahash = "0.8.11"
 farmhash = "1.1.5"
 highway = "1.2.0"
 rustc-hash = "2.0.0"
+foldhash = "0.1.5"
+rapidhash-c = { version = "0.1.0", path = "./rapidhash-c" }
 
 # testing rapidhash_file
 tempfile = "3.14.0"

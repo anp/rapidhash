@@ -1,6 +1,6 @@
 use core::hash::Hasher;
-use crate::rapid_const::{RAPID_SEED};
-use crate::RapidInlineHasher;
+use crate::v1::rapid_const::{RAPID_SEED};
+use crate::v1::RapidInlineHasher;
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash) algorithm.
 ///
@@ -41,11 +41,6 @@ pub struct RapidHasher(RapidInlineHasher);
 /// map.insert(42, "the answer");
 /// ```
 pub type RapidBuildHasher = core::hash::BuildHasherDefault<RapidHasher>;
-
-/// Deprecated and renamed to [RapidBuildHasher].
-#[deprecated(since = "1.1.0", note = "Renamed to `RapidBuildHasher`")]
-#[doc(hidden)]
-pub type RapidHashBuilder = core::hash::BuildHasherDefault<RapidHasher>;
 
 /// A [std::collections::HashMap] type that uses the [RapidBuildHasher] hasher.
 ///

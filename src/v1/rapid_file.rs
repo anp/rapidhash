@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::io::{BufReader, Read};
-use crate::rapid_const::{RAPID_SEED, RAPID_SECRET, rapid_mix, rapid_mum, rapidhash_finish, rapidhash_seed, read_u32_combined, read_u64};
+use crate::v1::rapid_const::{RAPID_SEED, RAPID_SECRET, rapid_mix, rapid_mum, rapidhash_finish, rapidhash_seed, read_u32_combined, read_u64};
 
 /// Rapidhash a file, matching the C++ implementation.
 ///
@@ -76,37 +76,44 @@ fn rapidhash_file_core(mut a: u64, mut b: u64, mut seed: u64, len: usize, iter: 
         // slice is a view on the buffer that we use for reading into, and reading from, depending
         // on the stage of the loop.
         let mut slice = &mut buf[..96];
+        let end;
 
-        // because we're using a buffered reader, it might be worth unrolling this loop further
-        let mut see1 = seed;
-        let mut see2 = seed;
-        while remaining >= 96 {
-            // read into and process using the first half of the buffer
+        if remaining > 48 {
+            // because we're using a buffered reader, it might be worth unrolling this loop further
+            let mut see1 = seed;
+            let mut see2 = seed;
+            while remaining >= 96 {
+                // read into and process using the first half of the buffer
+                iter.read_exact(&mut slice)?;
+                seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
+                see1 = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
+                see2 = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
+                seed = rapid_mix(read_u64(slice, 48) ^ RAPID_SECRET[0], read_u64(slice, 56) ^ seed);
+                see1 = rapid_mix(read_u64(slice, 64) ^ RAPID_SECRET[1], read_u64(slice, 72) ^ see1);
+                see2 = rapid_mix(read_u64(slice, 80) ^ RAPID_SECRET[2], read_u64(slice, 88) ^ see2);
+                remaining -= 96;
+            }
+
+            // remaining might be up to 95 bytes, so we read into the second half of the buffer,
+            // which allows us to negative index safely in the final a and b xor using `end`.
+            slice = &mut buf[96..96 + remaining];
             iter.read_exact(&mut slice)?;
-            seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
-            see1 = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
-            see2 = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
-            seed = rapid_mix(read_u64(slice , 48) ^ RAPID_SECRET[0], read_u64(slice, 56) ^ seed);
-            see1 = rapid_mix(read_u64(slice, 64) ^ RAPID_SECRET[1], read_u64(slice, 72) ^ see1);
-            see2 = rapid_mix(read_u64(slice, 80) ^ RAPID_SECRET[2], read_u64(slice, 88) ^ see2);
-            remaining -= 96;
+            end = 96 + remaining;
+
+            if remaining >= 48 {
+                seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
+                see1 = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
+                see2 = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
+                slice = &mut buf[96 + 48..96 + remaining];
+                remaining -= 48;
+            }
+
+            seed ^= see1 ^ see2;
+        } else {
+            end = remaining;
+            slice = &mut buf[..remaining];
+            iter.read_exact(&mut slice)?;
         }
-
-        // remaining might be up to 95 bytes, so we read into the second half of the buffer,
-        // which allows us to negative index safely in the final a and b xor using `end`.
-        slice = &mut buf[96..96 + remaining];
-        iter.read_exact(&mut slice)?;
-        let end = 96 + remaining;
-
-        if remaining >= 48 {
-            seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
-            see1 = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
-            see2 = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
-            slice = &mut buf[96 + 48..96 + remaining];
-            remaining -= 48;
-        }
-
-        seed ^= see1 ^ see2;
 
         if remaining > 16 {
             seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[2], read_u64(slice, 8) ^ seed ^ RAPID_SECRET[1]);
@@ -147,7 +154,7 @@ mod tests {
             file.seek(SeekFrom::Start(0)).unwrap();
 
             assert_eq!(
-                crate::rapidhash(&data),
+                crate::v1::rapidhash(&data),
                 rapidhash_file(&mut file).unwrap(),
                 "Mismatch for input len: {}", &data.len()
             );

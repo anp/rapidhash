@@ -1,4 +1,4 @@
-use std::hash::Hasher;
+use std::hash::{BuildHasher, Hasher};
 use criterion::Bencher;
 use rand::Rng;
 use rapidhash::RAPID_SEED;
@@ -27,6 +27,30 @@ pub fn bench_rapidhash_raw(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             rapidhash::rapidhash_inline(&bytes, RAPID_SEED)
+        }, criterion::BatchSize::SmallInput);
+    })
+}
+
+pub fn bench_rapidhash_cc_v1(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
+    Box::new(move |b: &mut Bencher| {
+        b.iter_batched_ref(|| {
+            let mut slice = vec![0u8; size];
+            rand::rng().fill(slice.as_mut_slice());
+            slice
+        }, |bytes| {
+            rapidhash_c::rapidhashcc_v1(&bytes, 0xbdd89aa982704029)
+        }, criterion::BatchSize::SmallInput);
+    })
+}
+
+pub fn bench_rapidhash_cc_v2(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
+    Box::new(move |b: &mut Bencher| {
+        b.iter_batched_ref(|| {
+            let mut slice = vec![0u8; size];
+            rand::rng().fill(slice.as_mut_slice());
+            slice
+        }, |bytes| {
+            rapidhash_c::rapidhashcc_v2(&bytes, 0)
         }, criterion::BatchSize::SmallInput);
     })
 }
@@ -205,6 +229,20 @@ pub fn bench_rustchash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = rustc_hash::FxHasher::default();
+            hasher.write(&bytes);
+            hasher.finish()
+        }, criterion::BatchSize::SmallInput);
+    })
+}
+
+pub fn bench_foldhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
+    Box::new(move |b: &mut Bencher| {
+        b.iter_batched_ref(|| {
+            let mut slice = vec![0u8; size];
+            rand::rng().fill(slice.as_mut_slice());
+            slice
+        }, |bytes| {
+            let mut hasher = foldhash::quality::RandomState::default().build_hasher();
             hasher.write(&bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);

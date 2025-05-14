@@ -1,4 +1,4 @@
-use std::hash::{Hash, Hasher};
+use std::hash::{BuildHasher, Hash, Hasher};
 use criterion::{Bencher};
 
 #[derive(Hash)]
@@ -189,3 +189,16 @@ pub fn bench_rustchash() -> Box<dyn FnMut(&mut Bencher)> {
         }, criterion::BatchSize::SmallInput);
     })
 }
+
+pub fn bench_foldhash() -> Box<dyn FnMut(&mut Bencher)> {
+    Box::new(move |b: &mut Bencher| {
+        b.iter_batched_ref(|| {
+            Object::random()
+        }, |o| {
+            let mut hasher = foldhash::quality::RandomState::default().build_hasher();
+            o.hash(&mut hasher);
+            hasher.finish()
+        }, criterion::BatchSize::SmallInput);
+    })
+}
+

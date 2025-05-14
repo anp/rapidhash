@@ -28,7 +28,7 @@ jobs:
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
-        run: cargo test --no-fail-fast --lib --no-default-features
+        run: cargo test --no-fail-fast --lib --no-default-features --features=v1,v2
 
   test-unsafe:
     name: "Test (unsafe)"
@@ -38,7 +38,7 @@ jobs:
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
-        run: cargo test --no-fail-fast --lib --no-default-features --features unsafe
+        run: cargo test --no-fail-fast --lib --no-default-features --features v1,v2,unsafe
 
   test-msrv:
     name: "Test (MSRV)"
@@ -55,4 +55,4 @@ jobs:
       - name: Compile and run tests (std)
         run: cargo test --no-fail-fast --all-features
       - name: Compile and run tests (no_std)
-        run: cargo test --no-fail-fast --lib --no-default-features
+        run: cargo test --no-fail-fast --lib --no-default-features --features=v1,v2

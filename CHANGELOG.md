@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.0 (20250514)
+
+**Rapidhash V2 algorithm change**. Going forwards this crate will expose old algorithms under `v1`, `v2` etc. modules and naming. **The non-versioned functions will use the latest algorithm.**
+
+- **Breaking:** Updated to use the rapidhash V2 algorithm by default.
+- **Breaking:** Fixed the rapidhash V1 algorithm for 48 and 144 length inputs, where it would mismatch with the C implementation.
+- **Breaking:** Removed the deprecated `RapidHashBuilder` and `RapidInlineHashBuilder` types.
+- Added `v1` and `v2` features to expose V1 and V2 algorithms with explicit versioning.
+
 ## 1.4.0 (20250219)
 
 - Updated `rand` and `rand-core` to 0.9. [#18](https://github.com/hoxxep/rapidhash/pull/18)

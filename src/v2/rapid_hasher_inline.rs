@@ -1,5 +1,5 @@
 use core::hash::Hasher;
-use crate::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, RAPID_SEED};
+use crate::v2::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
 /// algorithm, and uses `#[inline(always)]` for all methods.
@@ -46,11 +46,6 @@ pub struct RapidInlineHasher {
 /// map.insert(42, "the answer");
 /// ```
 pub type RapidInlineBuildHasher = core::hash::BuildHasherDefault<RapidInlineHasher>;
-
-/// Deprecated and renamed to [RapidInlineBuildHasher].
-#[deprecated(since = "1.1.0", note = "Renamed to `RapidInlineBuildHasher`")]
-#[doc(hidden)]
-pub type RapidInlineHashBuilder = core::hash::BuildHasherDefault<RapidInlineHasher>;
 
 /// A [std::collections::HashMap] type that uses the [RapidInlineBuildHasher] hasher.
 ///

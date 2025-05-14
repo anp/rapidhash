@@ -70,27 +70,29 @@ pub(crate) const fn rapidhash_core(mut a: u64, mut b: u64, mut seed: u64, data: 
     } else {
         let mut slice = data;
 
-        // most CPUs appear to benefit from this unrolled loop
-        let mut see1 = seed;
-        let mut see2 = seed;
-        while slice.len() >= 96 {
-            seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
-            see1 = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
-            see2 = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
-            seed = rapid_mix(read_u64(slice , 48) ^ RAPID_SECRET[0], read_u64(slice, 56) ^ seed);
-            see1 = rapid_mix(read_u64(slice, 64) ^ RAPID_SECRET[1], read_u64(slice, 72) ^ see1);
-            see2 = rapid_mix(read_u64(slice, 80) ^ RAPID_SECRET[2], read_u64(slice, 88) ^ see2);
-            let (_, split) = slice.split_at(96);
-            slice = split;
+        if slice.len() > 48 {
+            // most CPUs appear to benefit from this unrolled loop
+            let mut see1 = seed;
+            let mut see2 = seed;
+            while slice.len() >= 96 {
+                seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
+                see1 = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
+                see2 = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
+                seed = rapid_mix(read_u64(slice, 48) ^ RAPID_SECRET[0], read_u64(slice, 56) ^ seed);
+                see1 = rapid_mix(read_u64(slice, 64) ^ RAPID_SECRET[1], read_u64(slice, 72) ^ see1);
+                see2 = rapid_mix(read_u64(slice, 80) ^ RAPID_SECRET[2], read_u64(slice, 88) ^ see2);
+                let (_, split) = slice.split_at(96);
+                slice = split;
+            }
+            if slice.len() >= 48 {
+                seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
+                see1 = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
+                see2 = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
+                let (_, split) = slice.split_at(48);
+                slice = split;
+            }
+            seed ^= see1 ^ see2;
         }
-        if slice.len() >= 48 {
-            seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
-            see1 = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
-            see2 = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
-            let (_, split) = slice.split_at(48);
-            slice = split;
-        }
-        seed ^= see1 ^ see2;
 
         if slice.len() > 16 {
             seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[2], read_u64(slice, 8) ^ seed ^ RAPID_SECRET[1]);
