@@ -28,7 +28,7 @@ jobs:
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
-        run: cargo test --no-fail-fast --lib --no-default-features --features=v1,v2
+        run: cargo test -p rapidhash --no-fail-fast --lib --no-default-features --features=v1,v2
 
   test-unsafe:
     name: "Test (unsafe)"
@@ -38,7 +38,7 @@ jobs:
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
-        run: cargo test --no-fail-fast --lib --no-default-features --features v1,v2,unsafe
+        run: cargo test -p rapidhash --no-fail-fast --lib --no-default-features --features v1,v2,unsafe
 
   test-msrv:
     name: "Test (MSRV)"
@@ -55,7 +55,7 @@ jobs:
       - name: Compile and run tests (std)
         run: cargo test --no-fail-fast --all-features
       - name: Compile and run tests (no_std)
-        run: cargo test --no-fail-fast --lib --no-default-features --features=v1,v2
+        run: cargo test -p rapidhash --no-fail-fast --lib --no-default-features --features=std,v1,v2,vlatest
 
   test-c:
     name: "Test (C implementations)"
@@ -65,7 +65,7 @@ jobs:
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
-        run: cd rapidhash-c && cargo test --no-fail-fast
+        run: cargo test -p rapidhash-c --no-fail-fast
 
   test-v1:
     name: "Test (v1)"
@@ -75,7 +75,7 @@ jobs:
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
-        run: cargo test --no-fail-fast --no-default-features --features=std,v1
+        run: cargo test -p rapidhash --no-fail-fast --no-default-features --features=std,v1
 
   test-v2:
     name: "Test (v2)"
@@ -85,4 +85,4 @@ jobs:
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
-        run: cargo test --no-fail-fast --no-default-features --features=std,v2
+        run: cargo test -p rapidhash --no-fail-fast --no-default-features --features=std,v2

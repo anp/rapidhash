@@ -1,5 +1,10 @@
 # Repository Command Cheatsheet
 
+Repositories are split into multiple crates:
+- `rapidhash`: The main library crate.
+- `rapidhash-c`: The original rapidhash C code, used for checking correctness.
+- `rapidhash-bench`: A benchmark crate for running benchmarks, separates the benchmarking deps from MSRV tests.
+
 ## Running Tests
 ```shell
 ## Tests

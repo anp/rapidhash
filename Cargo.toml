@@ -1,47 +1,21 @@
-[package]
-name = "rapidhash"
-version = "2.0.0"
-edition = "2021"
-publish = true
-rust-version = "1.77.0"  # limited by slice::first_chunk
-authors = ["Liam Gray <gmail@liamg.me>"]
-description = "A rust port of rapidhash: an extremely fast, high quality, platform-independent hashing algorithm."
-repository = "https://github.com/hoxxep/rapidhash"
-documentation = "https://docs.rs/rapidhash"
-license = "MIT OR Apache-2.0"
-readme = "README.md"
-keywords = ["hash", "hasher", "no-std", "rapidhash"]
-categories = ["algorithms", "no-std"]
-exclude = ["Cargo.lock", ".github", "fuzz", "docs", "rapidhash-c", "rapidhash-bench"]
+[workspace]
+resolver = "3"
+members = ["rapidhash", "rapidhash-bench", "rapidhash-c"]
 
-[lib]
+[workspace.dependencies]
+rapidhash = { path = "rapidhash", default-features = false }
+rapidhash-c = { path = "rapidhash-c" }
+rapidhash-bench = { path = "rapidhash-bench" }
 
-# Test docs using cargo-docs. Command:
-# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly docs -- --all-feature
-[package.metadata.docs.rs]
-all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
-
-[features]
-default = ["std", "vlatest"]
-std = []  # enable std library for RapidHashMap and RapidHashSet helpers
-rand = ["dep:rand", "std"]  # enable the rand library for random seed initialisation and RapidRandomState
-rng = ["dep:rand_core"]  # fast random number generator using rapidhash
-v1 = []  # expose the old v1 algorithm module
-v2 = []  # expose the current v2 algorithm module
-vlatest = []  # expose the latest algorithm as default exports - exclude this feature to make all versions explicit
-unsafe = []  # enable unsafe pointer arithmetic to skip unnecessary bounds checks
-
-[dependencies]
-rand = { version = "0.9.0", optional = true }
-rand_core = { version = "0.9.1", default-features = false, optional = true }
-
-[dev-dependencies]
-rapidhash-c = { version = "0.1.0", path = "./rapidhash-c" }
-tempfile = "3.14.0" # testing rapidhash_file
-
-# aggressive optimisations for benchmark consistency
+# aggressive optimizations for benchmark consistency
 [profile.release]
+codegen-units = 1
+lto = "fat"
+incremental = false
+opt-level = 3
+
+# aggressive optimizations for benchmark consistency
+[profile.bench]
 codegen-units = 1
 lto = "fat"
 incremental = false

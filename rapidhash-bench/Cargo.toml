@@ -13,11 +13,13 @@ name = "quality"
 harness = false
 
 [features]
+# avoid bringing in all of these during workspace default tests
+bench = ["rapidhash/std", "rapidhash/rand", "rapidhash/rng", "rapidhash/vlatest", "rapidhash/v1", "rapidhash/v2"]
 unsafe = ["rapidhash/unsafe"]
 
 [dependencies]
-rapidhash = { path = "..", features = ["std", "v1", "v2", "vlatest", "rand", "rng"] }
-rapidhash-c = { path = "../rapidhash-c" }
+rapidhash = { workspace = true, default-features = false }
+rapidhash-c = { workspace = true }
 
 [dev-dependencies]
 # hash functions to benchmark/compare
@@ -48,17 +50,3 @@ itertools = "0.14.0"
 gxhash = "3.4.1"
 [target.'cfg(all(any(target_arch = "x86", target_arch = "x86_64"), all(target_feature = "aes", target_feature = "sse2")))'.dev-dependencies]
 gxhash = "3.4.1"
-
-# aggressive optimizations for benchmark consistency
-[profile.release]
-codegen-units = 1
-lto = "fat"
-incremental = false
-opt-level = 3
-
-# aggressive optimizations for benchmark consistency
-[profile.bench]
-codegen-units = 1
-lto = "fat"
-incremental = false
-opt-level = 3
