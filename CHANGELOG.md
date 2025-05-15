@@ -8,6 +8,8 @@
 - **Breaking:** Fixed the rapidhash V1 algorithm for 48 and 144 length inputs, where it would mismatch with the C implementation.
 - **Breaking:** Removed the deprecated `RapidHashBuilder` and `RapidInlineHashBuilder` types.
 - Added `v1` and `v2` features to expose V1 and V2 algorithms with explicit versioning.
+- Full tests and verification against the C implementations for both versions.
+- MSRV bump to 1.82.
 
 ## 1.4.0 (20250219)
 

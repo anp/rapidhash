@@ -34,28 +34,95 @@ use std::io::{Read};
 /// 8543579700415218186
 /// ```
 pub fn main() {
-    let hash_arg = std::env::args().nth(1);
+    let args: Vec<String> = std::env::args().collect();
+    if args.iter().any(|a| a == "--help") {
+        println!("Usage: rapidhash [opts] [filename]");
+        println!("[opts]");
+        println!("  --v1  Use v1 hashing algorithm (must have v1 feature enabled)");
+        println!("  --v2  Use v2 hashing algorithm (default; must have v2 or vlatest feature enabled)");
+        println!("[filename]");
+        println!("  Providing a filename is optional and will read a file directly. Requires the std");
+        println!("  feature to be enabled. Otherwise will accept from stdin.");
+        println!("  ");
+        println!("  Note that reading from stdin will buffer the whole input in memory before hashing,");
+        println!("  while hashing a filename will load the file length from metadata and then stream");
+        println!("  the file.");
+        println!("Docs: https://github.com/hoxxep/rapidhash?tab=readme-ov-file#cli");
+        return;
+    }
 
-    let hash = match hash_arg {
+    // file name is the first non-option argument
+    let filename = args.iter().filter(|a| !a.starts_with('-')).next();
+
+    let v1 = args.iter().any(|a| a == "--v1");
+    let v2 = args.iter().any(|a| a == "--v2") || !v1;
+    if v1 && v2 {
+        println!("Cannot use both --v1 and --v2 at the same time.");
+        return;
+    }
+
+    let hash = match filename {
         None => {
             let mut buffer = Vec::with_capacity(1024);
             std::io::stdin().read_to_end(&mut buffer).expect("Could not read from stdin.");
-            rapidhash::rapidhash(&buffer)
+
+            #[allow(unreachable_code)]
+            #[allow(unused_variables)]
+            match (v1, v2) {
+                (true, false) => {
+                    #[cfg(not(feature = "v1"))]
+                    panic!("v1 feature is not enabled.");
+
+                    #[cfg(feature = "v1")]
+                    rapidhash::v1::rapidhash(&buffer)
+                }
+                (false, true) => {
+                    #[cfg(not(any(feature = "v2", feature = "vlatest")))]
+                    panic!("v2 or vlatest feature is not enabled.");
+
+                    #[cfg(feature = "v2")] {
+                        rapidhash::v2::rapidhash(&buffer)
+                    }
+
+                    #[cfg(all(feature = "vlatest", not(feature = "v2")))] {
+                        rapidhash::rapidhash(&buffer)
+                    }
+                }
+                _ => unreachable!("Logic error."),
+            }
         }
         Some(filename) => {
-            if filename == "--help" {
-                println!("Usage: rapidhash [filename]");
-                println!("Docs: https://github.com/hoxxep/rapidhash?tab=readme-ov-file#cli");
-                return;
-            }
-
-            #[cfg(feature = "std")] {
-                let mut file = std::fs::File::open(filename).expect("Could not open file.");
-                rapidhash::rapidhash_file(&mut file).expect("Failed to hash file.")
-            }
-
             #[cfg(not(feature = "std"))] {
                 panic!("File reading is not supported without the `std` feature.");
+            }
+
+            #[allow(unreachable_code)]
+            #[allow(unused_variables)]
+            match (v1, v2) {
+                (true, false) => {
+                    #[cfg(not(feature = "v1"))]
+                    panic!("v1 feature is not enabled.");
+
+                    let mut file = std::fs::File::open(filename).expect("Could not open file.");
+
+                    #[cfg(feature = "v1")]
+                    rapidhash::v1::rapidhash_file(&mut file).expect("Failed to hash file.")
+                }
+                (false, true) => {
+                    #[cfg(not(any(feature = "v2", feature = "vlatest")))]
+                    panic!("v2 or vlatest feature is not enabled.");
+
+                    let mut file = std::fs::File::open(filename).expect("Could not open file.");
+
+                    #[cfg(feature = "v2")] {
+                        rapidhash::v2::rapidhash_file(&mut file).expect("Failed to hash file.")
+                    }
+
+                    #[cfg(all(feature = "vlatest", not(feature = "v2")))] {
+                        rapidhash::rapidhash_file(&mut file).expect("Failed to hash file.")
+                    }
+                }
+                _ => unreachable!("Logic error."),
             }
         }
     };

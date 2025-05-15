@@ -1,5 +1,6 @@
 /target
-rapidhash-c/target
+/rapidhash-bench/target
+/rapidhash-c/target
 Cargo.lock
 .idea/
 .DS_Store

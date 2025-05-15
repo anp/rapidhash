@@ -28,7 +28,7 @@ pub use crate::v2::rng::*;
 mod tests {
     extern crate std;
 
-    use std::hash::{Hash, Hasher};
+    use std::hash::{BuildHasher, Hash, Hasher};
     use std::collections::BTreeSet;
     use rand::Rng;
     use super::*;
@@ -59,12 +59,12 @@ mod tests {
         let object = Object { bytes: b"hello world".to_vec() };
         let mut hasher = RapidHasher::default();
         object.hash(&mut hasher);
-        assert_eq!(hasher.finish(), 6148497315230733725);
+        assert_eq!(hasher.finish(), 17044374698137929640);
 
         let mut hasher = RapidHasher::default();
         hasher.write_usize(b"hello world".len());
         hasher.write(b"hello world");
-        assert_eq!(hasher.finish(), 6148497315230733725);
+        assert_eq!(hasher.finish(), 17044374698137929640);
     }
 
     /// Check RapidHasher is equivalent to the raw rapidhash for a single byte stream.
@@ -179,7 +179,7 @@ mod tests {
         use rand::Rng;
         use rapidhash_c::rapidhashcc_v2;
 
-        for len in 0..=256 {
+        for len in 0..=512 {
             let mut data = std::vec![0; len];
             rand::rng().fill(&mut data[..]);
 
@@ -191,6 +191,16 @@ mod tests {
                     let rust_hash = rapidhash_seeded(&data, RAPID_SEED);
                     let c_hash = rapidhashcc_v2(&data, RAPID_SEED);
                     assert_eq!(rust_hash, c_hash, "Mismatch with input {} byte {} bit {}", len, byte, bit);
+
+                    let mut rust_hasher = RapidBuildHasher::default().build_hasher();
+                    rust_hasher.write(&data);
+                    let rust_hasher_hash = rust_hasher.finish();
+                    assert_eq!(rust_hash, rust_hasher_hash, "Hasher mismatch with input {} byte {} bit {}", len, byte, bit);
+
+                    let mut inline_hasher = RapidInlineBuildHasher::default().build_hasher();
+                    inline_hasher.write(&data);
+                    let inline_hasher_hash = inline_hasher.finish();
+                    assert_eq!(rust_hash, inline_hasher_hash, "Inline hasher mismatch with input {} byte {} bit {}", len, byte, bit);
                 }
             }
         }

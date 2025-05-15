@@ -28,7 +28,7 @@ pub use crate::v1::rng::*;
 mod tests {
     extern crate std;
 
-    use std::hash::{Hash, Hasher};
+    use std::hash::{BuildHasher, Hash, Hasher};
     use std::collections::BTreeSet;
     use rand::Rng;
     use super::*;
@@ -179,7 +179,7 @@ mod tests {
         use rand::Rng;
         use rapidhash_c::rapidhashcc_v1;
 
-        for len in 0..=256 {
+        for len in 0..=512 {
             let mut data = std::vec![0; len];
             rand::rng().fill(&mut data[..]);
 
@@ -191,6 +191,16 @@ mod tests {
                     let rust_hash = rapidhash_seeded(&data, RAPID_SEED);
                     let c_hash = rapidhashcc_v1(&data, RAPID_SEED);
                     assert_eq!(rust_hash, c_hash, "Mismatch with input {} byte {} bit {}", len, byte, bit);
+
+                    let mut rust_hasher = RapidBuildHasher::default().build_hasher();
+                    rust_hasher.write(&data);
+                    let rust_hasher_hash = rust_hasher.finish();
+                    assert_eq!(rust_hash, rust_hasher_hash, "Hasher mismatch with input {} byte {} bit {}", len, byte, bit);
+
+                    let mut inline_hasher = RapidInlineBuildHasher::default().build_hasher();
+                    inline_hasher.write(&data);
+                    let inline_hasher_hash = inline_hasher.finish();
+                    assert_eq!(rust_hash, inline_hasher_hash, "Inline hasher mismatch with input {} byte {} bit {}", len, byte, bit);
                 }
             }
         }

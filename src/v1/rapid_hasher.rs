@@ -1,5 +1,5 @@
 use core::hash::Hasher;
-use crate::v1::rapid_const::{RAPID_SEED};
+use std::hash::BuildHasher;
 use crate::v1::RapidInlineHasher;
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash) algorithm.
@@ -40,7 +40,29 @@ pub struct RapidHasher(RapidInlineHasher);
 /// let mut map = HashMap::with_hasher(RapidBuildHasher::default());
 /// map.insert(42, "the answer");
 /// ```
-pub type RapidBuildHasher = core::hash::BuildHasherDefault<RapidHasher>;
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct RapidBuildHasher {
+    seed: u64,
+}
+
+// Explicitly implement to inline always the hasher.
+impl BuildHasher for RapidBuildHasher {
+    type Hasher = RapidHasher;
+
+    #[inline(always)]
+    fn build_hasher(&self) -> Self::Hasher {
+        RapidHasher::new(self.seed)
+    }
+}
+
+impl Default for RapidBuildHasher {
+    #[inline]
+    fn default() -> Self {
+        RapidBuildHasher {
+            seed: RapidHasher::DEFAULT_SEED,
+        }
+    }
+}
 
 /// A [std::collections::HashMap] type that uses the [RapidBuildHasher] hasher.
 ///
@@ -80,7 +102,7 @@ pub type RapidHashSet<K> = std::collections::HashSet<K, RapidBuildHasher>;
 
 impl RapidHasher {
     /// Default `RapidHasher` seed.
-    pub const DEFAULT_SEED: u64 = RAPID_SEED;
+    pub const DEFAULT_SEED: u64 = RapidInlineHasher::DEFAULT_SEED;
 
     /// Create a new [RapidHasher] with a custom seed.
     #[inline]
@@ -129,7 +151,7 @@ impl Default for RapidHasher {
     /// seed.
     #[inline]
     fn default() -> Self {
-        Self::new(RAPID_SEED)
+        Self::new(RapidHasher::DEFAULT_SEED)
     }
 }
 

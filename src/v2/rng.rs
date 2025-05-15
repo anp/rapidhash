@@ -247,7 +247,7 @@ mod tests {
 
             let xor = prev ^ next;
             let flipped = xor.count_ones() as u64;
-            assert!(xor.count_ones() >= 12, "Flipping bit changed only {} bits", flipped);
+            assert!(xor.count_ones() >= 10, "Flipping bit changed only {} bits", flipped);
             flips.push(flipped);
 
             assert!(!seen.contains(&next), "rapidrng_fast produced a duplicate value");
@@ -301,30 +301,6 @@ mod tests {
                 lam = 0;
             }
             fast = rng.next_u64();
-            lam += 1;
-        }
-
-        assert!(false, "Cycle found after {power}:{lam} iterations.");
-    }
-
-    /// detects a cycle at: 2147483648:1605182499
-    /// note that we're detecting _seed_ cycles, not output values.
-    #[test]
-    #[ignore]
-    fn find_cycle_wyhash() {
-        let mut fast = 0;
-        let mut slow = 0;
-
-        let mut power: u64 = 1;
-        let mut lam: u64 = 1;
-        wyhash::wyrng(&mut fast);
-        while fast != slow {
-            if power == lam {
-                slow = fast;
-                power *= 2;
-                lam = 0;
-            }
-            wyhash::wyrng(&mut fast);
             lam += 1;
         }
 

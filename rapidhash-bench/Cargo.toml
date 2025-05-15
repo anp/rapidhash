@@ -1,0 +1,64 @@
+[package]
+name = "rapidhash-bench"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[[bench]]
+name = "bench"
+harness = false
+
+[[bench]]
+name = "quality"
+harness = false
+
+[features]
+unsafe = ["rapidhash/unsafe"]
+
+[dependencies]
+rapidhash = { path = "..", features = ["std", "v1", "v2", "vlatest", "rand", "rng"] }
+rapidhash-c = { path = "../rapidhash-c" }
+
+[dev-dependencies]
+# hash functions to benchmark/compare
+fxhash = "0.2.1"
+t1ha = "0.1.2"
+wyhash = "0.5.0"
+twox-hash = "1.6.3"
+metrohash = "1.0.6"
+seahash = "4.1.0"
+ahash = "0.8.11"
+farmhash = "1.1.5"
+highway = "1.2.0"
+rustc-hash = "2.0.0"
+foldhash = "0.1.5"
+
+# benchmarking helpers
+criterion = { version = "0.5.1", default-features = false, features = ["rayon", "cargo_bench_support"] }
+rand = "0.9.0"
+rand_core = "0.9.0"
+rand8 = { package = "rand", version = "0.8.0" }
+const-random = "0.1.18"
+lazy_static = "1.5.0"
+reqwest = { version = "0.12.7", default-features = false, features = ["http2", "blocking", "rustls-tls"] }
+itertools = "0.14.0"
+
+# gxhash simply won't compile on Github Actions, even though I only use it for the benchmarks...
+[target.'cfg(all(any(target_arch = "arm", target_arch = "aarch64"), all(target_feature = "aes", target_feature = "neon")))'.dev-dependencies]
+gxhash = "3.4.1"
+[target.'cfg(all(any(target_arch = "x86", target_arch = "x86_64"), all(target_feature = "aes", target_feature = "sse2")))'.dev-dependencies]
+gxhash = "3.4.1"
+
+# aggressive optimizations for benchmark consistency
+[profile.release]
+codegen-units = 1
+lto = "fat"
+incremental = false
+opt-level = 3
+
+# aggressive optimizations for benchmark consistency
+[profile.bench]
+codegen-units = 1
+lto = "fat"
+incremental = false
+opt-level = 3

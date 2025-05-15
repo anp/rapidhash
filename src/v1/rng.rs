@@ -308,30 +308,6 @@ mod tests {
         assert!(false, "Cycle found after {power}:{lam} iterations.");
     }
 
-    /// detects a cycle at: 2147483648:1605182499
-    /// note that we're detecting _seed_ cycles, not output values.
-    #[test]
-    #[ignore]
-    fn find_cycle_wyhash() {
-        let mut fast = 0;
-        let mut slow = 0;
-
-        let mut power: u64 = 1;
-        let mut lam: u64 = 1;
-        wyhash::wyrng(&mut fast);
-        while fast != slow {
-            if power == lam {
-                slow = fast;
-                power *= 2;
-                lam = 0;
-            }
-            wyhash::wyrng(&mut fast);
-            lam += 1;
-        }
-
-        assert!(false, "Cycle found after {power}:{lam} iterations.");
-    }
-
     #[cfg(feature = "rng")]
     #[test]
     fn test_construction() {

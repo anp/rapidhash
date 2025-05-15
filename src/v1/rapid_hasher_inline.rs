@@ -1,4 +1,5 @@
 use core::hash::Hasher;
+use std::hash::BuildHasher;
 use crate::v1::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
@@ -45,7 +46,29 @@ pub struct RapidInlineHasher {
 /// let mut map = HashMap::with_hasher(RapidInlineBuildHasher::default());
 /// map.insert(42, "the answer");
 /// ```
-pub type RapidInlineBuildHasher = core::hash::BuildHasherDefault<RapidInlineHasher>;
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct RapidInlineBuildHasher {
+    seed: u64,
+}
+
+// Explicitly implement to inline always the hasher.
+impl BuildHasher for RapidInlineBuildHasher {
+    type Hasher = RapidInlineHasher;
+
+    #[inline(always)]
+    fn build_hasher(&self) -> Self::Hasher {
+        RapidInlineHasher::new(self.seed)
+    }
+}
+
+impl Default for RapidInlineBuildHasher {
+    #[inline]
+    fn default() -> Self {
+        RapidInlineBuildHasher {
+            seed: RapidInlineHasher::DEFAULT_SEED,
+        }
+    }
+}
 
 /// A [std::collections::HashMap] type that uses the [RapidInlineBuildHasher] hasher.
 ///

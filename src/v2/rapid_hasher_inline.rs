@@ -1,5 +1,6 @@
 use core::hash::Hasher;
-use crate::v2::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, RAPID_SEED};
+use std::hash::BuildHasher;
+use crate::v2::rapid_const::{rapid_mix, rapid_mum, rapidhash_core, rapidhash_finish, RAPID_SECRET, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
 /// algorithm, and uses `#[inline(always)]` for all methods.
@@ -45,7 +46,29 @@ pub struct RapidInlineHasher {
 /// let mut map = HashMap::with_hasher(RapidInlineBuildHasher::default());
 /// map.insert(42, "the answer");
 /// ```
-pub type RapidInlineBuildHasher = core::hash::BuildHasherDefault<RapidInlineHasher>;
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct RapidInlineBuildHasher {
+    seed: u64,
+}
+
+// Explicitly implement to inline always the hasher.
+impl BuildHasher for RapidInlineBuildHasher {
+    type Hasher = RapidInlineHasher;
+
+    #[inline(always)]
+    fn build_hasher(&self) -> Self::Hasher {
+        RapidInlineHasher::new(self.seed)
+    }
+}
+
+impl Default for RapidInlineBuildHasher {
+    #[inline]
+    fn default() -> Self {
+        RapidInlineBuildHasher {
+            seed: RapidInlineHasher::DEFAULT_SEED,
+        }
+    }
+}
 
 /// A [std::collections::HashMap] type that uses the [RapidInlineBuildHasher] hasher.
 ///
@@ -77,6 +100,14 @@ pub type RapidInlineHashMap<K, V> = std::collections::HashMap<K, V, RapidInlineB
 #[cfg(any(feature = "std", docsrs))]
 pub type RapidInlineHashSet<K> = std::collections::HashSet<K, RapidInlineBuildHasher>;
 
+#[derive(Copy, Clone)]
+enum NumSize {
+    U8 = 1,
+    U16 = 2,
+    U32 = 4,
+    U64 = 8,
+}
+
 impl RapidInlineHasher {
     /// Default `RapidHasher` seed.
     pub const DEFAULT_SEED: u64 = RAPID_SEED;
@@ -84,7 +115,10 @@ impl RapidInlineHasher {
     /// Create a new [RapidInlineHasher] with a custom seed.
     #[inline(always)]
     #[must_use]
-    pub const fn new(seed: u64) -> Self {
+    pub const fn new(mut seed: u64) -> Self {
+        // do most of the rapidhash_seed initialisation here to avoid doing it on each int
+        seed ^= rapid_mix(seed ^ RAPID_SECRET[2], RAPID_SECRET[1]);
+
         Self {
             seed,
             a: 0,
@@ -116,11 +150,61 @@ impl RapidInlineHasher {
 
         let mut this = *self;
         this.size += bytes.len() as u64;
-        this.seed = rapidhash_seed(this.seed, this.size);
+        this.seed ^= this.size;
         let (a, b, seed) = rapidhash_core(this.a, this.b, this.seed, bytes);
         this.a = a;
         this.b = b;
         this.seed = seed;
+        this
+    }
+
+    /// Shortcut for numbers, although the compiler arrives here anyway.
+    #[inline(always)]
+    #[must_use]
+    const fn write_num(&self, i: u64, num_size: NumSize) -> Self {
+        let mut this = *self;
+        this.size += num_size as u64;
+        this.seed ^= this.size;
+
+        match num_size {
+            NumSize::U8 => {
+                this.a ^= (i << 56) | (i << 32) | i;
+            }
+            NumSize::U16 => {
+                this.a ^= ((i & 0xFF00) << 48) | ((i & 0xFF) << 32) | i & 0xFF;
+            }
+            NumSize::U32 | NumSize::U64 => {
+                this.a ^= i;
+                this.b ^= i;
+            }
+        }
+
+        this.a ^= RAPID_SECRET[1];
+        this.b ^= this.seed;
+        let (a, b) = rapid_mum(this.a, this.b);
+
+        this.a = a;
+        this.b = b;
+        this
+    }
+
+    /// Shortcut for u128, although the compiler arrives here anyway.
+    #[inline(always)]
+    #[must_use]
+    const fn write_num_128(&self, i: u128) -> Self {
+        let mut this = *self;
+        this.size += 16;
+        this.seed ^= this.size;
+
+        this.a ^= (i >> 64) as u64;
+        this.b ^= i as u64;
+
+        this.a ^= RAPID_SECRET[1];
+        this.b ^= this.seed;
+        let (a, b) = rapid_mum(this.a, this.b);
+
+        this.a = a;
+        this.b = b;
         this
     }
 
@@ -160,69 +244,82 @@ impl Hasher for RapidInlineHasher {
 
     #[inline(always)]
     fn write_u8(&mut self, i: u8) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_num(i as u64, NumSize::U8);
     }
 
     #[inline(always)]
     fn write_u16(&mut self, i: u16) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_num(i as u64, NumSize::U16);
     }
 
     #[inline(always)]
     fn write_u32(&mut self, i: u32) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_num(i as u64, NumSize::U32);
     }
 
     #[inline(always)]
-    fn write_u64(&mut self, i: u64) {
-        *self = self.write_const(&i.to_ne_bytes());
-
-        // NOTE: in case of compiler regression, it should compile to:
-        // self.size += size_of::<u64>() as u64;
-        // self.seed ^= rapid_mix(self.seed ^ RAPID_SECRET[0], RAPID_SECRET[1]) ^ self.size;
-        // self.a ^= i.rotate_right(32) ^ RAPID_SECRET[1];
-        // self.b ^= i ^ self.seed;
-        // rapid_mum(&mut self.a, &mut self.b);
-    }
+    fn write_u64(&mut self, i: u64) { *self = self.write_num(i, NumSize::U64); }
 
     #[inline(always)]
     fn write_u128(&mut self, i: u128) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_num_128(i);
     }
 
     #[inline(always)]
     fn write_usize(&mut self, i: usize) {
-        *self = self.write_const(&i.to_ne_bytes());
+        #[cfg(target_pointer_width = "32")] {
+            *self = self.write_num(i as u64, NumSize::U32);
+        }
+
+        #[cfg(target_pointer_width = "64")] {
+            *self = self.write_num(i as u64, NumSize::U64);
+        }
+
+        #[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
+        {
+            compile_error!("Unsupported target pointer width");
+        }
     }
 
     #[inline(always)]
     fn write_i8(&mut self, i: i8) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_num(i as u64, NumSize::U8);
     }
 
     #[inline(always)]
     fn write_i16(&mut self, i: i16) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_num(i as u64, NumSize::U16);
     }
 
     #[inline(always)]
     fn write_i32(&mut self, i: i32) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_num(i as u64, NumSize::U32);
     }
 
     #[inline(always)]
     fn write_i64(&mut self, i: i64) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_num(i as u64, NumSize::U64);
     }
 
     #[inline(always)]
     fn write_i128(&mut self, i: i128) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_num_128(i as u128);
     }
 
     #[inline(always)]
     fn write_isize(&mut self, i: isize) {
-        *self = self.write_const(&i.to_ne_bytes());
+        #[cfg(target_pointer_width = "32")] {
+            *self = self.write_num(i as u64, NumSize::U32);
+        }
+
+        #[cfg(target_pointer_width = "64")] {
+            *self = self.write_num(i as u64, NumSize::U64);
+        }
+
+        #[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
+        {
+            compile_error!("Unsupported target pointer width");
+        }
     }
 }
 

@@ -1,7 +1,9 @@
 # Repository Command Cheatsheet
 
-## Development
+## Running Tests
 ```shell
+## Tests
+
 # Run tests
 cargo test --all-features
 
@@ -10,6 +12,14 @@ cargo test --no-default-features --lib
 
 # Check MSRV
 cargo +1.77.0 test --all-features
+```
+
+## Running benchmarks
+Benchmarks are run using `cargo-criterion` in the `rapidhash-bench` crate to separate them from the library.
+
+```shell
+# Run in the bench crate
+cd rapidhash-bench
 
 # Run all benchmarks (assumes cargo-criterion is installed)
 RUSTFLAGS="-C target-cpu=native" cargo criterion --bench bench --all-features
