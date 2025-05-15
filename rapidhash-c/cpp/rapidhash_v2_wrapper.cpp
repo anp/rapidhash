@@ -1,1 +1,1 @@
-#include "rapidhash_v2.h"
+#include "rapidhash_v2.hpp"

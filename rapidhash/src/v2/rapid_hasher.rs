@@ -1,5 +1,4 @@
-use core::hash::Hasher;
-use std::hash::BuildHasher;
+use core::hash::{BuildHasher, Hasher};
 use crate::v2::RapidInlineHasher;
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash) algorithm.
@@ -12,7 +11,11 @@ use crate::v2::RapidInlineHasher;
 /// # Example
 /// ```
 /// use std::hash::Hasher;
+///
+/// #[cfg(not(feature = "v2"))]
 /// use rapidhash::RapidHasher;
+/// #[cfg(feature = "v2")]
+/// use rapidhash::v2::RapidHasher;
 ///
 /// let mut hasher = RapidHasher::default();
 /// hasher.write(b"hello world");
@@ -35,7 +38,11 @@ pub struct RapidHasher(RapidInlineHasher);
 /// ```
 /// use std::collections::HashMap;
 /// use std::hash::Hasher;
+///
+/// #[cfg(not(feature = "v2"))]
 /// use rapidhash::RapidBuildHasher;
+/// #[cfg(feature = "v2")]
+/// use rapidhash::v2::RapidBuildHasher;
 ///
 /// let mut map = HashMap::with_hasher(RapidBuildHasher::default());
 /// map.insert(42, "the answer");
@@ -71,7 +78,11 @@ impl Default for RapidBuildHasher {
 ///
 /// # Example
 /// ```
+/// #[cfg(not(feature = "v2"))]
 /// use rapidhash::RapidHashMap;
+/// #[cfg(feature = "v2")]
+/// use rapidhash::v2::RapidHashMap;
+///
 /// let mut map = RapidHashMap::default();
 /// map.insert(42, "the answer");
 ///
@@ -89,7 +100,11 @@ pub type RapidHashMap<K, V> = std::collections::HashMap<K, V, RapidBuildHasher>;
 ///
 /// # Example
 /// ```
+/// #[cfg(not(feature = "v2"))]
 /// use rapidhash::RapidHashSet;
+/// #[cfg(feature = "v2")]
+/// use rapidhash::v2::RapidHashSet;
+///
 /// let mut set = RapidHashSet::default();
 /// set.insert("the answer");
 ///
@@ -122,7 +137,10 @@ impl RapidHasher {
     ///
     /// # Example
     /// ```rust
+    /// #[cfg(not(feature = "v2"))]
     /// use rapidhash::RapidHasher;
+    /// #[cfg(feature = "v2")]
+    /// use rapidhash::v2::RapidHasher;
     ///
     /// let hasher = RapidHasher::default_const();
     /// let hash = hasher

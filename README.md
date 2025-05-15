@@ -17,27 +17,27 @@ A rust implementation of the [rapidhash](https://github.com/Nicoshev/rapidhash) 
 ### Hashing
 ```rust
 use std::hash::Hasher;
-use rapidhash::{rapidhash, RapidInlineHasher, RapidHasher};
+use rapidhash::{rapidhash, RapidHasher, RapidInlineHasher};
 
 // direct const usage
-assert_eq!(rapidhash(b"hello world"), 17498481775468162579);
+assert_eq!(rapidhash(b"hello world"), 1722744455612372674);
 
 // a std::hash::Hasher compatible hasher
-let mut hasher = RapidInlineHasher::default();
-hasher.write(b"hello world");
-assert_eq!(hasher.finish(), 17498481775468162579);
-
-// a non-inline hasher for when you don't want to force inlining,
-// such as when being careful with WASM binary size.
 let mut hasher = RapidHasher::default();
 hasher.write(b"hello world");
-assert_eq!(hasher.finish(), 17498481775468162579);
+assert_eq!(hasher.finish(), 1722744455612372674);
+
+// a forced-inline(always) hasher which sometimes can be faster than the default,
+// benchmark your use case.
+let mut hasher = RapidInlineHasher::default();
+hasher.write(b"hello world");
+assert_eq!(hasher.finish(), 1722744455612372674);
 
 // a const API similar to std::hash::Hasher
-const HASH: u64 = RapidInlineHasher::default_const()
+const HASH: u64 = RapidHasher::default_const()
     .write_const(b"hello world")
     .finish_const();
-assert_eq!(HASH, 17498481775468162579);
+assert_eq!(HASH, 1722744455612372674);
 ```
 
 ### Helper Types
@@ -74,9 +74,20 @@ rapidhash example.txt
 echo "example" | rapidhash
 ```
 
+## Rapidhash Versions
+
+Rapidhash has multiple versions of the algorithm. By default, rapidhash uses the V2 algorithm.
+
+The main `use rapidhash::*` functions will always use the latest algorithm. The rapidhash crate will use a minor version bump when adding support for future algorithms.
+
+A user can fix their algorithm version by enabling the `v1` or `v2` feature flags and importing rapidhash via `use rapidhash::v1::*` or `use rapidhash::v2::*`.
+
 ## Features
 
-- `default`: `std`
+- `default`: `std`, `vlatest`
+- `vlatest`: enables `use crate::rapidhash::*` which aliases the latest algorithm version, V2.
+- `v1`: enables `use crate::rapidhash::v1` to fix to the rapidhash V1 algorithm.
+- `v2`: enables `use crate::rapidhash::v2` to fix to the rapidhash V2 algorithm.
 - `std`: Enables the `RapidHashMap` and `RapidHashSet` helper types.
 - `rand`: Enables `RapidRandomState`, a `BuildHasher` that randomly initializes the seed. Includes the `rand` crate dependency.
 - `rng`: Enables `RapidRng`, a fast, non-cryptographic random number generator based on rapidhash. Includes the `rand_core` crate dependency.

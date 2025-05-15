@@ -12,7 +12,11 @@ use crate::v2::{rapidrng_fast, RapidHasher};
 /// ```rust
 /// use std::collections::HashMap;
 /// use std::hash::Hasher;
+///
+/// #[cfg(not(feature = "v2"))]
 /// use rapidhash::RapidRandomState;
+/// #[cfg(feature = "v2")]
+/// use rapidhash::v2::RapidRandomState;
 ///
 /// let mut map = HashMap::with_hasher(RapidRandomState::default());
 /// map.insert(42, "the answer");

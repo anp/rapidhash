@@ -14,17 +14,19 @@ jobs:
     name: "Test (std)"
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Rust dependency cache
-      uses: Swatinem/rust-cache@v2
-    - name: Compile and run tests
-      run: cargo test --no-fail-fast --all-features
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Rust dependency cache
+        uses: Swatinem/rust-cache@v2
+      - name: Compile and run tests
+        run: cargo test --no-fail-fast --all-features
 
   test-no-std:
     name: "Test (no_std)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
@@ -35,6 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
@@ -53,15 +56,16 @@ jobs:
         run: rustup update ${{ env.RUST_VERSION }} --no-self-update && rustup default ${{ env.RUST_VERSION }} && cargo -V && rustc -V
         shell: bash
       - name: Compile and run tests (std)
-        run: cargo test --no-fail-fast --all-features
+        run: cargo test -p rapidhash --no-fail-fast --all-features
       - name: Compile and run tests (no_std)
-        run: cargo test -p rapidhash --no-fail-fast --lib --no-default-features --features=std,v1,v2,vlatest
+        run: cargo test -p rapidhash --no-fail-fast --lib --no-default-features --features=v1,v2,vlatest
 
   test-c:
     name: "Test (C implementations)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
@@ -72,6 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
@@ -82,6 +87,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests

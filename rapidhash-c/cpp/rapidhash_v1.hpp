@@ -322,14 +322,14 @@ RAPIDHASH_INLINE uint64_t rapidhash(const void *key, size_t len) RAPIDHASH_NOEXC
   return rapidhash_withSeed(key, len, RAPID_SEED);
 }
 
-#ifdef __cplusplus
+//#ifdef __cplusplus
 extern "C" {
-#endif
+//#endif
 
 uint64_t rapidhash_v1_extern(const void *key, size_t len, uint64_t seed) RAPIDHASH_NOEXCEPT {
   return rapidhash_withSeed(key, len, seed);
 }
 
-#ifdef __cplusplus
+//#ifdef __cplusplus
 }
-#endif
+//#endif

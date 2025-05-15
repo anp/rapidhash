@@ -42,7 +42,7 @@ pub fn main() {
         println!("  --v2  Use v2 hashing algorithm (default; must have v2 or vlatest feature enabled)");
         println!("[filename]");
         println!("  Providing a filename is optional and will read a file directly. Requires the std");
-        println!("  feature to be enabled. Otherwise will accept from stdin.");
+        println!("  feature to be enabled. Otherwise input is read from stdin.");
         println!("  ");
         println!("  Note that reading from stdin will buffer the whole input in memory before hashing,");
         println!("  while hashing a filename will load the file length from metadata and then stream");
@@ -61,7 +61,7 @@ pub fn main() {
         return;
     }
 
-    let hash = match filename {
+    let hash: u64 = match filename {
         None => {
             let mut buffer = Vec::with_capacity(1024);
             std::io::stdin().read_to_end(&mut buffer).expect("Could not read from stdin.");
@@ -91,13 +91,15 @@ pub fn main() {
                 _ => unreachable!("Logic error."),
             }
         }
+
+        #[allow(unreachable_code)]
+        #[allow(unused_variables)]
         Some(filename) => {
             #[cfg(not(feature = "std"))] {
                 panic!("File reading is not supported without the `std` feature.");
             }
 
-            #[allow(unreachable_code)]
-            #[allow(unused_variables)]
+            #[cfg(feature = "std")]
             match (v1, v2) {
                 (true, false) => {
                     #[cfg(not(feature = "v1"))]

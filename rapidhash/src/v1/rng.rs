@@ -33,7 +33,7 @@ pub fn rapidrng_fast(seed: &mut u64) -> u64 {
 ///
 /// # Example
 /// ```rust
-/// use rapidhash::{rapidrng_fast, rapidrng_time};
+/// use rapidhash::v1::{rapidrng_fast, rapidrng_time};
 ///
 /// // choose a non-deterministic random seed (50-100ns)
 /// let mut seed = rapidrng_time(&mut 0);
@@ -65,7 +65,7 @@ pub fn rapidrng_time(seed: &mut u64) -> u64 {
 ///
 /// # Example
 /// ```rust
-/// use rapidhash::RapidRng;
+/// use rapidhash::v1::RapidRng;
 ///
 /// let mut rng = RapidRng::default();
 /// println!("{}", rng.next());

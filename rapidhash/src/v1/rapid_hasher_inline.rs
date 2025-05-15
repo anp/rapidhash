@@ -1,5 +1,4 @@
-use core::hash::Hasher;
-use std::hash::BuildHasher;
+use core::hash::{BuildHasher, Hasher};
 use crate::v1::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
@@ -16,7 +15,7 @@ use crate::v1::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, R
 /// # Example
 /// ```
 /// use std::hash::Hasher;
-/// use rapidhash::RapidInlineHasher;
+/// use rapidhash::v1::RapidInlineHasher;
 ///
 /// let mut hasher = RapidInlineHasher::default();
 /// hasher.write(b"hello world");
@@ -41,7 +40,7 @@ pub struct RapidInlineHasher {
 /// ```
 /// use std::collections::HashMap;
 /// use std::hash::Hasher;
-/// use rapidhash::RapidInlineBuildHasher;
+/// use rapidhash::v1::RapidInlineBuildHasher;
 ///
 /// let mut map = HashMap::with_hasher(RapidInlineBuildHasher::default());
 /// map.insert(42, "the answer");
@@ -74,7 +73,7 @@ impl Default for RapidInlineBuildHasher {
 ///
 /// # Example
 /// ```
-/// use rapidhash::RapidInlineHashMap;
+/// use rapidhash::v1::RapidInlineHashMap;
 /// let mut map = RapidInlineHashMap::default();
 /// map.insert(42, "the answer");
 ///
@@ -89,7 +88,7 @@ pub type RapidInlineHashMap<K, V> = std::collections::HashMap<K, V, RapidInlineB
 ///
 /// # Example
 /// ```
-/// use rapidhash::RapidInlineHashSet;
+/// use rapidhash::v1::RapidInlineHashSet;
 /// let mut set = RapidInlineHashSet::default();
 /// set.insert("the answer");
 ///

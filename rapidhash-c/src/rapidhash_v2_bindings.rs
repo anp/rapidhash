@@ -1,4 +1,4 @@
-#[link(name = "rapidhash_v2")]
+#[link(name = "rapidhash_v2", kind = "static")]
 extern "C" {
     fn rapidhash_v2_extern(
         key: *const core::ffi::c_void,
@@ -7,6 +7,7 @@ extern "C" {
     ) -> u64;
 }
 
+#[inline]
 pub fn rapidhashcc_v2(key: &[u8], seed: u64) -> u64 {
     unsafe { rapidhash_v2_extern(key.as_ptr() as *const core::ffi::c_void, key.len(), seed) }
 }

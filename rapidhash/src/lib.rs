@@ -1,4 +1,4 @@
-#![doc = include_str!("../../README.md")]
+#![cfg_attr(docsrs, doc = include_str!("../../README.md"))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
@@ -9,18 +9,18 @@
 #[deny(unused_must_use)]
 
 /// Rapidhash V1 algorithm implementations. Only exposed with the `versioned` feature.
-#[cfg(feature = "v1")]
+#[cfg(any(feature = "v1", docsrs))]
 pub mod v1;
 /// Rapidhash V2 algorithm implementations (default). Only exposed with the `versioned` feature.
-#[cfg(feature = "v2")]
+#[cfg(any(feature = "v2", docsrs))]
 pub mod v2;
 
 /// Privately load v2 when exporting default aliases.
-#[cfg(all(not(feature = "v2"), feature = "vlatest"))]
-mod v2;
+#[cfg(all(feature = "vlatest", not(any(feature = "v2", docsrs))))]
+pub(crate) mod v2;
 
-#[cfg(feature = "vlatest")]
+#[cfg(any(feature = "vlatest", docsrs))]
 mod latest;
 
-#[cfg(feature = "vlatest")]
+#[cfg(any(feature = "vlatest", docsrs))]
 pub use latest::*;
