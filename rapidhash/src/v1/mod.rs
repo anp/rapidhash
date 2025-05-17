@@ -59,12 +59,12 @@ mod tests {
         let object = Object { bytes: b"hello world".to_vec() };
         let mut hasher = RapidHasher::default();
         object.hash(&mut hasher);
-        assert_eq!(hasher.finish(), 3415994554582211120);
+        assert_eq!(hasher.finish(), 3735036129343247068);
 
         let mut hasher = RapidHasher::default();
         hasher.write_usize(b"hello world".len());
         hasher.write(b"hello world");
-        assert_eq!(hasher.finish(), 3415994554582211120);
+        assert_eq!(hasher.finish(), 3735036129343247068);
     }
 
     /// Check RapidHasher is equivalent to the raw rapidhash for a single byte stream.

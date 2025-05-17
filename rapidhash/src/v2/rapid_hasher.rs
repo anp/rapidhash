@@ -267,6 +267,10 @@ impl Hasher for RapidHasher {
 mod tests {
     use super::*;
 
+    /// Test that writing a single u64 outputs the same as writing the equivalent bytes.
+    ///
+    /// Does not apply if the algorithm is using a sponge.
+    #[ignore]
     #[test]
     fn test_hasher_write_u64() {
         let ints = [

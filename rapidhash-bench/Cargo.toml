@@ -16,6 +16,10 @@ harness = false
 name = "realworld"
 harness = false
 
+[[bench]]
+name = "iai-callgrind"
+harness = false
+
 [features]
 # avoid bringing in all of these during workspace default tests
 bench = ["rapidhash/std", "rapidhash/rand", "rapidhash/rng", "rapidhash/vlatest", "rapidhash/v1", "rapidhash/v2"]
@@ -45,6 +49,7 @@ foldhash = "0.1.5"
 
 # benchmarking helpers
 criterion = { version = "0.5.1", default-features = false, features = ["rayon", "cargo_bench_support"] }
+iai-callgrind = "0.14.0"
 rand = "0.9.0"
 rand_core = "0.9.0"
 rand8 = { package = "rand", version = "0.8.0" }

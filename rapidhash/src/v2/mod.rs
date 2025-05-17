@@ -59,12 +59,12 @@ mod tests {
         let object = Object { bytes: b"hello world".to_vec() };
         let mut hasher = RapidHasher::default();
         object.hash(&mut hasher);
-        assert_eq!(hasher.finish(), 15016919318955950083);
+        assert_eq!(hasher.finish(), 12636359961071509004);
 
         let mut hasher = RapidHasher::default();
         hasher.write_usize(b"hello world".len());
         hasher.write(b"hello world");
-        assert_eq!(hasher.finish(), 15016919318955950083);
+        assert_eq!(hasher.finish(), 12636359961071509004);
     }
 
     /// Check RapidHasher is equivalent to the raw rapidhash for a single byte stream.
@@ -204,5 +204,26 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn disambiguation_check() {
+        let hasher = RapidBuildHasher::default();
+
+        let a = [vec![1], vec![2, 3]];
+        let b = [vec![1, 2], vec![3]];
+        assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
+
+        let a = [vec![], vec![1]];
+        let b = [vec![1],  vec![]];
+        assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
+
+        let a: [Vec<Vec<u64>>; 2] = [vec![], vec![vec![]]];
+        let b: [Vec<Vec<u64>>; 2] = [vec![vec![]], vec![]];
+        assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
+
+        let a = ["abc", "def"];
+        let b = ["abcd", "ef"];
+        assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
     }
 }

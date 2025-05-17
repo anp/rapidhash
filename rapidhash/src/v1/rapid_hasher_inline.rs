@@ -1,6 +1,5 @@
 use core::hash::{BuildHasher, Hasher};
-use crate::NumSize;
-use crate::v1::rapid_const::{rapid_mix, rapid_mum, rapidhash_core, rapidhash_finish, RAPID_SECRET, RAPID_SEED};
+use crate::v1::rapid_const::{rapid_mix, rapidhash_core, rapidhash_finish, RAPID_SECRET, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
 /// algorithm, and uses `#[inline(always)]` for all methods.
@@ -173,7 +172,7 @@ impl RapidInlineHasher {
     // #[must_use]
     // const fn write_num(&self, i: u64, num_size: NumSize) -> Self {
     //     let mut this = *self;
-    // 
+    //
     //     if (this.sponge_len + num_size as u64) <= core::mem::size_of::<u128>() as u64 {
     //         this.sponge |= (i as u128) << (this.sponge_len * 8);
     //         this.sponge_len += num_size as u64;
@@ -182,28 +181,28 @@ impl RapidInlineHasher {
     //         this.sponge = i as u128;
     //         this.sponge_len = num_size as u64;
     //     }
-    // 
+    //
     //     this
     // }
-    // 
+    //
     // #[inline(always)]
     // #[must_use]
     // const fn write_num_128(&self, i: u128) -> Self {
     //     self.write_sponge(i, core::mem::size_of::<u128>() as u64)
     // }
-    // 
+    //
     // #[inline(always)]
     // #[must_use]
     // const fn write_sponge(&self, i: u128, size: u64) -> Self {
     //     let mut this = *self;
     //     this.size += size;
     //     this.seed ^= this.size;
-    // 
+    //
     //     this.a ^= (i >> 64) as u64 ^ RAPID_SECRET[1];
     //     this.b ^= i as u64 ^ this.seed;
-    // 
+    //
     //     let (a, b) = rapid_mum(this.a, this.b);
-    // 
+    //
     //     this.a = a;
     //     this.b = b;
     //     this
@@ -251,22 +250,22 @@ impl Hasher for RapidInlineHasher {
 
     #[inline(always)]
     fn write_u8(&mut self, i: u8) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_const(&i.to_le_bytes());
     }
 
     #[inline(always)]
     fn write_u16(&mut self, i: u16) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_const(&i.to_le_bytes());
     }
 
     #[inline(always)]
     fn write_u32(&mut self, i: u32) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_const(&i.to_le_bytes());
     }
 
     #[inline(always)]
     fn write_u64(&mut self, i: u64) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_const(&i.to_le_bytes());
 
         // NOTE: in case of compiler regression, it should compile to:
         // self.size += size_of::<u64>() as u64;
@@ -278,42 +277,42 @@ impl Hasher for RapidInlineHasher {
 
     #[inline(always)]
     fn write_u128(&mut self, i: u128) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_const(&i.to_le_bytes());
     }
 
     #[inline(always)]
     fn write_usize(&mut self, i: usize) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_const(&i.to_le_bytes());
     }
 
     #[inline(always)]
     fn write_i8(&mut self, i: i8) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_const(&i.to_le_bytes());
     }
 
     #[inline(always)]
     fn write_i16(&mut self, i: i16) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_const(&i.to_le_bytes());
     }
 
     #[inline(always)]
     fn write_i32(&mut self, i: i32) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_const(&i.to_le_bytes());
     }
 
     #[inline(always)]
     fn write_i64(&mut self, i: i64) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_const(&i.to_le_bytes());
     }
 
     #[inline(always)]
     fn write_i128(&mut self, i: i128) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_const(&i.to_le_bytes());
     }
 
     #[inline(always)]
     fn write_isize(&mut self, i: isize) {
-        *self = self.write_const(&i.to_ne_bytes());
+        *self = self.write_const(&i.to_le_bytes());
     }
 }
 
@@ -335,10 +334,10 @@ mod tests {
 
         for int in ints {
             let mut hasher = RapidInlineHasher::default();
-            hasher.write(int.to_ne_bytes().as_slice());
+            hasher.write(int.to_le_bytes().as_slice());
             let a = hasher.finish();
 
-            assert_eq!(int.to_ne_bytes().as_slice().len(), 8);
+            assert_eq!(int.to_le_bytes().as_slice().len(), 8);
 
             let mut hasher = RapidInlineHasher::default();
             hasher.write_u64(int);

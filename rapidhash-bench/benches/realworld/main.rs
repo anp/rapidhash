@@ -8,6 +8,7 @@ use std::hash::BuildHasher;
 use std::hint::black_box;
 use std::time::Duration;
 
+const RNG_SEED: u64 = 0x123456789abcdef;
 const NUM_PRECOMPUTED_KEYS: usize = 1024;
 
 mod distribution;
@@ -20,7 +21,7 @@ fn profile_hashonly<S: BuildHasher + Default, D: Distribution>(
     c: &mut BenchmarkGroup<'_, WallTime>,
 ) {
     let name = format!("hashonly-{}-{hash_name}", distr.name().to_lowercase());
-    let mut rng = StdRng::seed_from_u64(0x123456789abcdef);
+    let mut rng = StdRng::seed_from_u64(RNG_SEED);
 
     let hasher = S::default();
 
@@ -47,7 +48,7 @@ fn profile_lookup_hit<S: BuildHasher + Default, D: Distribution>(
     c: &mut BenchmarkGroup<'_, WallTime>,
 ) {
     let name = format!("lookuphit-{}-{hash_name}", distr.name().to_lowercase());
-    let mut rng = StdRng::seed_from_u64(0x123456789abcdef);
+    let mut rng = StdRng::seed_from_u64(RNG_SEED);
 
     c.bench_function(&name, |b| {
         b.iter_custom(|iters| {
@@ -83,7 +84,7 @@ fn profile_lookup_miss<S: BuildHasher + Default, D: Distribution>(
     c: &mut BenchmarkGroup<'_, WallTime>,
 ) {
     let name = format!("lookupmiss-{}-{hash_name}", distr.name().to_lowercase());
-    let mut rng = StdRng::seed_from_u64(0x123456789abcdef);
+    let mut rng = StdRng::seed_from_u64(RNG_SEED);
 
     c.bench_function(&name, |b| {
         b.iter_custom(|iters| {
@@ -118,7 +119,7 @@ fn profile_set_build<S: BuildHasher + Default, D: Distribution>(
     c: &mut BenchmarkGroup<'_, WallTime>,
 ) {
     let name = format!("setbuild-{}-{hash_name}", distr.name().to_lowercase());
-    let mut rng = StdRng::seed_from_u64(0x123456789abcdef);
+    let mut rng = StdRng::seed_from_u64(RNG_SEED);
 
     c.bench_function(&name, |b| {
         b.iter_custom(|iters| {
@@ -149,8 +150,8 @@ fn profile_distr<D: Distribution>(distr: D, map_size: usize, c: &mut Criterion) 
     let c = &mut c.benchmark_group(name);
     c.sampling_mode(criterion::SamplingMode::Flat);
 
-    type RapidhashV1 = rapidhash::v1::RapidBuildHasher;
-    type RapidhashV2 = rapidhash::v2::RapidBuildHasher;
+    type RapidhashV1 = rapidhash::v1::RapidInlineBuildHasher;
+    type RapidhashV2 = rapidhash::v2::RapidInlineBuildHasher;
 
     profile_hashonly::<RapidhashV1, _>("rapidhash-v1", distr.clone(), c);
     profile_hashonly::<RapidhashV2, _>("rapidhash-v2", distr.clone(), c);
