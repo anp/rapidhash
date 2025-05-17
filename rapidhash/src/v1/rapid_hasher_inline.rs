@@ -1,5 +1,6 @@
 use core::hash::{BuildHasher, Hasher};
-use crate::v1::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, RAPID_SEED};
+use crate::NumSize;
+use crate::v1::rapid_const::{rapid_mix, rapid_mum, rapidhash_core, rapidhash_finish, RAPID_SECRET, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
 /// algorithm, and uses `#[inline(always)]` for all methods.
@@ -27,6 +28,8 @@ pub struct RapidInlineHasher {
     a: u64,
     b: u64,
     size: u64,
+    sponge: u128,
+    sponge_len: u64,
 }
 
 /// A [std::hash::BuildHasher] trait compatible hasher that uses the [RapidInlineHasher] algorithm.
@@ -50,22 +53,29 @@ pub struct RapidInlineBuildHasher {
     seed: u64,
 }
 
+impl RapidInlineBuildHasher {
+    /// New rapid inline build hasher, and pre-compute the seed.
+    #[inline(always)]
+    pub const fn new(mut seed: u64) -> Self {
+        seed ^= rapid_mix(seed ^ RAPID_SECRET[0], RAPID_SECRET[1]);
+        Self { seed }
+    }
+}
+
 // Explicitly implement to inline always the hasher.
 impl BuildHasher for RapidInlineBuildHasher {
     type Hasher = RapidInlineHasher;
 
     #[inline(always)]
     fn build_hasher(&self) -> Self::Hasher {
-        RapidInlineHasher::new(self.seed)
+        Self::Hasher::new_precomputed_seed(self.seed)
     }
 }
 
 impl Default for RapidInlineBuildHasher {
-    #[inline]
+    #[inline(always)]
     fn default() -> Self {
-        RapidInlineBuildHasher {
-            seed: RapidInlineHasher::DEFAULT_SEED,
-        }
+        Self::new(RapidInlineHasher::DEFAULT_SEED)
     }
 }
 
@@ -106,12 +116,21 @@ impl RapidInlineHasher {
     /// Create a new [RapidInlineHasher] with a custom seed.
     #[inline(always)]
     #[must_use]
-    pub const fn new(seed: u64) -> Self {
+    pub const fn new(mut seed: u64) -> Self {
+        seed ^= rapid_mix(seed ^ RAPID_SECRET[0], RAPID_SECRET[1]);
+        Self::new_precomputed_seed(seed)
+    }
+
+    #[inline(always)]
+    #[must_use]
+    pub(crate) const fn new_precomputed_seed(seed: u64) -> Self {
         Self {
             seed,
             a: 0,
             b: 0,
             size: 0,
+            sponge: 0,
+            sponge_len: 0,
         }
     }
 
@@ -138,7 +157,7 @@ impl RapidInlineHasher {
 
         let mut this = *self;
         this.size += bytes.len() as u64;
-        this.seed = rapidhash_seed(this.seed, this.size);
+        this.seed ^= this.size;
         let (a, b, seed) = rapidhash_core(this.a, this.b, this.seed, bytes);
         this.a = a;
         this.b = b;
@@ -146,11 +165,61 @@ impl RapidInlineHasher {
         this
     }
 
+    // /// Shortcut for numbers using a sponge.
+    // ///
+    // /// Note this must _only_ be for numbers, as otherwise two byte streams in the same object
+    // /// could cause trivial hash collisions at the boundary.
+    // #[inline(always)]
+    // #[must_use]
+    // const fn write_num(&self, i: u64, num_size: NumSize) -> Self {
+    //     let mut this = *self;
+    // 
+    //     if (this.sponge_len + num_size as u64) <= core::mem::size_of::<u128>() as u64 {
+    //         this.sponge |= (i as u128) << (this.sponge_len * 8);
+    //         this.sponge_len += num_size as u64;
+    //     } else {
+    //         this = self.write_sponge(this.sponge, this.sponge_len);
+    //         this.sponge = i as u128;
+    //         this.sponge_len = num_size as u64;
+    //     }
+    // 
+    //     this
+    // }
+    // 
+    // #[inline(always)]
+    // #[must_use]
+    // const fn write_num_128(&self, i: u128) -> Self {
+    //     self.write_sponge(i, core::mem::size_of::<u128>() as u64)
+    // }
+    // 
+    // #[inline(always)]
+    // #[must_use]
+    // const fn write_sponge(&self, i: u128, size: u64) -> Self {
+    //     let mut this = *self;
+    //     this.size += size;
+    //     this.seed ^= this.size;
+    // 
+    //     this.a ^= (i >> 64) as u64 ^ RAPID_SECRET[1];
+    //     this.b ^= i as u64 ^ this.seed;
+    // 
+    //     let (a, b) = rapid_mum(this.a, this.b);
+    // 
+    //     this.a = a;
+    //     this.b = b;
+    //     this
+    // }
+
     /// Const equivalent to [Hasher::finish], and marked as `#[inline(always)]`.
     #[inline(always)]
     #[must_use]
     pub const fn finish_const(&self) -> u64 {
-        rapidhash_finish(self.a, self.b, self.size)
+        let mut this = *self;
+
+        // if this.sponge_len > 0 {
+        //     this = this.write_sponge(this.sponge, this.sponge_len);
+        // }
+
+        rapidhash_finish(this.a, this.b, this.size)
     }
 }
 

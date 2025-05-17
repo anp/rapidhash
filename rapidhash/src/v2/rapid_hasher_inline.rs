@@ -1,4 +1,5 @@
 use core::hash::{BuildHasher, Hasher};
+use crate::NumSize;
 use crate::v2::rapid_const::{rapid_mix, rapid_mum, rapidhash_core, rapidhash_finish, RAPID_SECRET, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
@@ -31,6 +32,8 @@ pub struct RapidInlineHasher {
     a: u64,
     b: u64,
     size: u64,
+    sponge: u128,
+    sponge_len: u64,
 }
 
 /// A [std::hash::BuildHasher] trait compatible hasher that uses the [RapidInlineHasher] algorithm.
@@ -58,22 +61,29 @@ pub struct RapidInlineBuildHasher {
     seed: u64,
 }
 
+impl RapidInlineBuildHasher {
+    /// New rapid inline build hasher, and pre-compute the seed.
+    #[inline]
+    pub const fn new(mut seed: u64) -> Self {
+        seed ^= rapid_mix(seed ^ RAPID_SECRET[2], RAPID_SECRET[1]);
+        RapidInlineBuildHasher { seed }
+    }
+}
+
 // Explicitly implement to inline always the hasher.
 impl BuildHasher for RapidInlineBuildHasher {
     type Hasher = RapidInlineHasher;
 
     #[inline(always)]
     fn build_hasher(&self) -> Self::Hasher {
-        RapidInlineHasher::new(self.seed)
+        RapidInlineHasher::new_precomputed_seed(self.seed)
     }
 }
 
 impl Default for RapidInlineBuildHasher {
     #[inline]
     fn default() -> Self {
-        RapidInlineBuildHasher {
-            seed: RapidInlineHasher::DEFAULT_SEED,
-        }
+        RapidInlineBuildHasher::new(RapidInlineHasher::DEFAULT_SEED)
     }
 }
 
@@ -85,7 +95,7 @@ impl Default for RapidInlineBuildHasher {
 /// use rapidhash::RapidInlineHashMap;
 /// #[cfg(feature = "v2")]
 /// use rapidhash::v2::RapidInlineHashMap;
-/// 
+///
 /// let mut map = RapidInlineHashMap::default();
 /// map.insert(42, "the answer");
 ///
@@ -104,7 +114,7 @@ pub type RapidInlineHashMap<K, V> = std::collections::HashMap<K, V, RapidInlineB
 /// use rapidhash::RapidInlineHashSet;
 /// #[cfg(feature = "v2")]
 /// use rapidhash::v2::RapidInlineHashSet;
-/// 
+///
 /// let mut set = RapidInlineHashSet::default();
 /// set.insert("the answer");
 ///
@@ -114,14 +124,6 @@ pub type RapidInlineHashMap<K, V> = std::collections::HashMap<K, V, RapidInlineB
 /// ```
 #[cfg(any(feature = "std", docsrs))]
 pub type RapidInlineHashSet<K> = std::collections::HashSet<K, RapidInlineBuildHasher>;
-
-#[derive(Copy, Clone)]
-enum NumSize {
-    U8 = 1,
-    U16 = 2,
-    U32 = 4,
-    U64 = 8,
-}
 
 impl RapidInlineHasher {
     /// Default `RapidHasher` seed.
@@ -133,12 +135,19 @@ impl RapidInlineHasher {
     pub const fn new(mut seed: u64) -> Self {
         // do most of the rapidhash_seed initialisation here to avoid doing it on each int
         seed ^= rapid_mix(seed ^ RAPID_SECRET[2], RAPID_SECRET[1]);
+        Self::new_precomputed_seed(seed)
+    }
 
+    #[inline(always)]
+    #[must_use]
+    pub(crate) const fn new_precomputed_seed(seed: u64) -> Self {
         Self {
             seed,
             a: 0,
             b: 0,
             size: 0,
+            sponge: 0,
+            sponge_len: 0,
         }
     }
 
@@ -173,49 +182,43 @@ impl RapidInlineHasher {
         this
     }
 
-    /// Shortcut for numbers, although the compiler arrives here anyway.
+    /// Shortcut for numbers using a sponge.
+    ///
+    /// Note this must _only_ be for numbers, as otherwise two byte streams in the same object
+    /// could cause trivial hash collisions at the boundary.
     #[inline(always)]
     #[must_use]
     const fn write_num(&self, i: u64, num_size: NumSize) -> Self {
         let mut this = *self;
-        this.size += num_size as u64;
-        this.seed ^= this.size;
 
-        match num_size {
-            NumSize::U8 => {
-                this.a ^= (i << 56) | (i << 32) | i;
-            }
-            NumSize::U16 => {
-                this.a ^= ((i & 0xFF00) << 48) | ((i & 0xFF) << 32) | i & 0xFF;
-            }
-            NumSize::U32 | NumSize::U64 => {
-                this.a ^= i;
-                this.b ^= i;
-            }
+        if (this.sponge_len + num_size as u64) <= core::mem::size_of::<u128>() as u64 {
+            this.sponge |= (i as u128) << (this.sponge_len * 8);
+            this.sponge_len += num_size as u64;
+        } else {
+            this = self.write_sponge(this.sponge, this.sponge_len);
+            this.sponge = i as u128;
+            this.sponge_len = num_size as u64;
         }
 
-        this.a ^= RAPID_SECRET[1];
-        this.b ^= this.seed;
-        let (a, b) = rapid_mum(this.a, this.b);
-
-        this.a = a;
-        this.b = b;
         this
     }
 
-    /// Shortcut for u128, although the compiler arrives here anyway.
     #[inline(always)]
     #[must_use]
     const fn write_num_128(&self, i: u128) -> Self {
+        self.write_sponge(i, core::mem::size_of::<u128>() as u64)
+    }
+
+    #[inline(always)]
+    #[must_use]
+    const fn write_sponge(&self, i: u128, size: u64) -> Self {
         let mut this = *self;
-        this.size += 16;
+        this.size += size;
         this.seed ^= this.size;
 
-        this.a ^= (i >> 64) as u64;
-        this.b ^= i as u64;
+        this.a ^= (i >> 64) as u64 ^ RAPID_SECRET[1];
+        this.b ^= i as u64 ^ this.seed;
 
-        this.a ^= RAPID_SECRET[1];
-        this.b ^= this.seed;
         let (a, b) = rapid_mum(this.a, this.b);
 
         this.a = a;
@@ -227,7 +230,13 @@ impl RapidInlineHasher {
     #[inline(always)]
     #[must_use]
     pub const fn finish_const(&self) -> u64 {
-        rapidhash_finish(self.a, self.b, self.size)
+        let mut this = *self;
+
+        if self.sponge_len > 0 {
+            this = this.write_sponge(this.sponge, this.sponge_len);
+        }
+
+        rapidhash_finish(this.a, this.b, this.size)
     }
 }
 
@@ -256,6 +265,74 @@ impl Hasher for RapidInlineHasher {
     fn write(&mut self, bytes: &[u8]) {
         *self = self.write_const(bytes);
     }
+
+    // TODO: remove old no sponge
+    // #[inline(always)]
+    // fn write_u8(&mut self, i: u8) {
+    //     *self = self.write_const(&i.to_ne_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_u16(&mut self, i: u16) {
+    //     *self = self.write_const(&i.to_ne_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_u32(&mut self, i: u32) {
+    //     *self = self.write_const(&i.to_ne_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_u64(&mut self, i: u64) {
+    //     *self = self.write_const(&i.to_ne_bytes());
+    //
+    //     // NOTE: in case of compiler regression, it should compile to:
+    //     // self.size += size_of::<u64>() as u64;
+    //     // self.seed ^= rapid_mix(self.seed ^ RAPID_SECRET[0], RAPID_SECRET[1]) ^ self.size;
+    //     // self.a ^= i.rotate_right(32) ^ RAPID_SECRET[1];
+    //     // self.b ^= i ^ self.seed;
+    //     // rapid_mum(&mut self.a, &mut self.b);
+    // }
+    //
+    // #[inline(always)]
+    // fn write_u128(&mut self, i: u128) {
+    //     *self = self.write_const(&i.to_ne_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_usize(&mut self, i: usize) {
+    //     *self = self.write_const(&i.to_ne_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_i8(&mut self, i: i8) {
+    //     *self = self.write_const(&i.to_ne_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_i16(&mut self, i: i16) {
+    //     *self = self.write_const(&i.to_ne_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_i32(&mut self, i: i32) {
+    //     *self = self.write_const(&i.to_ne_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_i64(&mut self, i: i64) {
+    //     *self = self.write_const(&i.to_ne_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_i128(&mut self, i: i128) {
+    //     *self = self.write_const(&i.to_ne_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_isize(&mut self, i: isize) {
+    //     *self = self.write_const(&i.to_ne_bytes());
+    // }
 
     #[inline(always)]
     fn write_u8(&mut self, i: u8) {

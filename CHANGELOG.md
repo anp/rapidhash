@@ -5,7 +5,9 @@
 **Rapidhash V2 algorithm change**. Going forwards this crate will expose old algorithms under `v1`, `v2` etc. modules and naming. **The non-versioned functions will use the latest algorithm.**
 
 - **Breaking:** Updated to use the rapidhash V2 algorithm by default.
-- **Breaking:** Fixed the rapidhash V1 algorithm for 48 and 144 length inputs, where it would mismatch with the C implementation.
+- **Breaking:** Rapidhash V1 algorithm changes:
+  - Fixed the rapidhash V1 algorithm for 48 and 144 length inputs, where it would mismatch with the C implementation.
+  - Since the algorithm implementation changed, I also took the opportunity to make performance improvements and to include seed pre-computation and an integer sponge.
 - **Breaking:** Removed the deprecated `RapidHashBuilder` and `RapidInlineHashBuilder` types.
 - Added `v1` and `v2` features to expose V1 and V2 algorithms with explicit versioning.
 - Full tests and verification against the C implementations for both versions.

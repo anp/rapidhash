@@ -24,3 +24,11 @@ mod latest;
 
 #[cfg(any(feature = "vlatest", docsrs))]
 pub use latest::*;
+
+#[derive(Copy, Clone)]
+enum NumSize {
+    U8 = 1,
+    U16 = 2,
+    U32 = 4,
+    U64 = 8,
+}

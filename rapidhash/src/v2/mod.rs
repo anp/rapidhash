@@ -59,12 +59,12 @@ mod tests {
         let object = Object { bytes: b"hello world".to_vec() };
         let mut hasher = RapidHasher::default();
         object.hash(&mut hasher);
-        assert_eq!(hasher.finish(), 17044374698137929640);
+        assert_eq!(hasher.finish(), 15016919318955950083);
 
         let mut hasher = RapidHasher::default();
         hasher.write_usize(b"hello world".len());
         hasher.write(b"hello world");
-        assert_eq!(hasher.finish(), 17044374698137929640);
+        assert_eq!(hasher.finish(), 15016919318955950083);
     }
 
     /// Check RapidHasher is equivalent to the raw rapidhash for a single byte stream.
@@ -157,12 +157,12 @@ mod tests {
 
                     // check that the hash changed
                     let new_hash = streaming_hash(&data);
-                    assert_ne!(hash, new_hash, "Flipping bit {} did not change hash", byte);
+                    assert_ne!(hash, new_hash, "Flipping bit {byte}:{bit} for input len {len} did not change hash");
 
                     // track how many bits were flipped
                     let xor = hash ^ new_hash;
                     let flipped = xor.count_ones() as u64;
-                    assert!(xor.count_ones() >= 10, "Flipping bit {byte}:{bit} changed only {flipped} bits");
+                    assert!(xor.count_ones() >= 10, "Flipping bit {byte}:{bit} for input len {len} changed only {flipped} bits");
                     flips.push(flipped);
                 }
             }

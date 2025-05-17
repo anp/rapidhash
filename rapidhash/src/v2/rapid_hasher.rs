@@ -1,4 +1,5 @@
 use core::hash::{BuildHasher, Hasher};
+use crate::v2::rapid_const::{rapid_mix, RAPID_SECRET};
 use crate::v2::RapidInlineHasher;
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash) algorithm.
@@ -52,22 +53,29 @@ pub struct RapidBuildHasher {
     seed: u64,
 }
 
+impl RapidBuildHasher {
+    /// New rapid inline build hasher, and pre-compute the seed.
+    #[inline]
+    pub const fn new(mut seed: u64) -> Self {
+        seed ^= rapid_mix(seed ^ RAPID_SECRET[2], RAPID_SECRET[1]);
+        RapidBuildHasher { seed }
+    }
+}
+
 // Explicitly implement to inline always the hasher.
 impl BuildHasher for RapidBuildHasher {
     type Hasher = RapidHasher;
 
     #[inline(always)]
     fn build_hasher(&self) -> Self::Hasher {
-        RapidHasher::new(self.seed)
+        RapidHasher::new_precomputed_seed(self.seed)
     }
 }
 
 impl Default for RapidBuildHasher {
     #[inline]
     fn default() -> Self {
-        RapidBuildHasher {
-            seed: RapidHasher::DEFAULT_SEED,
-        }
+        RapidBuildHasher::new(RapidHasher::DEFAULT_SEED)
     }
 }
 
@@ -120,14 +128,20 @@ impl RapidHasher {
     pub const DEFAULT_SEED: u64 = RapidInlineHasher::DEFAULT_SEED;
 
     /// Create a new [RapidHasher] with a custom seed.
-    #[inline]
+    #[inline(always)]
     #[must_use]
     pub const fn new(seed: u64) -> Self {
         Self(RapidInlineHasher::new(seed))
     }
 
+    #[inline(always)]
+    #[must_use]
+    pub(crate) const fn new_precomputed_seed(seed: u64) -> Self {
+        Self(RapidInlineHasher::new_precomputed_seed(seed))
+    }
+
     /// Create a new [RapidHasher] using the default seed.
-    #[inline]
+    #[inline(always)]
     #[must_use]
     pub const fn default_const() -> Self {
         Self::new(Self::DEFAULT_SEED)

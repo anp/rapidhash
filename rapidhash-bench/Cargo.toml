@@ -12,6 +12,10 @@ harness = false
 name = "quality"
 harness = false
 
+[[bench]]
+name = "realworld"
+harness = false
+
 [features]
 # avoid bringing in all of these during workspace default tests
 bench = ["rapidhash/std", "rapidhash/rand", "rapidhash/rng", "rapidhash/vlatest", "rapidhash/v1", "rapidhash/v2"]
@@ -22,6 +26,10 @@ rapidhash = { workspace = true, default-features = false }
 rapidhash-c = { workspace = true }
 
 [dev-dependencies]
+# building typical datasets
+uuid = { version = "1.16.0", features = ["v4"] }
+chrono = "0.4.41"
+
 # hash functions to benchmark/compare
 fxhash = "0.2.1"
 t1ha = "0.1.2"
