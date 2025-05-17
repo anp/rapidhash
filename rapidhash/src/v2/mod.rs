@@ -207,19 +207,21 @@ mod tests {
     }
 
     #[test]
-    fn disambiguation_check() {
+    fn disambiguation_check() { ;
+        use std::vec::Vec;
+        
         let hasher = RapidBuildHasher::default();
 
-        let a = [vec![1], vec![2, 3]];
-        let b = [vec![1, 2], vec![3]];
+        let a = [std::vec![1], std::vec![2, 3]];
+        let b = [std::vec![1, 2], std::vec![3]];
         assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
 
-        let a = [vec![], vec![1]];
-        let b = [vec![1],  vec![]];
+        let a = [std::vec![], std::vec![1]];
+        let b = [std::vec![1],  std::vec![]];
         assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
 
-        let a: [Vec<Vec<u64>>; 2] = [vec![], vec![vec![]]];
-        let b: [Vec<Vec<u64>>; 2] = [vec![vec![]], vec![]];
+        let a: [Vec<Vec<u64>>; 2] = [std::vec![], std::vec![std::vec![]]];
+        let b: [Vec<Vec<u64>>; 2] = [std::vec![std::vec![]], std::vec![]];
         assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
 
         let a = ["abc", "def"];
