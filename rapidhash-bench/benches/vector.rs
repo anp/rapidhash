@@ -12,7 +12,7 @@ pub fn bench_rapidhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            let mut hasher = rapidhash::RapidHasher::default();
+            let mut hasher = rapidhash::RapidInlineHasher::default();
             hasher.write(&bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);

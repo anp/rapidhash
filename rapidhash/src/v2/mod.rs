@@ -225,7 +225,31 @@ mod tests {
         assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
 
         let a = ["abc", "def"];
+        let b = ["fed", "abc"];
+        assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
+
+        let a = ["abc", "def"];
         let b = ["abcd", "ef"];
+        assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
+
+        let a = [1u8, 2];
+        let b = [2u8, 1];
+        assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
+
+        let a = [1u16, 2];
+        let b = [2u16, 1];
+        assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
+
+        let a = [1u32, 2];
+        let b = [2u32, 1];
+        assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
+
+        let a = [1u64, 2];
+        let b = [2u64, 1];
+        assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
+
+        let a = [1u128, 2];
+        let b = [2u128, 1];
         assert_ne!(hasher.hash_one(a), hasher.hash_one(b));
     }
 }

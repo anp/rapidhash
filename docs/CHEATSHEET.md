@@ -30,10 +30,21 @@ cd rapidhash-bench
 RUSTFLAGS="-C target-cpu=native" cargo criterion --bench bench --all-features
 
 # Run all benchmarks, but unsafe=disabled
-RUSTFLAGS="-C target-cpu=native" cargo criterion --bench bench --features rng
+RUSTFLAGS="-C target-cpu=native" cargo criterion --bench bench --features bench
+
+# Run the realworld benchmark, which is a modification of the foldhash benchmarks
+RUSTFLAGS="-C target-cpu=native" cargo criterion --profile bench --bench realworld --all-features
 
 # Run quality tests across various hash functions
 RUSTFLAGS="-C target-cpu=native" cargo bench --bench quality --all-features
+
+# Run iai-callgrind to compare instruction counts and L1 cache misses
+# Requires: valgrind
+RUSTFLAGS="-C target-cpu=native" cargo bench --bench iai-callgrind --all-features
+
+# Use cargo-instruments to diagnose performance
+# Requires: cargo-instruments and MacOS
+RUSTFLAGS="-C target-cpu=native" cargo instruments -t time --profile=bench --bench realworld --features bench,unsafe -- --bench hashonly-struuid-rapidhash-v2
 ```
 
 ## Fuzzing

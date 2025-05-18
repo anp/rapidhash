@@ -7,7 +7,7 @@ pub fn bench_rapidhash() -> Box<dyn FnMut(&mut Bencher)> {
         b.iter_batched(|| {
             rand::random::<u64>()
         }, |i: u64| {
-            let mut hasher = rapidhash::RapidHasher::default();
+            let mut hasher = rapidhash::RapidInlineHasher::default();
             hasher.write_u64(i);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
