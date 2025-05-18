@@ -17,7 +17,7 @@ opt-level = 3
 # aggressive optimizations for benchmark consistency
 [profile.bench]
 codegen-units = 1
-lto = "off"
+lto = "thin"
 incremental = false
 opt-level = 3
 debug = true
