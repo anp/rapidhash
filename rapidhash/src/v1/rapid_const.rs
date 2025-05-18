@@ -26,24 +26,24 @@ pub const fn rapidhash_inline(data: &[u8], mut seed: u64) -> u64 {
 }
 
 #[inline(always)]
-pub const fn rapid_mum(a: u64, b: u64) -> (u64, u64) {
+pub(super) const fn rapid_mum(a: u64, b: u64) -> (u64, u64) {
     let r = a as u128 * b as u128;
     (r as u64, (r >> 64) as u64)
 }
 
 #[inline(always)]
-pub const fn rapid_mix(a: u64, b: u64) -> u64 {
+pub(super) const fn rapid_mix(a: u64, b: u64) -> u64 {
     let (a, b) = rapid_mum(a, b);
     a ^ b
 }
 
 #[inline(always)]
-pub(crate) const fn rapidhash_seed(seed: u64, len: u64) -> u64 {
+pub(super) const fn rapidhash_seed(seed: u64, len: u64) -> u64 {
     seed ^ rapid_mix(seed ^ RAPID_SECRET[0], RAPID_SECRET[1]) ^ len
 }
 
 #[inline(always)]
-pub(crate) const fn rapidhash_core(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
+pub(super) const fn rapidhash_core(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
     if data.len() <= 16 {
         // deviation from the C++ impl computes delta as follows
         // let delta = (data.len() & 24) >> (data.len() >> 3);
@@ -115,7 +115,7 @@ pub(crate) const fn rapidhash_core(mut a: u64, mut b: u64, mut seed: u64, data: 
 }
 
 #[inline(always)]
-pub(crate) const fn rapidhash_finish(a: u64, b: u64, len: u64) -> u64 {
+pub(super) const fn rapidhash_finish(a: u64, b: u64, len: u64) -> u64 {
     rapid_mix(a ^ RAPID_SECRET[0] ^ len, b ^ RAPID_SECRET[1])
 }
 
@@ -123,7 +123,7 @@ pub(crate) const fn rapidhash_finish(a: u64, b: u64, len: u64) -> u64 {
 /// bounds check, and so we have an unsafe version behind the `unsafe` feature flag.
 #[cfg(not(feature = "unsafe"))]
 #[inline(always)]
-pub(crate) const fn read_u64(slice: &[u8], offset: usize) -> u64 {
+pub(super) const fn read_u64(slice: &[u8], offset: usize) -> u64 {
     // equivalent to slice[offset..offset+8].try_into().unwrap(), but const-friendly
     let maybe_buf = slice.split_at(offset).1.first_chunk::<8>();
     let buf = match maybe_buf {
@@ -154,7 +154,7 @@ const fn read_u32(slice: &[u8], offset: usize) -> u32 {
 /// implementation.
 #[cfg(feature = "unsafe")]
 #[inline(always)]
-pub(crate) const fn read_u64(slice: &[u8], offset: usize) -> u64 {
+pub(super) const fn read_u64(slice: &[u8], offset: usize) -> u64 {
     debug_assert!(offset as isize >= 0);
     debug_assert!(slice.len() >= 8 + offset);
     let val = unsafe { core::ptr::read_unaligned(slice.as_ptr().offset(offset as isize) as *const u64) };
@@ -176,7 +176,7 @@ const fn read_u32(slice: &[u8], offset: usize) -> u32 {
 }
 
 #[inline(always)]
-pub(crate) const fn read_u32_combined(slice: &[u8], offset_top: usize, offset_bot: usize) -> u64 {
+pub(super) const fn read_u32_combined(slice: &[u8], offset_top: usize, offset_bot: usize) -> u64 {
     debug_assert!(slice.len() >= 4 + offset_top && slice.len() >= 4 + offset_bot);
     let top = read_u32(slice, offset_top) as u64;
     let bot = read_u32(slice, offset_bot) as u64;

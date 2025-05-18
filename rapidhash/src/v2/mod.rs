@@ -207,9 +207,9 @@ mod tests {
     }
 
     #[test]
-    fn disambiguation_check() { ;
+    fn disambiguation_check() {
         use std::vec::Vec;
-        
+
         let hasher = RapidBuildHasher::default();
 
         let a = [std::vec![1], std::vec![2, 3]];

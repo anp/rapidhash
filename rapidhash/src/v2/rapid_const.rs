@@ -2,7 +2,7 @@
 pub const RAPID_SEED: u64 = 0;
 
 /// Rapidhash secret parameters.
-pub(crate) const RAPID_SECRET: [u64; 8] = [
+pub(super) const RAPID_SECRET: [u64; 8] = [
     0x2d358dccaa6c78a5,
     0x8bb84b93962eacc9,
     0x4b33a62ed433d4a3,
@@ -13,13 +13,17 @@ pub(crate) const RAPID_SECRET: [u64; 8] = [
     0xaaaaaaaaaaaaaaaa,
 ];
 
-/// Rapidhash a single byte stream, matching the C++ implementation.
+/// Rapidhash a single byte stream, matching the C++ implementation, with the default seed.
+///
+/// Fixed length inputs will greatly benefit from inlining with [rapidhash_inline] instead.
 #[inline]
 pub const fn rapidhash(data: &[u8]) -> u64 {
     rapidhash_inline(data, RAPID_SEED)
 }
 
 /// Rapidhash a single byte stream, matching the C++ implementation, with a custom seed.
+///
+/// Fixed length inputs will greatly benefit from inlining with [rapidhash_inline] instead.
 #[inline]
 pub const fn rapidhash_seeded(data: &[u8], seed: u64) -> u64 {
     rapidhash_inline(data, seed)
@@ -28,7 +32,7 @@ pub const fn rapidhash_seeded(data: &[u8], seed: u64) -> u64 {
 /// Rapidhash a single byte stream, matching the C++ implementation.
 ///
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
-/// Can provide large performance uplifts for inputs where the length is known at compile time.
+/// Can provide large performance uplifts for fixed-length inputs at compile time.
 #[inline(always)]
 pub const fn rapidhash_inline(data: &[u8], mut seed: u64) -> u64 {
     seed = rapidhash_seed(seed, data.len() as u64);
@@ -51,24 +55,24 @@ pub const fn rapidhash_inline(data: &[u8], mut seed: u64) -> u64 {
 /// Xors and overwrites A contents with C's low 64 bits.
 /// Xors and overwrites B contents with C's high 64 bits.
 #[inline(always)]
-pub const fn rapid_mum(a: u64, b: u64) -> (u64, u64) {
+pub(super) const fn rapid_mum(a: u64, b: u64) -> (u64, u64) {
     let r = a as u128 * b as u128;
     (r as u64, (r >> 64) as u64)
 }
 
 #[inline(always)]
-pub const fn rapid_mix(a: u64, b: u64) -> u64 {
+pub(super) const fn rapid_mix(a: u64, b: u64) -> u64 {
     let (a, b) = rapid_mum(a, b);
     a ^ b
 }
 
 #[inline(always)]
-pub(crate) const fn rapidhash_seed(seed: u64, len: u64) -> u64 {
+pub(super) const fn rapidhash_seed(seed: u64, len: u64) -> u64 {
     seed ^ rapid_mix(seed ^ RAPID_SECRET[2], RAPID_SECRET[1]) ^ len
 }
 
 #[inline(always)]
-pub(crate) const fn rapidhash_core(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
+pub(super) const fn rapidhash_core(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
     // TODO: benchmark without the a,b XOR -- eg. a oneshot
     if data.len() <= 16 {
         if data.len() >= 4 {
@@ -242,7 +246,7 @@ const fn rapidhash_core_cold(mut a: u64, mut b: u64, mut seed: u64, data: &[u8])
 }
 
 #[inline(always)]
-pub(crate) const fn rapidhash_finish(a: u64, b: u64, len: u64) -> u64 {
+pub(super) const fn rapidhash_finish(a: u64, b: u64, len: u64) -> u64 {
     rapid_mix(a ^ RAPID_SECRET[7] ^ len, b ^ RAPID_SECRET[1])
 }
 
@@ -250,7 +254,7 @@ pub(crate) const fn rapidhash_finish(a: u64, b: u64, len: u64) -> u64 {
 /// bounds check, and so we have an unsafe version behind the `unsafe` feature flag.
 #[cfg(not(feature = "unsafe"))]
 #[inline(always)]
-pub(crate) const fn read_u64(slice: &[u8], offset: usize) -> u64 {
+pub(super) const fn read_u64(slice: &[u8], offset: usize) -> u64 {
     // equivalent to slice[offset..offset+8].try_into().unwrap(), but const-friendly
     let maybe_buf = slice.split_at(offset).1.first_chunk::<8>();
     let buf = match maybe_buf {
@@ -264,7 +268,7 @@ pub(crate) const fn read_u64(slice: &[u8], offset: usize) -> u64 {
 /// bounds check, and so we have an unsafe version behind the `unsafe` feature flag.
 #[cfg(not(feature = "unsafe"))]
 #[inline(always)]
-pub(crate) const fn read_u32(slice: &[u8], offset: usize) -> u32 {
+pub(super) const fn read_u32(slice: &[u8], offset: usize) -> u32 {
     // equivalent to slice[offset..offset+4].try_into().unwrap(), but const-friendly
     let maybe_buf = slice.split_at(offset).1.first_chunk::<4>();
     let buf = match maybe_buf {
@@ -281,7 +285,7 @@ pub(crate) const fn read_u32(slice: &[u8], offset: usize) -> u32 {
 /// implementation.
 #[cfg(feature = "unsafe")]
 #[inline(always)]
-pub(crate) const fn read_u64(slice: &[u8], offset: usize) -> u64 {
+pub(super) const fn read_u64(slice: &[u8], offset: usize) -> u64 {
     debug_assert!(offset as isize >= 0);
     debug_assert!(slice.len() >= 8 + offset);
     let val = unsafe { core::ptr::read_unaligned(slice.as_ptr().offset(offset as isize) as *const u64) };
@@ -295,7 +299,7 @@ pub(crate) const fn read_u64(slice: &[u8], offset: usize) -> u64 {
 /// implementation.
 #[cfg(feature = "unsafe")]
 #[inline(always)]
-pub(crate) const fn read_u32(slice: &[u8], offset: usize) -> u32 {
+pub(super) const fn read_u32(slice: &[u8], offset: usize) -> u32 {
     debug_assert!(offset as isize >= 0);
     debug_assert!(slice.len() >= 4 + offset);
     let val = unsafe { core::ptr::read_unaligned(slice.as_ptr().offset(offset as isize) as *const u32) };

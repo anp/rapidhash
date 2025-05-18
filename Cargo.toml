@@ -20,3 +20,6 @@ codegen-units = 1
 lto = "fat"
 incremental = false
 opt-level = 3
+debug = true
+debug-assertions = false
+strip = false

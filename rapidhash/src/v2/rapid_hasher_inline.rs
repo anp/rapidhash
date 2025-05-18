@@ -164,7 +164,7 @@ impl RapidInlineHasher {
     /// time.
     #[inline(always)]
     #[must_use]
-    pub const fn write_const(&self, bytes: &[u8]) -> Self {
+    pub const fn write_const(mut self, bytes: &[u8]) -> Self {
         // FUTURE: wyhash processes the bytes as u64::MAX chunks in case chunk.len() > usize.
         // we use this static assert to ensure that usize is not larger than u64 for now.
         const _: () = assert!(
@@ -172,14 +172,13 @@ impl RapidInlineHasher {
             "usize is wider than u64. Please raise a github issue to support this."
         );
 
-        let mut this = *self;
-        this.size += bytes.len() as u64;
-        this.seed ^= this.size;
-        let (a, b, seed) = rapidhash_core(this.a, this.b, this.seed, bytes);
-        this.a = a;
-        this.b = b;
-        this.seed = seed;
-        this
+        self.size += bytes.len() as u64;
+        self.seed ^= self.size;
+        let (a, b, seed) = rapidhash_core(self.a, self.b, self.seed, bytes);
+        self.a = a;
+        self.b = b;
+        self.seed = seed;
+        self
     }
 
     /// Shortcut for numbers using a sponge.
@@ -188,55 +187,50 @@ impl RapidInlineHasher {
     /// could cause trivial hash collisions at the boundary.
     #[inline(always)]
     #[must_use]
-    const fn write_num(&self, i: u64, num_size: NumSize) -> Self {
-        let mut this = *self;
-
-        if (this.sponge_len + num_size as u64) <= core::mem::size_of::<u128>() as u64 {
-            this.sponge |= (i as u128) << (this.sponge_len * 8);
-            this.sponge_len += num_size as u64;
+    const fn write_num(mut self, i: u64, num_size: NumSize) -> Self {
+        if (self.sponge_len + num_size as u64) <= core::mem::size_of::<u128>() as u64 {
+            self.sponge |= (i as u128) << (self.sponge_len * 8);
+            self.sponge_len += num_size as u64;
         } else {
-            this = self.write_sponge(this.sponge, this.sponge_len);
-            this.sponge = i as u128;
-            this.sponge_len = num_size as u64;
+            self = self.write_sponge(self.sponge, self.sponge_len);
+            self.sponge = i as u128;
+            self.sponge_len = num_size as u64;
         }
 
-        this
+        self
     }
 
     #[inline(always)]
     #[must_use]
-    const fn write_num_128(&self, i: u128) -> Self {
+    const fn write_num_128(self, i: u128) -> Self {
         self.write_sponge(i, core::mem::size_of::<u128>() as u64)
     }
 
     #[inline(always)]
     #[must_use]
-    const fn write_sponge(&self, i: u128, size: u64) -> Self {
-        let mut this = *self;
-        this.size += size;
-        this.seed ^= this.size;
+    const fn write_sponge(mut self, i: u128, size: u64) -> Self {
+        self.size += size;
+        self.seed ^= self.size;
 
-        this.a ^= (i >> 64) as u64 ^ RAPID_SECRET[1];
-        this.b ^= i as u64 ^ this.seed;
+        self.a ^= (i >> 64) as u64 ^ RAPID_SECRET[1];
+        self.b ^= i as u64 ^ self.seed;
 
-        let (a, b) = rapid_mum(this.a, this.b);
+        let (a, b) = rapid_mum(self.a, self.b);
 
-        this.a = a;
-        this.b = b;
-        this
+        self.a = a;
+        self.b = b;
+        self
     }
 
     /// Const equivalent to [Hasher::finish], and marked as `#[inline(always)]`.
     #[inline(always)]
     #[must_use]
-    pub const fn finish_const(&self) -> u64 {
-        let mut this = *self;
-
+    pub const fn finish_const(mut self) -> u64 {
         if self.sponge_len > 0 {
-            this = this.write_sponge(this.sponge, this.sponge_len);
+            self = self.write_sponge(self.sponge, self.sponge_len);
         }
 
-        rapidhash_finish(this.a, this.b, this.size)
+        rapidhash_finish(self.a, self.b, self.size)
     }
 }
 
@@ -266,25 +260,25 @@ impl Hasher for RapidInlineHasher {
         *self = self.write_const(bytes);
     }
 
-    // TODO: remove old no sponge
+    // // TODO: remove old no sponge
     // #[inline(always)]
     // fn write_u8(&mut self, i: u8) {
-    //     *self = self.write_const(&i.to_ne_bytes());
+    //     *self = self.write_const(&i.to_le_bytes());
     // }
     //
     // #[inline(always)]
     // fn write_u16(&mut self, i: u16) {
-    //     *self = self.write_const(&i.to_ne_bytes());
+    //     *self = self.write_const(&i.to_le_bytes());
     // }
     //
     // #[inline(always)]
     // fn write_u32(&mut self, i: u32) {
-    //     *self = self.write_const(&i.to_ne_bytes());
+    //     *self = self.write_const(&i.to_le_bytes());
     // }
     //
     // #[inline(always)]
     // fn write_u64(&mut self, i: u64) {
-    //     *self = self.write_const(&i.to_ne_bytes());
+    //     *self = self.write_const(&i.to_le_bytes());
     //
     //     // NOTE: in case of compiler regression, it should compile to:
     //     // self.size += size_of::<u64>() as u64;
@@ -296,42 +290,42 @@ impl Hasher for RapidInlineHasher {
     //
     // #[inline(always)]
     // fn write_u128(&mut self, i: u128) {
-    //     *self = self.write_const(&i.to_ne_bytes());
+    //     *self = self.write_const(&i.to_le_bytes());
     // }
     //
     // #[inline(always)]
     // fn write_usize(&mut self, i: usize) {
-    //     *self = self.write_const(&i.to_ne_bytes());
+    //     *self = self.write_const(&i.to_le_bytes());
     // }
     //
     // #[inline(always)]
     // fn write_i8(&mut self, i: i8) {
-    //     *self = self.write_const(&i.to_ne_bytes());
+    //     *self = self.write_const(&i.to_le_bytes());
     // }
     //
     // #[inline(always)]
     // fn write_i16(&mut self, i: i16) {
-    //     *self = self.write_const(&i.to_ne_bytes());
+    //     *self = self.write_const(&i.to_le_bytes());
     // }
     //
     // #[inline(always)]
     // fn write_i32(&mut self, i: i32) {
-    //     *self = self.write_const(&i.to_ne_bytes());
+    //     *self = self.write_const(&i.to_le_bytes());
     // }
     //
     // #[inline(always)]
     // fn write_i64(&mut self, i: i64) {
-    //     *self = self.write_const(&i.to_ne_bytes());
+    //     *self = self.write_const(&i.to_le_bytes());
     // }
     //
     // #[inline(always)]
     // fn write_i128(&mut self, i: i128) {
-    //     *self = self.write_const(&i.to_ne_bytes());
+    //     *self = self.write_const(&i.to_le_bytes());
     // }
     //
     // #[inline(always)]
     // fn write_isize(&mut self, i: isize) {
-    //     *self = self.write_const(&i.to_ne_bytes());
+    //     *self = self.write_const(&i.to_le_bytes());
     // }
 
     #[inline(always)]
@@ -420,7 +414,7 @@ mod tests {
     use super::*;
 
     /// Test that writing a single u64 outputs the same as writing the equivalent bytes.
-    /// 
+    ///
     /// Does not apply if the algorithm is using a sponge.
     #[ignore]
     #[test]
@@ -437,10 +431,10 @@ mod tests {
 
         for int in ints {
             let mut hasher = RapidInlineHasher::default();
-            hasher.write(int.to_ne_bytes().as_slice());
+            hasher.write(int.to_le_bytes().as_slice());
             let a = hasher.finish();
 
-            assert_eq!(int.to_ne_bytes().as_slice().len(), 8);
+            assert_eq!(int.to_le_bytes().as_slice().len(), 8);
 
             let mut hasher = RapidInlineHasher::default();
             hasher.write_u64(int);

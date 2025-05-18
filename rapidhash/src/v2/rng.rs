@@ -55,8 +55,8 @@ pub fn rapidrng_time(seed: &mut u64) -> u64 {
     // This is why we further stretch the teed with multiple rounds of rapid_mix.
     let mut  teed = ((time.as_secs() as u64) << 32) | time.subsec_nanos() as u64;
     teed = rapid_mix(teed ^ RAPID_SECRET[0], *seed ^ RAPID_SECRET[1]);
-    *seed = rapid_mix(teed ^ RAPID_SECRET[0], RAPID_SECRET[2]);
-    rapid_mix(*seed, *seed ^ RAPID_SECRET[1])
+    *seed = rapid_mix(teed ^ RAPID_SECRET[2], RAPID_SECRET[3]);
+    rapid_mix(*seed, *seed ^ RAPID_SECRET[4])
 }
 
 /// A random number generator that uses the rapidhash mixing algorithm.
