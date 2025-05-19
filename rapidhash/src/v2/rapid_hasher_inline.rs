@@ -1,8 +1,7 @@
 use crate::v2::rapid_const::{
     rapid_mix, rapid_mum, rapidhash_core, rapidhash_finish, RAPID_SECRET, RAPID_SEED,
 };
-use core::hash::{BuildHasher, Hasher};
-use std::hash::Hash;
+use core::hash::{BuildHasher, Hash, Hasher};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
 /// algorithm, and uses `#[inline(always)]` for all methods.
@@ -217,7 +216,7 @@ impl RapidInlineHasher {
     //         self.sponge = i;
     //         self.sponge_len = N;
     //     }
-    // 
+    //
     //     self
     // }
 
@@ -226,18 +225,18 @@ impl RapidInlineHasher {
     // const fn write_num_128(self, i: u128) -> Self {
     //     self.write_sponge(i, 128)
     // }
-    // 
+    //
     // #[inline(always)]
     // #[must_use]
     // const fn write_sponge(mut self, i: u128, size: u8) -> Self {
     //     // self.size += size as u64;
     //     // self.seed ^= size as u64;
-    // 
+    //
     //     self.a ^= i as u64 ^ RAPID_SECRET[1];
     //     self.b ^= (i >> 64) as u64 ^ self.seed;
-    // 
+    //
     //     let (a, b) = rapid_mum(self.a, self.b);
-    // 
+    //
     //     self.a = a;
     //     self.b = b;
     //     self
