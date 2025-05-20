@@ -1,4 +1,4 @@
-use core::hash::{BuildHasher, Hasher};
+use core::hash::{BuildHasher, Hash, Hasher};
 use crate::v1::rapid_const::{rapid_mix, rapidhash_core, rapidhash_finish, RAPID_SECRET, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
@@ -24,10 +24,11 @@ use crate::v1::rapid_const::{rapid_mix, rapidhash_core, rapidhash_finish, RAPID_
 #[derive(Copy, Clone, Eq, PartialEq)]
 #[repr(align(32))]
 pub struct RapidHasher {
+    // NOTE: field order is important for performance and inlining, benchmark changes!
+    size: u64,
     seed: u64,
     a: u64,
     b: u64,
-    size: u64,
 }
 
 /// A [std::hash::BuildHasher] trait compatible hasher that uses the [RapidHasher] algorithm.
@@ -53,7 +54,7 @@ pub struct RapidBuildHasher {
 
 impl RapidBuildHasher {
     /// New rapid inline build hasher, and pre-compute the seed.
-    #[inline(always)]
+    #[inline]
     pub const fn new(mut seed: u64) -> Self {
         seed ^= rapid_mix(seed ^ RAPID_SECRET[0], RAPID_SECRET[1]);
         Self { seed }
@@ -68,10 +69,28 @@ impl BuildHasher for RapidBuildHasher {
     fn build_hasher(&self) -> Self::Hasher {
         Self::Hasher::new_precomputed_seed(self.seed)
     }
+
+    /// It's incredibly important that the `x.hash()` call gets inlined, while the `hash_one` method
+    /// itself isn't that critical to be inlined.
+    ///
+    /// - Otherwise the compiler won't be able to optimise out the sponge if as it might be full
+    ///   when starting to hash each object.
+    /// - The rapidhash method also makes use of callee-saved registers (at least on aarch64), which
+    ///   then results in a slow ldr operation (25% of hash time!) when the x.hash method returns.
+    #[inline(always)]
+    fn hash_one<T: Hash>(&self, x: T) -> u64
+    where
+        Self: Sized,
+        Self::Hasher: Hasher,
+    {
+        let mut hasher = self.build_hasher();
+        x.hash(&mut hasher);  // <-- trying hard to inline this
+        hasher.finish()
+    }
 }
 
 impl Default for RapidBuildHasher {
-    #[inline(always)]
+    #[inline]
     fn default() -> Self {
         Self::new(RapidHasher::DEFAULT_SEED)
     }
@@ -121,7 +140,7 @@ impl RapidHasher {
 
     #[inline(always)]
     #[must_use]
-    pub(crate) const fn new_precomputed_seed(seed: u64) -> Self {
+    pub(super) const fn new_precomputed_seed(seed: u64) -> Self {
         Self {
             seed,
             a: 0,

@@ -1,5 +1,5 @@
 use core::hash::{BuildHasher, Hash, Hasher};
-use crate::v2::rapid_const::{rapid_mix, rapidhash_core, rapidhash_finish, RAPID_SECRET, RAPID_SEED};
+use crate::v3::rapid_const::{rapid_mix, rapidhash_core, rapidhash_finish, RAPID_SECRET, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
 /// algorithm, and uses `#[inline(always)]` for all methods.
@@ -26,10 +26,12 @@ use crate::v2::rapid_const::{rapid_mix, rapidhash_core, rapidhash_finish, RAPID_
 /// let hash = hasher.finish();
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq)]
-#[repr(align(32))]
-pub struct RapidHasher {
+// #[repr(align(64))]
+pub struct RapidHasher<const AVALANCHE: bool> {
     // NOTE: field order is important for performance and inlining, benchmark changes!
-    size: u64,
+    // size: u64,
+    buf: u128,
+    buf_len: u8,
     seed: u64,
     a: u64,
     b: u64,
@@ -56,11 +58,11 @@ pub struct RapidHasher {
 /// map.insert(42, "the answer");
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq)]
-pub struct RapidBuildHasher {
+pub struct RapidBuildHasher<const AVALANCHE: bool> {
     seed: u64,
 }
 
-impl RapidBuildHasher {
+impl<const AVALANCHE: bool> RapidBuildHasher<AVALANCHE> {
     /// New rapid inline build hasher, and pre-compute the seed.
     #[inline]
     pub const fn new(mut seed: u64) -> Self {
@@ -70,8 +72,8 @@ impl RapidBuildHasher {
 }
 
 // Explicitly implement to inline always the hasher.
-impl BuildHasher for RapidBuildHasher {
-    type Hasher = RapidHasher;
+impl<const AVALANCHE: bool> BuildHasher for RapidBuildHasher<AVALANCHE> {
+    type Hasher = RapidHasher<AVALANCHE>;
 
     #[inline(always)]
     fn build_hasher(&self) -> Self::Hasher {
@@ -85,7 +87,7 @@ impl BuildHasher for RapidBuildHasher {
     ///   when starting to hash each object.
     /// - The rapidhash method also makes use of callee-saved registers (at least on aarch64), which
     ///   then results in a slow ldr operation (25% of hash time!) when the x.hash method returns.
-    #[inline(always)]
+    #[inline(always)]  // TODO: choose what to set here
     fn hash_one<T: Hash>(&self, x: T) -> u64
     where
         Self: Sized,
@@ -97,10 +99,10 @@ impl BuildHasher for RapidBuildHasher {
     }
 }
 
-impl Default for RapidBuildHasher {
+impl<const AVALANCHE: bool> Default for RapidBuildHasher<AVALANCHE> {
     #[inline]
     fn default() -> Self {
-        Self::new(RapidHasher::DEFAULT_SEED)
+        Self::new(RapidHasher::<AVALANCHE>::DEFAULT_SEED)
     }
 }
 
@@ -121,7 +123,7 @@ impl Default for RapidBuildHasher {
 /// map.insert(42, "the answer");
 /// ```
 #[cfg(any(feature = "std", docsrs))]
-pub type RapidHashMap<K, V> = std::collections::HashMap<K, V, RapidBuildHasher>;
+pub type RapidHashMap<K, V, const AVALANCHE: bool> = std::collections::HashMap<K, V, RapidBuildHasher<AVALANCHE>>;
 
 /// A [std::collections::HashSet] type that uses the [RapidBuildHasher] hasher.
 ///
@@ -140,9 +142,9 @@ pub type RapidHashMap<K, V> = std::collections::HashMap<K, V, RapidBuildHasher>;
 /// set.insert("the answer");
 /// ```
 #[cfg(any(feature = "std", docsrs))]
-pub type RapidHashSet<K> = std::collections::HashSet<K, RapidBuildHasher>;
+pub type RapidHashSet<K, const AVALANCHE: bool> = std::collections::HashSet<K, RapidBuildHasher<AVALANCHE>>;
 
-impl RapidHasher {
+impl<const AVALANCHE: bool> RapidHasher<AVALANCHE> {
     /// Default `RapidHasher` seed.
     pub const DEFAULT_SEED: u64 = RAPID_SEED;
 
@@ -159,10 +161,12 @@ impl RapidHasher {
     #[must_use]
     pub(super) const fn new_precomputed_seed(seed: u64) -> Self {
         Self {
+            // size: 0,
             seed,
             a: 0,
             b: 0,
-            size: 0,
+            buf: 0,
+            buf_len: 0,
         }
     }
 
@@ -187,8 +191,8 @@ impl RapidHasher {
             "usize is wider than u64. Please raise a github issue to support this."
         );
 
-        self.size += bytes.len() as u64;
-        self.seed ^= bytes.len() as u64;
+        // self.size += bytes.len() as u64;
+        self.seed = self.seed.wrapping_add(bytes.len() as u64);
         let (a, b, seed) = rapidhash_core(self.a, self.b, self.seed, bytes);
         self.a = a;
         self.b = b;
@@ -196,15 +200,56 @@ impl RapidHasher {
         self
     }
 
+    #[inline(always)]
+    const fn write_num<const N: u8>(mut self, bytes: u128) -> Self {
+        // the order of this if/else is temperamental and can cause the compiler to not inline it
+        if self.buf_len + N > 128 {
+            self.flush_buf_no_inline();
+            self.buf = bytes;
+            self.buf_len = N;
+        } else {
+            self.buf |= bytes << self.buf_len;
+            self.buf_len += N;
+        }
+
+        self
+    }
+
+    #[cold]
+    #[inline(never)]
+    const fn flush_buf_no_inline(self) -> Self {
+        self.flush_buf()
+    }
+
+    #[inline(always)]
+    const fn flush_buf(mut self) -> Self {
+        // we use a saturating sub here so that if only half of the buffer has been written, we can
+        // also take as much of the buffer as we can into the b state.
+        self.a ^= self.buf as u64 ^ RAPID_SECRET[1];
+        self.b ^= (self.buf >> self.buf_len.saturating_sub(64)) as u64 ^ self.seed;
+        let (a, b) = super::rapid_const::rapid_mum(self.a, self.b);
+        self.a = a;
+        self.b = b;
+        self
+    }
+
     /// Const equivalent to [Hasher::finish], and marked as `#[inline(always)]`.
     #[inline(always)]
     #[must_use]
-    pub const fn finish_const(self) -> u64 {
-        rapidhash_finish(self.a, self.b, self.size)
+    pub const fn finish_const(mut self) -> u64 {
+        if self.buf_len > 0 {
+            self = self.flush_buf();
+        }
+
+        if AVALANCHE {
+            rapidhash_finish(self.a, self.b, self.seed)
+        } else {
+            self.a ^ self.b
+        }
     }
 }
 
-impl Default for RapidHasher {
+impl<const AVALANCHE: bool> Default for RapidHasher<AVALANCHE> {
     /// Create a new [RapidHasher] with the default seed.
     ///
     /// See [crate::RapidRandomState] for a [std::hash::BuildHasher] that initialises with a random
@@ -218,7 +263,7 @@ impl Default for RapidHasher {
 /// This implementation implements methods for all integer types as the compiler will (hopefully...)
 /// inline and heavily optimize the rapidhash_core for each. Where the bytes length is known the
 /// compiler can make significant optimisations and saves us writing them out by hand.
-impl Hasher for RapidHasher {
+impl<const AVALANCHE: bool> Hasher for RapidHasher<AVALANCHE> {
     #[inline(always)]
     fn finish(&self) -> u64 {
         self.finish_const()
@@ -230,64 +275,124 @@ impl Hasher for RapidHasher {
         *self = self.write_const(bytes);
     }
 
+    // #[inline(always)]
+    // fn write_u8(&mut self, i: u8) {
+    //     *self = self.write_const(&i.to_le_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_u16(&mut self, i: u16) {
+    //     *self = self.write_const(&i.to_le_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_u32(&mut self, i: u32) {
+    //     *self = self.write_const(&i.to_le_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_u64(&mut self, i: u64) {
+    //     *self = self.write_const(&i.to_le_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_u128(&mut self, i: u128) {
+    //     *self = self.write_const(&i.to_le_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_usize(&mut self, i: usize) {
+    //     *self = self.write_const(&i.to_le_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_i8(&mut self, i: i8) {
+    //     *self = self.write_const(&i.to_le_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_i16(&mut self, i: i16) {
+    //     *self = self.write_const(&i.to_le_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_i32(&mut self, i: i32) {
+    //     *self = self.write_const(&i.to_le_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_i64(&mut self, i: i64) {
+    //     *self = self.write_const(&i.to_le_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_i128(&mut self, i: i128) {
+    //     *self = self.write_const(&i.to_le_bytes());
+    // }
+    //
+    // #[inline(always)]
+    // fn write_isize(&mut self, i: isize) {
+    //     *self = self.write_const(&i.to_le_bytes());
+    // }
+
     #[inline(always)]
     fn write_u8(&mut self, i: u8) {
-        *self = self.write_const(&i.to_le_bytes());
+        *self = self.write_num::<8>(i as u128);
     }
 
     #[inline(always)]
     fn write_u16(&mut self, i: u16) {
-        *self = self.write_const(&i.to_le_bytes());
+        *self = self.write_num::<16>(i as u128);
     }
 
     #[inline(always)]
     fn write_u32(&mut self, i: u32) {
-        *self = self.write_const(&i.to_le_bytes());
+        *self = self.write_num::<32>(i as u128);
     }
 
     #[inline(always)]
     fn write_u64(&mut self, i: u64) {
-        *self = self.write_const(&i.to_le_bytes());
+        *self = self.write_num::<64>(i as u128);
     }
 
     #[inline(always)]
     fn write_u128(&mut self, i: u128) {
-        *self = self.write_const(&i.to_le_bytes());
+        *self = self.write_num::<128>(i);
     }
 
     #[inline(always)]
     fn write_usize(&mut self, i: usize) {
-        *self = self.write_const(&i.to_le_bytes());
+        *self = self.write_num::<64>(i as u128);
     }
 
     #[inline(always)]
     fn write_i8(&mut self, i: i8) {
-        *self = self.write_const(&i.to_le_bytes());
+        *self = self.write_num::<8>(i as u128);
     }
 
     #[inline(always)]
     fn write_i16(&mut self, i: i16) {
-        *self = self.write_const(&i.to_le_bytes());
+        *self = self.write_num::<16>(i as u128);
     }
 
     #[inline(always)]
     fn write_i32(&mut self, i: i32) {
-        *self = self.write_const(&i.to_le_bytes());
+        *self = self.write_num::<32>(i as u128);
     }
 
     #[inline(always)]
     fn write_i64(&mut self, i: i64) {
-        *self = self.write_const(&i.to_le_bytes());
+        *self = self.write_num::<64>(i as u128);
     }
 
     #[inline(always)]
     fn write_i128(&mut self, i: i128) {
-        *self = self.write_const(&i.to_le_bytes());
+        *self = self.write_num::<128>(i as u128);
     }
 
     #[inline(always)]
     fn write_isize(&mut self, i: isize) {
-        *self = self.write_const(&i.to_le_bytes());
+        *self = self.write_num::<64>(i as u128);
     }
 }
 
@@ -306,13 +411,13 @@ mod tests {
         let ints = [1234u64, 0, 1, u64::MAX, u64::MAX - 2385962040453523];
 
         for int in ints {
-            let mut hasher = RapidHasher::default();
+            let mut hasher = RapidHasher::<true>::default();
             hasher.write(int.to_le_bytes().as_slice());
             let a = hasher.finish();
 
             assert_eq!(int.to_le_bytes().as_slice().len(), 8);
 
-            let mut hasher = RapidHasher::default();
+            let mut hasher = RapidHasher::<true>::default();
             hasher.write_u64(int);
             let b = hasher.finish();
 

@@ -14,6 +14,9 @@ pub mod v1;
 /// Rapidhash V2 algorithm implementations (default). Only exposed with the `versioned` feature.
 #[cfg(any(feature = "v2", docsrs))]
 pub mod v2;
+/// Rapidhash V3 algorithm implementations (default). Only exposed with the `versioned` feature.
+#[cfg(any(feature = "v3", docsrs))]
+pub mod v3;
 
 /// Privately load v2 when exporting default aliases.
 #[cfg(all(feature = "vlatest", not(any(feature = "v2", docsrs))))]

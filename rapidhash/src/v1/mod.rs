@@ -9,17 +9,17 @@ mod random_state;
 mod rng;
 
 #[doc(inline)]
-pub use crate::v1::rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, RAPID_SEED};
+pub use rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, RAPID_SEED};
 #[doc(inline)]
-pub use crate::v1::rapid_hasher::*;
+pub use rapid_hasher::*;
 #[doc(inline)]
 #[cfg(any(feature = "std", docsrs))]
-pub use crate::v1::rapid_file::*;
+pub use rapid_file::*;
 #[doc(inline)]
 #[cfg(any(feature = "std", feature = "rand", docsrs))]
-pub use crate::v1::random_state::*;
+pub use random_state::*;
 #[doc(inline)]
-pub use crate::v1::rng::*;
+pub use rng::*;
 
 #[cfg(test)]
 mod tests {

@@ -4,7 +4,7 @@
 
 **Rapidhash V2 algorithm change**. Going forwards this crate will expose old algorithms under `v1`, `v2` etc. modules and naming. **The non-versioned functions will use the latest algorithm.**
 
-- **Breaking:** Updated to use the rapidhash V2 algorithm by default.
+- **Breaking:** Updated to use the rapidhash V2.2 algorithm by default.
 - **Breaking:** Rapidhash V1 algorithm changes:
   - Fixed the rapidhash V1 algorithm for 48 and 144 length inputs, where it would mismatch with the C implementation.
   - Since the algorithm implementation changed, I also took the opportunity to make performance improvements and to include seed pre-computation but this shouldn't change the hash output.
@@ -12,7 +12,7 @@
 - **Breaking:** Removed `rapid_mix` and `rapid_mum` from the public API for cleanliness. These are now internal functions.
 - **Breaking:** Random number generator algorithm has changed as the V2 secrets are different. The v2 `rapidng_time`, `rapidrng_fast`, and `RapidRng` will produce different values to the v1 versions.
 - **Breaking:** Removed the `RapidInline*` variants in favour of making the default `Rapid` types inline by default. If this is a problem for your use case, please raise a github issue, thanks!
-- Added `v1` and `v2` features to expose V1 and V2 algorithms with explicit versioning.
+- Added `v1` and `v2` features to expose V1 and V2.2 algorithms with explicit versioning.
 - Full tests and verification against the C implementations for both versions.
 - Extensive benchmarking and optimisation, read more: https://github.com/hoxxep/rapidhash/issues/20
 

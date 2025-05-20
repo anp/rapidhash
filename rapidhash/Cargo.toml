@@ -29,6 +29,7 @@ rand = ["dep:rand", "std"]  # enable the rand library for random seed initialisa
 rng = ["dep:rand_core"]  # fast random number generator using rapidhash
 v1 = []  # expose the old v1 algorithm module
 v2 = []  # expose the current v2 algorithm module
+v3 = []  # expose the new v3 algorithm module
 vlatest = []  # expose the latest algorithm as default exports - exclude this feature to make all versions explicit
 unsafe = []  # enable unsafe pointer arithmetic to skip unnecessary bounds checks
 

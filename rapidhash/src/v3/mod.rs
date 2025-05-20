@@ -1,4 +1,4 @@
-//! The rapidhash V2.2 algorithm.
+//! The rapidhash V2 algorithm.
 
 mod rapid_const;
 mod rapid_hasher;
@@ -10,8 +10,8 @@ mod rng;
 
 #[doc(inline)]
 pub use rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, RAPID_SEED};
-#[doc(inline)]
-pub use rapid_hasher::*;
+// #[doc(inline)]
+// pub use rapid_hasher::*;
 #[doc(inline)]
 #[cfg(any(feature = "std", docsrs))]
 pub use rapid_file::*;
@@ -20,6 +20,12 @@ pub use rapid_file::*;
 pub use random_state::*;
 #[doc(inline)]
 pub use rng::*;
+
+const AVALANCHE: bool = true;
+pub type RapidHasher = rapid_hasher::RapidHasher<AVALANCHE>;
+pub type RapidBuildHasher = rapid_hasher::RapidBuildHasher<AVALANCHE>;
+pub type RapidHashMap<K, V> = rapid_hasher::RapidHashMap<K, V, AVALANCHE>;
+pub type RapidHashSet<K> = rapid_hasher::RapidHashSet<K, AVALANCHE>;
 
 #[cfg(test)]
 mod tests {
@@ -142,7 +148,7 @@ mod tests {
 
         let mut flips = std::vec![];
 
-        for len in 1..=256 {
+        for len in 1..=300 {
             let mut data = std::vec![0; len];
             rand::rng().fill(&mut data[..]);
 
@@ -174,7 +180,7 @@ mod tests {
     #[test]
     fn compare_to_c() {
         use rand::Rng;
-        use rapidhash_c::rapidhashcc_v2;
+        use rapidhash_c::rapidhashcc_v3;
 
         for len in 0..=512 {
             let mut data = std::vec![0; len];
@@ -186,7 +192,7 @@ mod tests {
                     data[byte] ^= 1 << bit;
 
                     let rust_hash = rapidhash_seeded(&data, RAPID_SEED);
-                    let c_hash = rapidhashcc_v2(&data, RAPID_SEED);
+                    let c_hash = rapidhashcc_v3(&data, RAPID_SEED);
                     assert_eq!(rust_hash, c_hash, "Mismatch with input {} byte {} bit {}", len, byte, bit);
 
                     let mut rust_hasher = RapidBuildHasher::default().build_hasher();

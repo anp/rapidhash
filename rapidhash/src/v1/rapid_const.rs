@@ -1,6 +1,6 @@
 /// The rapidhash default seed.
 pub const RAPID_SEED: u64 = 0xbdd89aa982704029;
-pub(crate) const RAPID_SECRET: [u64; 3] = [0x2d358dccaa6c78a5, 0x8bb84b93962eacc9, 0x4b33a62ed433d4a3];
+pub(super) const RAPID_SECRET: [u64; 3] = [0x2d358dccaa6c78a5, 0x8bb84b93962eacc9, 0x4b33a62ed433d4a3];
 
 /// Rapidhash a single byte stream, matching the C++ implementation.
 #[inline]

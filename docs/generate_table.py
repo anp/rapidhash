@@ -69,6 +69,7 @@ def table():
     hash_order = [
         "rapidhash-v1",
         "rapidhash-v2",
+        "rapidhash-v3",
         # "foldhash-f",
         "foldhash-q",
         "fxhash",

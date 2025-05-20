@@ -22,7 +22,7 @@ harness = false
 
 [features]
 # avoid bringing in all of these during workspace default tests
-bench = ["rapidhash/std", "rapidhash/rand", "rapidhash/rng", "rapidhash/vlatest", "rapidhash/v1", "rapidhash/v2"]
+bench = ["rapidhash/std", "rapidhash/rand", "rapidhash/rng", "rapidhash/vlatest", "rapidhash/v1", "rapidhash/v2", "rapidhash/v3"]
 unsafe = ["rapidhash/unsafe"]
 
 [dependencies]
