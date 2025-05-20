@@ -27,19 +27,7 @@ pub fn bench_rapidhash() -> Box<dyn FnMut(&mut Bencher)> {
         b.iter_batched_ref(|| {
             Object::random()
         }, |o| {
-            let mut hasher = rapidhash::RapidInlineHasher::default();
-            o.hash(&mut hasher);
-            hasher.finish()
-        }, criterion::BatchSize::SmallInput);
-    })
-}
-
-pub fn bench_rapidhash_inline() -> Box<dyn FnMut(&mut Bencher)> {
-    Box::new(move |b: &mut Bencher| {
-        b.iter_batched_ref(|| {
-            Object::random()
-        }, |o| {
-            let mut hasher = rapidhash::RapidInlineHasher::default();
+            let mut hasher = rapidhash::RapidHasher::default();
             o.hash(&mut hasher);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);

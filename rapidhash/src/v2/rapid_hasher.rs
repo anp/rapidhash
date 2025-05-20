@@ -1,11 +1,16 @@
-use core::hash::{BuildHasher, Hasher};
-use crate::v2::rapid_const::{rapid_mix, RAPID_SECRET};
-use crate::v2::RapidInlineHasher;
+use crate::v2::rapid_const::{
+    rapid_mix, rapidhash_core, rapidhash_finish, RAPID_SECRET, RAPID_SEED,
+};
+use core::hash::{BuildHasher, Hash, Hasher};
 
-/// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash) algorithm.
+/// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
+/// algorithm, and uses `#[inline(always)]` for all methods.
 ///
-/// See [RapidInlineHasher] for an `#[inline(always)]` version of this hasher, which can deliver
-/// speed improvements of around 30% when hashing complex objects.
+/// Using `#[inline(always)]` can deliver a large performance improvement when hashing complex
+/// objects, but should be benchmarked for your specific use case. If you have HashMaps for many
+/// different types this may come at the cost of some binary size increase.
+///
+/// See [crate::RapidHasher] for default non-forced inline methods.
 ///
 /// See [RapidHashBuilder] for usage with [std::collections::HashMap].
 ///
@@ -23,16 +28,19 @@ use crate::v2::RapidInlineHasher;
 /// let hash = hasher.finish();
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq)]
-pub struct RapidHasher(RapidInlineHasher);
+#[repr(align(32))]
+pub struct RapidHasher {
+    size: u64,
+    seed: u64,
+    a: u64,
+    b: u64,
+}
 
 /// A [std::hash::BuildHasher] trait compatible hasher that uses the [RapidHasher] algorithm.
 ///
 /// This is an alias for [`std::hash::BuildHasherDefault<RapidHasher>`] with a static seed.
 ///
-/// See [RapidInlineHasher] for an `#[inline(always)]` version of this hasher, which can deliver
-/// speed improvements of around 30% when hashing complex objects.
-///
-/// See [crate::RapidRandomState] can be used instead for a
+/// Note there that [crate::RapidRandomState] with can be used instead for a
 /// [std::hash::BuildHasher] that initialises with a random seed.
 ///
 /// # Example
@@ -70,6 +78,24 @@ impl BuildHasher for RapidBuildHasher {
     fn build_hasher(&self) -> Self::Hasher {
         RapidHasher::new_precomputed_seed(self.seed)
     }
+
+    /// It's incredibly important that the `x.hash()` call gets inlined, while the `hash_one` method
+    /// itself isn't that critical to be inlined.
+    ///
+    /// - Otherwise the compiler won't be able to optimise out the sponge if as it might be full
+    ///   when starting to hash each object.
+    /// - The rapidhash method also makes use of callee-saved registers (at least on aarch64), which
+    ///   then results in a slow ldr operation (25% of hash time!) when the x.hash method returns.
+    #[inline(always)]
+    fn hash_one<T: Hash>(&self, x: T) -> u64
+    where
+        Self: Sized,
+        Self::Hasher: Hasher,
+    {
+        let mut hasher = self.build_hasher();
+        x.hash(&mut hasher);  // <-- trying hard to inline this
+        hasher.finish()
+    }
 }
 
 impl Default for RapidBuildHasher {
@@ -80,9 +106,6 @@ impl Default for RapidBuildHasher {
 }
 
 /// A [std::collections::HashMap] type that uses the [RapidBuildHasher] hasher.
-///
-/// See [crate::RapidInlineHashMap] for an `#[inline(always)]` version of this type, which can deliver
-/// speed improvements of around 30% when hashing complex objects.
 ///
 /// # Example
 /// ```
@@ -103,9 +126,6 @@ pub type RapidHashMap<K, V> = std::collections::HashMap<K, V, RapidBuildHasher>;
 
 /// A [std::collections::HashSet] type that uses the [RapidBuildHasher] hasher.
 ///
-/// See [crate::RapidInlineHashSet] for an `#[inline(always)]` version of this type, which can
-/// deliver speed improvements of around 30% when hashing complex objects.
-///
 /// # Example
 /// ```
 /// #[cfg(not(feature = "v2"))]
@@ -125,19 +145,26 @@ pub type RapidHashSet<K> = std::collections::HashSet<K, RapidBuildHasher>;
 
 impl RapidHasher {
     /// Default `RapidHasher` seed.
-    pub const DEFAULT_SEED: u64 = RapidInlineHasher::DEFAULT_SEED;
+    pub const DEFAULT_SEED: u64 = RAPID_SEED;
 
     /// Create a new [RapidHasher] with a custom seed.
     #[inline(always)]
     #[must_use]
-    pub const fn new(seed: u64) -> Self {
-        Self(RapidInlineHasher::new(seed))
+    pub const fn new(mut seed: u64) -> Self {
+        // do most of the rapidhash_seed initialisation here to avoid doing it on each int
+        seed ^= rapid_mix(seed ^ RAPID_SECRET[2], RAPID_SECRET[1]);
+        Self::new_precomputed_seed(seed)
     }
 
     #[inline(always)]
     #[must_use]
-    pub(crate) const fn new_precomputed_seed(seed: u64) -> Self {
-        Self(RapidInlineHasher::new_precomputed_seed(seed))
+    pub(super) const fn new_precomputed_seed(seed: u64) -> Self {
+        Self {
+            seed,
+            a: 0,
+            b: 0,
+            size: 0,
+        }
     }
 
     /// Create a new [RapidHasher] using the default seed.
@@ -147,32 +174,34 @@ impl RapidHasher {
         Self::new(Self::DEFAULT_SEED)
     }
 
-    /// Const equivalent to [Hasher::write].
+    /// Const equivalent to [Hasher::write], and marked as `#[inline(always)]`.
     ///
-    /// # Example
-    /// ```rust
-    /// #[cfg(not(feature = "v2"))]
-    /// use rapidhash::RapidHasher;
-    /// #[cfg(feature = "v2")]
-    /// use rapidhash::v2::RapidHasher;
-    ///
-    /// let hasher = RapidHasher::default_const();
-    /// let hash = hasher
-    ///     .write_const(b"some bytes")
-    ///     .write_const(b"and some more bytes")
-    ///     .finish_const();
-    /// ```
-    #[inline]
+    /// This can deliver a large performance improvement when the `bytes` length is known at compile
+    /// time.
+    #[inline(always)]
     #[must_use]
-    pub const fn write_const(&self, bytes: &[u8]) -> Self {
-        Self(self.0.write_const(bytes))
+    pub const fn write_const(mut self, bytes: &[u8]) -> Self {
+        // FUTURE: wyhash processes the bytes as u64::MAX chunks in case chunk.len() > usize.
+        // we use this static assert to ensure that usize is not larger than u64 for now.
+        const _: () = assert!(
+            usize::MAX as u128 <= u64::MAX as u128,
+            "usize is wider than u64. Please raise a github issue to support this."
+        );
+
+        self.size += bytes.len() as u64;
+        self.seed ^= bytes.len() as u64;
+        let (a, b, seed) = rapidhash_core(self.a, self.b, self.seed, bytes);
+        self.a = a;
+        self.b = b;
+        self.seed = seed;
+        self
     }
 
-    /// Const equivalent to [Hasher::finish].
-    #[inline]
+    /// Const equivalent to [Hasher::finish], and marked as `#[inline(always)]`.
+    #[inline(always)]
     #[must_use]
-    pub const fn finish_const(&self) -> u64 {
-        self.0.finish_const()
+    pub const fn finish_const(self) -> u64 {
+        rapidhash_finish(self.a, self.b, self.size)
     }
 }
 
@@ -181,9 +210,9 @@ impl Default for RapidHasher {
     ///
     /// See [crate::RapidRandomState] for a [std::hash::BuildHasher] that initialises with a random
     /// seed.
-    #[inline]
+    #[inline(always)]
     fn default() -> Self {
-        Self::new(RapidHasher::DEFAULT_SEED)
+        Self::new(RAPID_SEED)
     }
 }
 
@@ -191,75 +220,75 @@ impl Default for RapidHasher {
 /// inline and heavily optimize the rapidhash_core for each. Where the bytes length is known the
 /// compiler can make significant optimisations and saves us writing them out by hand.
 impl Hasher for RapidHasher {
-    #[inline]
+    #[inline(always)]
     fn finish(&self) -> u64 {
-        self.0.finish_const()
+        self.finish_const()
     }
 
-    /// Write a byte slice to the hasher.
-    #[inline]
+    /// Write a byte slice to the hasher, marked as `#[inline(always)]`.
+    #[inline(always)]
     fn write(&mut self, bytes: &[u8]) {
-        self.0.write(bytes)
+        *self = self.write_const(bytes);
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_u8(&mut self, i: u8) {
-        self.0.write_u8(i)
+        *self = self.write_const(&i.to_le_bytes());
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_u16(&mut self, i: u16) {
-        self.0.write_u16(i)
+        *self = self.write_const(&i.to_le_bytes());
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_u32(&mut self, i: u32) {
-        self.0.write_u32(i)
+        *self = self.write_const(&i.to_le_bytes());
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_u64(&mut self, i: u64) {
-        self.0.write_u64(i)
+        *self = self.write_const(&i.to_le_bytes());
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_u128(&mut self, i: u128) {
-        self.0.write_u128(i)
+        *self = self.write_const(&i.to_le_bytes());
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_usize(&mut self, i: usize) {
-        self.0.write_usize(i)
+        *self = self.write_const(&i.to_le_bytes());
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_i8(&mut self, i: i8) {
-        self.0.write_i8(i)
+        *self = self.write_const(&i.to_le_bytes());
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_i16(&mut self, i: i16) {
-        self.0.write_i16(i)
+        *self = self.write_const(&i.to_le_bytes());
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_i32(&mut self, i: i32) {
-        self.0.write_i32(i)
+        *self = self.write_const(&i.to_le_bytes());
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_i64(&mut self, i: i64) {
-        self.0.write_i64(i)
+        *self = self.write_const(&i.to_le_bytes());
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_i128(&mut self, i: i128) {
-        self.0.write_i128(i)
+        *self = self.write_const(&i.to_le_bytes());
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_isize(&mut self, i: isize) {
-        self.0.write_isize(i)
+        *self = self.write_const(&i.to_le_bytes());
     }
 }
 
@@ -273,20 +302,16 @@ mod tests {
     #[ignore]
     #[test]
     fn test_hasher_write_u64() {
-        let ints = [
-            1234u64,
-            0,
-            1,
-            u64::MAX,
-            u64::MAX - 2385962040453523
-        ];
+        assert_eq!((8 & 24) >> (8 >> 3), 4);
+
+        let ints = [1234u64, 0, 1, u64::MAX, u64::MAX - 2385962040453523];
 
         for int in ints {
             let mut hasher = RapidHasher::default();
-            hasher.write(int.to_ne_bytes().as_slice());
+            hasher.write(int.to_le_bytes().as_slice());
             let a = hasher.finish();
 
-            assert_eq!(int.to_ne_bytes().as_slice().len(), 8);
+            assert_eq!(int.to_le_bytes().as_slice().len(), 8);
 
             let mut hasher = RapidHasher::default();
             hasher.write_u64(int);

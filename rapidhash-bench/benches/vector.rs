@@ -1,4 +1,5 @@
 use std::hash::{BuildHasher, Hasher};
+use std::hint::black_box;
 use criterion::Bencher;
 use rand::Rng;
 use rapidhash::RAPID_SEED;
@@ -12,7 +13,7 @@ pub fn bench_rapidhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            let mut hasher = rapidhash::RapidInlineHasher::default();
+            let mut hasher = rapidhash::RapidHasher::default();
             hasher.write(&bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
@@ -32,26 +33,74 @@ pub fn bench_rapidhash_raw(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
 }
 
 pub fn bench_rapidhash_cc_v1(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
+    let input_size = if size < 1024 * 1024 {
+        criterion::BatchSize::SmallInput
+    } else {
+        criterion::BatchSize::PerIteration
+    };
+
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            rapidhash_c::rapidhashcc_v1(&bytes, 0xbdd89aa982704029)
-        }, criterion::BatchSize::SmallInput);
+            black_box(rapidhash_c::rapidhashcc_v1(&bytes, black_box(rapidhash::v1::RAPID_SEED)))
+        }, input_size);
     })
 }
 
 pub fn bench_rapidhash_cc_v2(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
+    let input_size = if size < 1024 * 1024 {
+        criterion::BatchSize::SmallInput
+    } else {
+        criterion::BatchSize::PerIteration
+    };
+
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {
             let mut slice = vec![0u8; size];
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            rapidhash_c::rapidhashcc_v2(&bytes, 0)
-        }, criterion::BatchSize::SmallInput);
+            black_box(rapidhash_c::rapidhashcc_v2(&bytes, black_box(rapidhash::v1::RAPID_SEED)))
+        }, input_size);
+    })
+}
+
+pub fn bench_rapidhash_cc_v2_1(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
+    let input_size = if size < 1024 * 1024 {
+        criterion::BatchSize::SmallInput
+    } else {
+        criterion::BatchSize::PerIteration
+    };
+
+    Box::new(move |b: &mut Bencher| {
+        b.iter_batched_ref(|| {
+            let mut slice = vec![0u8; size];
+            rand::rng().fill(slice.as_mut_slice());
+            slice
+        }, |bytes| {
+            black_box(rapidhash_c::rapidhashcc_v2_1(&bytes, black_box(rapidhash::v1::RAPID_SEED)))
+        }, input_size);
+    })
+}
+
+pub fn bench_rapidhash_cc_v3(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
+    let input_size = if size < 1024 * 1024 {
+        criterion::BatchSize::SmallInput
+    } else {
+        criterion::BatchSize::PerIteration
+    };
+
+    Box::new(move |b: &mut Bencher| {
+        b.iter_batched_ref(|| {
+            let mut slice = vec![0u8; size];
+            rand::rng().fill(slice.as_mut_slice());
+            slice
+        }, |bytes| {
+            black_box(rapidhash_c::rapidhashcc_v3(&bytes, black_box(rapidhash::v1::RAPID_SEED)))
+        }, input_size);
     })
 }
 

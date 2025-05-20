@@ -107,7 +107,7 @@ pub(super) const fn rapidhash_core(mut a: u64, mut b: u64, mut seed: u64, data: 
 
 #[inline]  // intentionally not always
 const fn rapidhash_core_16_56(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
-    let mut slice = data;
+    let slice = data;
 
     seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
     if slice.len() > 32 {

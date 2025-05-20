@@ -150,8 +150,8 @@ fn profile_distr<D: Distribution>(distr: D, map_size: usize, c: &mut Criterion) 
     let c = &mut c.benchmark_group(name);
     c.sampling_mode(criterion::SamplingMode::Flat);
 
-    type RapidhashV1 = rapidhash::v1::RapidInlineBuildHasher;
-    type RapidhashV2 = rapidhash::v2::RapidInlineBuildHasher;
+    type RapidhashV1 = rapidhash::v1::RapidBuildHasher;
+    type RapidhashV2 = rapidhash::v2::RapidBuildHasher;
 
     profile_hashonly::<RapidhashV1, _>("rapidhash-v1", distr.clone(), c);
     profile_hashonly::<RapidhashV2, _>("rapidhash-v2", distr.clone(), c);

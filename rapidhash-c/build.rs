@@ -14,27 +14,21 @@ fn main() {
         panic!("Failed to properly resolve cpp/ dir: {}", dir.display());
     }
 
-    cc::Build::new()
-        .cpp(true)
-        .file(dir.join("rapidhash_v1_wrapper.cpp"))
-        .include(&dir)
-        .std("c++20")
-        .opt_level(3)
-        .flag_if_supported("-march=native")
-        .compile("rapidhash_v1");
+    for i in ["1", "2", "2_1", "3"] {
+        let header = format!("rapidhash_v{i}.hpp");
+        let wrapper = format!("rapidhash_v{i}_wrapper.cpp");
+        let library = format!("rapidhash_v{i}");
 
-    cc::Build::new()
-        .cpp(true)
-        .file(dir.join("rapidhash_v2_wrapper.cpp"))
-        .include(&dir)
-        .std("c++20")
-        .opt_level(3)
-        .flag_if_supported("-march=native")
-        .compile("rapidhash_v2");
+        cc::Build::new()
+            .cpp(true)
+            .file(dir.join(&wrapper))
+            .include(&dir)
+            .std("c++20")
+            .opt_level(3)
+            .flag_if_supported("-march=native")
+            .compile(&library);
 
-    println!("cargo:rerun-if-changed={}/rapidhash_v1.hpp", dir.display());
-    println!("cargo:rerun-if-changed={}/rapidhash_v1_wrapper.cpp", dir.display());
-
-    println!("cargo:rerun-if-changed={}/rapidhash_v2.hpp", dir.display());
-    println!("cargo:rerun-if-changed={}/rapidhash_v2_wrapper.cpp", dir.display());
+        println!("cargo:rerun-if-changed={}/{header}", dir.display());
+        println!("cargo:rerun-if-changed={}/{wrapper}", dir.display());
+    }
 }

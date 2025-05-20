@@ -15,6 +15,7 @@ pub fn bench(c: &mut Criterion) {
         ("hash/rapidhash_raw", Box::new(bench_rapidhash_raw)),
         ("hash/rapidhash_cc_v1", Box::new(bench_rapidhash_cc_v1)),
         ("hash/rapidhash_cc_v2", Box::new(bench_rapidhash_cc_v2)),
+        ("hash/rapidhash_cc_v3", Box::new(bench_rapidhash_cc_v3)),
         ("hash/default", Box::new(bench_default)),
         ("hash/fxhash", Box::new(bench_fxhash)),
         ("hash/gxhash", Box::new(bench_gxhash)),
@@ -90,9 +91,10 @@ macro_rules! bench_hash_emails_raw {
 }
 
 bench_hash_emails!(bench_rapidhash, rapidhash::RapidBuildHasher::default());
-bench_hash_emails!(bench_rapidhash_inline, rapidhash::RapidInlineBuildHasher::default());
+bench_hash_emails!(bench_rapidhash_inline, rapidhash::RapidBuildHasher::default());
 bench_hash_emails_raw!(bench_rapidhash_cc_v1, rapidhash_c::rapidhashcc_v1);
 bench_hash_emails_raw!(bench_rapidhash_cc_v2, rapidhash_c::rapidhashcc_v2);
+bench_hash_emails_raw!(bench_rapidhash_cc_v3, rapidhash_c::rapidhashcc_v3);
 bench_hash_emails_raw!(bench_rapidhash_raw, rapidhash::rapidhash_seeded);
 bench_hash_emails!(bench_default, std::hash::RandomState::default());
 bench_hash_emails!(bench_fxhash, fxhash::FxBuildHasher::default());

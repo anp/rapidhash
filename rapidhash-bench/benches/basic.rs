@@ -19,6 +19,9 @@ pub fn bench(c: &mut Criterion) {
         ("hash/rapidhash_raw", Box::new(vector::bench_rapidhash_raw), Box::new(int::bench_rapidhash_raw), Box::new(object::bench_rapidhash)),
         ("hash/rapidhash_cc_v1", Box::new(vector::bench_rapidhash_cc_v1), Box::new(int::bench_rapidhash_cc_v1), Box::new(object::bench_rapidhash)),
         ("hash/rapidhash_cc_v2", Box::new(vector::bench_rapidhash_cc_v2), Box::new(int::bench_rapidhash_cc_v2), Box::new(object::bench_rapidhash)),
+        ("hash/rapidhash_cc_v2_1", Box::new(vector::bench_rapidhash_cc_v2_1), Box::new(int::bench_rapidhash_cc_v2_1), Box::new(object::bench_rapidhash)),
+        ("hash/rapidhash_cc_v3", Box::new(vector::bench_rapidhash_cc_v3), Box::new(int::bench_rapidhash_cc_v3), Box::new(object::bench_rapidhash)),
+        // ("hash/rapidhash_cc_v3na", Box::new(vector::bench_rapidhash_cc_v3), Box::new(int::bench_rapidhash_cc_v3), Box::new(object::bench_rapidhash)),
         ("hash/default", Box::new(vector::bench_default), Box::new(int::bench_default), Box::new(object::bench_default)),
         ("hash/fxhash", Box::new(vector::bench_fxhash), Box::new(int::bench_fxhash), Box::new(object::bench_fxhash)),
         ("hash/gxhash", Box::new(vector::bench_gxhash), Box::new(int::bench_gxhash), Box::new(object::bench_gxhash)),
@@ -35,16 +38,22 @@ pub fn bench(c: &mut Criterion) {
         ("hash/foldhash", Box::new(vector::bench_foldhash), Box::new(int::bench_foldhash), Box::new(object::bench_foldhash)),
     ];
 
-    let sizes = [2usize, 8, 16, 25, 50, 64, 160, 256, 1024, 4096];
+    let sizes = [2usize, 8, 16, 25, 50, 64, 80, 160, 256, 350, 1024, 4096, 65536, 1024 * 1024 * 500];
 
     for (name, string_fn, int_fn, object_fn) in groups.into_iter() {
         let mut group = c.benchmark_group(name.to_string());
         for size in sizes {
             let name = "str_".to_string() + &size.to_string();
+            if size > 1024 * 1024 {
+                group.sample_size(10);
+            } else {
+                group.sample_size(100);
+            }
             group.throughput(Throughput::Bytes(size as u64));
             group.bench_function(name, string_fn(size));
         }
 
+        group.sample_size(100);
         group.throughput(Throughput::Elements(1));
         if name == &"hash/rapidhash" {
             group.bench_function("u8", int::bench_rapidhash_u8());
@@ -56,13 +65,13 @@ pub fn bench(c: &mut Criterion) {
             group.bench_function("u64", int_fn());
         }
 
-        if name.ends_with("_raw") {
+        if name.ends_with("_raw") || name.contains("rapidhash_cc") {
             continue;  // cannot hash objects with raw impls
         }
+
         group.bench_function("object", object_fn());
         if name == &"hash/rapidhash" {
-            group.bench_function("object_inline", object::bench_rapidhash_inline());
+            group.bench_function("object_inline", object::bench_rapidhash());
         }
-
     }
 }

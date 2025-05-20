@@ -20,13 +20,6 @@ pub use crate::v2::RapidHashMap;
 #[cfg(any(feature = "std", docsrs))]
 pub use crate::v2::RapidHashSet;
 
-pub use crate::v2::RapidInlineHasher;
-pub use crate::v2::RapidInlineBuildHasher;
-#[cfg(any(feature = "std", docsrs))]
-pub use crate::v2::RapidInlineHashMap;
-#[cfg(any(feature = "std", docsrs))]
-pub use crate::v2::RapidInlineHashSet;
-
 #[cfg(any(feature = "std", feature = "rand", docsrs))]
 pub use crate::v2::RapidRandomState;
 pub use crate::v2::RapidRng;

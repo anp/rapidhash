@@ -13,22 +13,28 @@ def main():
 
 def draw_hash():
     hash_settings = [
-        ("rapidhash", "b"),
-        ("default", "k"),
-        ("fxhash", "r"),
-        ("gxhash", "m"),
-        ("wyhash", "c"),
-        ("ahash", "0.8"),
-        ("t1ha", "0.8"),
-        ("metrohash", "0.8"),
-        ("seahash", "0.8"),
-        ("xxhash", "0.8"),
-        ("foldhash", "y"),
+#         ("rapidhash", "b"),
+        ("rapidhash_cc_v3", "b"),
+        ("rapidhash_cc_v2_1", "y"),
+        ("rapidhash_cc_v2", "g"),
+        ("rapidhash_cc_v1", "r"),
+#         ("rapidhash_cc_v3na", "y"),
+#         ("rapidhash", "b"),
+#         ("default", "k"),
+#         ("fxhash", "r"),
+#         ("gxhash", "m"),
+#         ("wyhash", "c"),
+#         ("ahash", "0.8"),
+#         ("t1ha", "0.8"),
+#         ("metrohash", "0.8"),
+#         ("seahash", "0.8"),
+#         ("xxhash", "0.8"),
+#         ("foldhash", "y"),
     ]
 
     hash_names = [hash_function for hash_function, _ in hash_settings]
 
-    sizes = [2, 8, 16, 25, 50, 64, 160, 256, 1024, 4096]
+    sizes = [2, 8, 16, 25, 50, 64, 80, 160, 256, 350, 1024, 4096]
 
     latency_data = []
     throughput_data = []
@@ -73,7 +79,7 @@ def draw_hash():
     axs[0, 0].set_xscale("log")
     axs[0, 0].set_yscale("log")
     axs[0, 0].set_xticks(sizes)
-    axs[0, 0].set_xticklabels(sizes)
+    axs[0, 0].set_xticklabels(sizes, rotation=90, ha="right")
 
     axs[0, 1].set_title("Throughput (byte stream)")
     axs[0, 1].set_xlabel("Input size (bytes)")
@@ -81,7 +87,7 @@ def draw_hash():
     axs[0, 1].set_xscale("log")
     axs[0, 1].set_yscale("log")
     axs[0, 1].set_xticks(sizes)
-    axs[0, 1].set_xticklabels(sizes)
+    axs[0, 1].set_xticklabels(sizes, rotation=90, ha="right")
 
     axs[1, 0].set_title("Latency (u64 optimised)")
     axs[1, 0].set_ylabel("Latency (ns)")

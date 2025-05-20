@@ -1,4 +1,5 @@
 use std::hash::{BuildHasher, Hasher};
+use std::hint::black_box;
 use criterion::Bencher;
 use rapidhash::RAPID_SEED;
 
@@ -7,7 +8,7 @@ pub fn bench_rapidhash() -> Box<dyn FnMut(&mut Bencher)> {
         b.iter_batched(|| {
             rand::random::<u64>()
         }, |i: u64| {
-            let mut hasher = rapidhash::RapidInlineHasher::default();
+            let mut hasher = rapidhash::RapidHasher::default();
             hasher.write_u64(i);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
@@ -77,7 +78,7 @@ pub fn bench_rapidhash_cc_v1() -> Box<dyn FnMut(&mut Bencher)> {
         b.iter_batched(|| {
             rand::random::<u64>()
         }, |i: u64| {
-            rapidhash_c::rapidhashcc_v1(&i.to_le_bytes(), 0xbdd89aa982704029)
+            black_box(rapidhash_c::rapidhashcc_v1(&i.to_le_bytes(), black_box(rapidhash::v1::RAPID_SEED)))
         }, criterion::BatchSize::SmallInput);
     })
 }
@@ -87,7 +88,27 @@ pub fn bench_rapidhash_cc_v2() -> Box<dyn FnMut(&mut Bencher)> {
         b.iter_batched(|| {
             rand::random::<u64>()
         }, |i: u64| {
-            rapidhash_c::rapidhashcc_v2(&i.to_le_bytes(), RAPID_SEED)
+            black_box(rapidhash_c::rapidhashcc_v2(&i.to_le_bytes(), black_box(rapidhash::v1::RAPID_SEED)))
+        }, criterion::BatchSize::SmallInput);
+    })
+}
+
+pub fn bench_rapidhash_cc_v2_1() -> Box<dyn FnMut(&mut Bencher)> {
+    Box::new(move |b: &mut Bencher| {
+        b.iter_batched(|| {
+            rand::random::<u64>()
+        }, |i: u64| {
+            black_box(rapidhash_c::rapidhashcc_v2_1(&i.to_le_bytes(), black_box(rapidhash::v1::RAPID_SEED)))
+        }, criterion::BatchSize::SmallInput);
+    })
+}
+
+pub fn bench_rapidhash_cc_v3() -> Box<dyn FnMut(&mut Bencher)> {
+    Box::new(move |b: &mut Bencher| {
+        b.iter_batched(|| {
+            rand::random::<u64>()
+        }, |i: u64| {
+            black_box(rapidhash_c::rapidhashcc_v3(&i.to_le_bytes(), black_box(rapidhash::v1::RAPID_SEED)))
         }, criterion::BatchSize::SmallInput);
     })
 }

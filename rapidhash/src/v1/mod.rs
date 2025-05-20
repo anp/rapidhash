@@ -2,7 +2,6 @@
 
 mod rapid_const;
 mod rapid_hasher;
-mod rapid_hasher_inline;
 #[cfg(any(feature = "std", docsrs))]
 mod rapid_file;
 #[cfg(any(feature = "std", feature = "rand", docsrs))]
@@ -13,8 +12,6 @@ mod rng;
 pub use crate::v1::rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, RAPID_SEED};
 #[doc(inline)]
 pub use crate::v1::rapid_hasher::*;
-#[doc(inline)]
-pub use crate::v1::rapid_hasher_inline::*;
 #[doc(inline)]
 #[cfg(any(feature = "std", docsrs))]
 pub use crate::v1::rapid_file::*;
@@ -196,11 +193,6 @@ mod tests {
                     rust_hasher.write(&data);
                     let rust_hasher_hash = rust_hasher.finish();
                     assert_eq!(rust_hash, rust_hasher_hash, "Hasher mismatch with input {} byte {} bit {}", len, byte, bit);
-
-                    let mut inline_hasher = RapidInlineBuildHasher::default().build_hasher();
-                    inline_hasher.write(&data);
-                    let inline_hasher_hash = inline_hasher.finish();
-                    assert_eq!(rust_hash, inline_hasher_hash, "Inline hasher mismatch with input {} byte {} bit {}", len, byte, bit);
                 }
             }
         }

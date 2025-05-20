@@ -15,7 +15,6 @@ pub fn bench(c: &mut Criterion) {
         Box<dyn Fn(usize) -> Box<dyn FnMut(&mut Bencher)>>,
     )] = &[
         ("map/rapidhash", Box::new(bench_rapidhash), Box::new(bench_rapidhash_u64), Box::new(bench_rapidhash_object)),
-        ("map/rapidhash_inline", Box::new(bench_rapidhash_inline), Box::new(bench_rapidhash_inline_u64), Box::new(bench_rapidhash_inline_object)),
         ("map/default", Box::new(bench_default), Box::new(bench_default_u64), Box::new(bench_default_object)),
         ("map/fxhash", Box::new(bench_fxhash), Box::new(bench_fxhash_u64), Box::new(bench_fxhash_object)),
         ("map/gxhash", Box::new(bench_gxhash), Box::new(bench_gxhash_u64), Box::new(bench_gxhash_object)),
@@ -254,10 +253,6 @@ macro_rules! bench_hashset_obj {
 bench_hashmap_str!(bench_rapidhash, rapidhash::RapidBuildHasher::default());
 bench_hashmap_u64!(bench_rapidhash_u64, rapidhash::RapidBuildHasher::default());
 bench_hashset_obj!(bench_rapidhash_object, rapidhash::RapidBuildHasher::default());
-
-bench_hashmap_str!(bench_rapidhash_inline, rapidhash::RapidInlineBuildHasher::default());
-bench_hashmap_u64!(bench_rapidhash_inline_u64, rapidhash::RapidInlineBuildHasher::default());
-bench_hashset_obj!(bench_rapidhash_inline_object, rapidhash::RapidInlineBuildHasher::default());
 
 bench_hashmap_str!(bench_default, std::hash::RandomState::default());
 bench_hashmap_u64!(bench_default_u64, std::hash::RandomState::default());

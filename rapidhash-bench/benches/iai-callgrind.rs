@@ -6,11 +6,10 @@ use iai_callgrind::{library_benchmark, library_benchmark_group};
 macro_rules! hash_benchmark {
     ($name:ident, $input:expr) => {
         #[library_benchmark]
-        #[bench::rapidhash_v1(&rapidhash::v1::RapidInlineBuildHasher::default(), $input)]
-        // #[bench::rapidhash_v2(&rapidhash::v2::RapidBuildHasher::default(), $input)]
-        #[bench::rapidhash_inline_v2(&rapidhash::v2::RapidInlineBuildHasher::default(), $input)]
+        #[bench::rapidhash_v1(&rapidhash::v1::RapidBuildHasher::default(), $input)]
+        #[bench::rapidhash_v2(&rapidhash::v2::RapidBuildHasher::default(), $input)]
         #[bench::foldhash_quality(&foldhash::quality::FixedState::default(), $input)]
-        // #[bench::foldhash_fast(&foldhash::fast::FixedState::default(), $input)]
+        #[bench::foldhash_fast(&foldhash::fast::FixedState::default(), $input)]
         fn $name<H: BuildHasher + Sized, I: Hash>(hasher: &H, input: I) -> u64 {
             black_box(hasher.hash_one(black_box(input)))
         }
@@ -20,11 +19,10 @@ macro_rules! hash_benchmark {
 macro_rules! hash_bytes {
     ($name:ident, $input:expr) => {
         #[library_benchmark]
-        #[bench::rapidhash_v1(&rapidhash::v1::RapidInlineBuildHasher::default(), $input)]
-        // #[bench::rapidhash_v2(&rapidhash::v2::RapidBuildHasher::default(), $input)]
-        #[bench::rapidhash_inline_v2(&rapidhash::v2::RapidInlineBuildHasher::default(), $input)]
+        #[bench::rapidhash_v1(&rapidhash::v1::RapidBuildHasher::default(), $input)]
+        #[bench::rapidhash_v2(&rapidhash::v2::RapidBuildHasher::default(), $input)]
         #[bench::foldhash_quality(&foldhash::quality::FixedState::default(), $input)]
-        // #[bench::foldhash_fast(&foldhash::fast::FixedState::default(), $input)]
+        #[bench::foldhash_fast(&foldhash::fast::FixedState::default(), $input)]
         fn $name<H: BuildHasher + Sized>(hasher: &H, input: &[u8]) -> u64 {
             let mut hasher = hasher.build_hasher();
             hasher.write(black_box(input));

@@ -16,7 +16,7 @@ mod tests {
     fn foldhash_flip_bit_trial_streaming() {
         use rand::Rng;
 
-        let hash_builder = foldhash::quality::FixedState::default();
+        let hash_builder = foldhash::fast::FixedState::default();
         let mut flips = std::vec![];
 
         for len in 1..=256 {
