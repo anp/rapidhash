@@ -35,7 +35,7 @@ pub const fn rapidhash_seeded(data: &[u8], seed: u64) -> u64 {
 /// Can provide large performance uplifts for fixed-length inputs at compile time.
 #[inline(always)]
 pub const fn rapidhash_inline(data: &[u8], mut seed: u64) -> u64 {
-    seed = rapidhash_seed(seed).wrapping_add(data.len() as u64);
+    seed = rapidhash_seed(seed);  // .wrapping_add(data.len() as u64);
     let (a, b, seed) = rapidhash_core(0, 0, seed, data);
     rapidhash_finish(a, b, seed)
 }
@@ -99,6 +99,7 @@ pub(super) const fn rapidhash_core(mut a: u64, mut b: u64, mut seed: u64, data: 
         return rapidhash_core_cold(a, b, seed, data);
     }
 
+    seed = seed.wrapping_add(data.len() as u64);
     a ^= RAPID_SECRET[1];
     b ^= seed;
 
@@ -229,6 +230,8 @@ const fn rapidhash_core_cold(mut a: u64, mut b: u64, mut seed: u64, data: &[u8])
 
     a ^= read_u64(data, data.len() - 16);
     b ^= read_u64(data, data.len() - 8);
+
+    seed = seed.wrapping_add(data.len() as u64);
 
     a ^= RAPID_SECRET[1];
     b ^= seed;

@@ -60,3 +60,36 @@ bindings!(rapidhash_v2_extern, rapidhashcc_v2, "rapidhash_v2", tests_v2);
 bindings!(rapidhash_v2_1_extern, rapidhashcc_v2_1, "rapidhash_v2_1", tests_v2_1);
 bindings!(rapidhash_v2_2_extern, rapidhashcc_v2_2, "rapidhash_v2_2", tests_v2_2);
 bindings!(rapidhash_v3_extern, rapidhashcc_v3, "rapidhash_v3", tests_v3);
+
+#[cfg(test)]
+mod tests_verification {
+    use super::*;
+
+    /// Used to generate the SMHasher3 selftest expected values.
+    #[test]
+    fn verification_v3() {
+        let inputs: [(u64, &str); 8] = [
+            (0x0fce4257ab06643c, ""),
+            (0x6068093a933c79ad, "a"),
+            (0x4dd5a1964cd5e715, "abc"),
+            (0x4005b3c2c8cf6b85, "message digest"),
+            (0x4846cfa4bda06275, "abcdefghijklmnopqrstuvwxyz"),
+            (0x3420e11fc0f7ae03, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"),
+            (0x0e5efb3a4c2f7d79, "12345678901234567890123456789012345678901234567890123456789012345678901234567890"),
+            (0x9376b1483d42b69d, "vlong123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"),
+        ];
+
+        for (i, (expected, input)) in inputs.iter().enumerate() {
+            // let seed = preseed_v3(0);
+            let result = rapidhashcc_v3(input.as_bytes(), i as u64);
+            let prefix: String = input.chars().take(16).collect();
+            assert_eq!(
+                result, *expected,
+                "Got 0x{} for input {} of '{}'",
+                hex::encode(result.to_be_bytes()),
+                i,
+                prefix,
+            );
+        }
+    }
+}

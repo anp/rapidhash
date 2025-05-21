@@ -1,7 +1,6 @@
 #[cfg(feature = "rng")]
 use rand_core::{RngCore, SeedableRng, impls};
-use crate::v3::rapid_const::{rapid_mix, RAPID_SECRET};
-use crate::v3::RAPID_SEED;
+use super::rapid_const::{rapid_mix, RAPID_SECRET, RAPID_SEED};
 
 /// Generate a random number using rapidhash mixing.
 ///
@@ -127,9 +126,7 @@ impl RapidRng {
     /// Export the current state of the random number generator.
     #[inline]
     pub fn state(&self) -> [u8; 8] {
-        let mut state = [0; 8];
-        state[0..8].copy_from_slice(&self.seed.to_le_bytes());
-        state
+        self.seed.to_le_bytes()
     }
 
     #[inline]
@@ -158,12 +155,12 @@ impl RngCore for RapidRng {
 
 #[cfg(feature = "rng")]
 impl SeedableRng for RapidRng {
-    type Seed = [u8; 24];
+    type Seed = [u8; 8];
 
     #[inline]
     fn from_seed(seed: Self::Seed) -> Self {
         Self {
-            seed: u64::from_le_bytes(seed[0..8].try_into().unwrap()),
+            seed: u64::from_le_bytes(seed),
         }
     }
 

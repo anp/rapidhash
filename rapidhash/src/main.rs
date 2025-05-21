@@ -40,6 +40,7 @@ pub fn main() {
         println!("[opts]");
         println!("  --v1  Use v1 hashing algorithm (must have v1 feature enabled)");
         println!("  --v2  Use v2 hashing algorithm (default; must have v2 or vlatest feature enabled)");
+        println!("  --v3  Use v3 hashing algorithm (must have v3 feature enabled)");
         println!("[filename]");
         println!("  Providing a filename is optional and will read a file directly. Requires the std");
         println!("  feature to be enabled. Otherwise input is read from stdin.");
@@ -52,7 +53,7 @@ pub fn main() {
     }
 
     // file name is the first non-option argument
-    let filename = args.iter().filter(|a| !a.starts_with('-')).next();
+    let filename = args.iter().skip(1).filter(|a| !a.starts_with('-')).next();
 
     let v1 = args.iter().any(|a| a == "--v1");
     let v2 = args.iter().any(|a| a == "--v2") || !v1;
@@ -63,33 +64,35 @@ pub fn main() {
 
     let hash: u64 = match filename {
         None => {
-            let mut buffer = Vec::with_capacity(1024);
-            std::io::stdin().read_to_end(&mut buffer).expect("Could not read from stdin.");
+            rapidhash::v3::rapidhash_file(std::io::stdin()).expect("Failed to read from stdin")
 
-            #[allow(unreachable_code)]
-            #[allow(unused_variables)]
-            match (v1, v2) {
-                (true, false) => {
-                    #[cfg(not(feature = "v1"))]
-                    panic!("v1 feature is not enabled.");
-
-                    #[cfg(feature = "v1")]
-                    rapidhash::v1::rapidhash(&buffer)
-                }
-                (false, true) => {
-                    #[cfg(not(any(feature = "v2", feature = "vlatest")))]
-                    panic!("v2 or vlatest feature is not enabled.");
-
-                    #[cfg(feature = "v2")] {
-                        rapidhash::v2::rapidhash(&buffer)
-                    }
-
-                    #[cfg(all(feature = "vlatest", not(feature = "v2")))] {
-                        rapidhash::rapidhash(&buffer)
-                    }
-                }
-                _ => unreachable!("Logic error."),
-            }
+            // let mut buffer = Vec::with_capacity(1024);
+            // std::io::stdin().read_to_end(&mut buffer).expect("Could not read from stdin.");
+            //
+            // #[allow(unreachable_code)]
+            // #[allow(unused_variables)]
+            // match (v1, v2) {
+            //     (true, false) => {
+            //         #[cfg(not(feature = "v1"))]
+            //         panic!("v1 feature is not enabled.");
+            //
+            //         #[cfg(feature = "v1")]
+            //         rapidhash::v1::rapidhash(&buffer)
+            //     }
+            //     (false, true) => {
+            //         #[cfg(not(any(feature = "v2", feature = "vlatest")))]
+            //         panic!("v2 or vlatest feature is not enabled.");
+            //
+            //         #[cfg(feature = "v2")] {
+            //             rapidhash::v2::rapidhash(&buffer)
+            //         }
+            //
+            //         #[cfg(all(feature = "vlatest", not(feature = "v2")))] {
+            //             rapidhash::rapidhash(&buffer)
+            //         }
+            //     }
+            //     _ => unreachable!("Logic error."),
+            // }
         }
 
         #[allow(unreachable_code)]
@@ -99,33 +102,32 @@ pub fn main() {
                 panic!("File reading is not supported without the `std` feature.");
             }
 
-            #[cfg(feature = "std")]
-            match (v1, v2) {
-                (true, false) => {
-                    #[cfg(not(feature = "v1"))]
-                    panic!("v1 feature is not enabled.");
+            let mut file = std::fs::File::open(filename).expect("Could not open file.");
+            rapidhash::v3::rapidhash_file(&mut file).expect("Failed to hash file.")
 
-                    let mut file = std::fs::File::open(filename).expect("Could not open file.");
-
-                    #[cfg(feature = "v1")]
-                    rapidhash::v1::rapidhash_file(&mut file).expect("Failed to hash file.")
-                }
-                (false, true) => {
-                    #[cfg(not(any(feature = "v2", feature = "vlatest")))]
-                    panic!("v2 or vlatest feature is not enabled.");
-
-                    let mut file = std::fs::File::open(filename).expect("Could not open file.");
-
-                    #[cfg(feature = "v2")] {
-                        rapidhash::v2::rapidhash_file(&mut file).expect("Failed to hash file.")
-                    }
-
-                    #[cfg(all(feature = "vlatest", not(feature = "v2")))] {
-                        rapidhash::rapidhash_file(&mut file).expect("Failed to hash file.")
-                    }
-                }
-                _ => unreachable!("Logic error."),
-            }
+            // #[cfg(feature = "std")]
+            // match (v1, v2) {
+            //     (true, false) => {
+            //         #[cfg(not(feature = "v1"))]
+            //         panic!("v1 feature is not enabled.");
+            //
+            //         #[cfg(feature = "v1")]
+            //         rapidhash::v1::rapidhash_file(&mut file).expect("Failed to hash file.")
+            //     }
+            //     (false, true) => {
+            //         #[cfg(not(any(feature = "v2", feature = "vlatest")))]
+            //         panic!("v2 or vlatest feature is not enabled.");
+            //
+            //         #[cfg(feature = "v2")] {
+            //             rapidhash::v2::rapidhash_file(&mut file).expect("Failed to hash file.")
+            //         }
+            //
+            //         #[cfg(all(feature = "vlatest", not(feature = "v2")))] {
+            //             rapidhash::rapidhash_file(&mut file).expect("Failed to hash file.")
+            //         }
+            //     }
+            //     _ => unreachable!("Logic error."),
+            // }
         }
     };
 

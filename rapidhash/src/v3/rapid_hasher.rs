@@ -90,6 +90,11 @@ impl<const AVALANCHE: bool> BuildHasher for RapidBuildHasher<AVALANCHE> {
     /// too many instructions and if x.hash() isn't inlined it can be 5x slower in a bunch of
     /// benchmarks... Frustrating voodoo to be up against! An alternative is to remove the sponge
     /// and hash numbers in a more optimal way.
+    ///
+    /// Ultimately `write_num` and `finish()` are more important to be inlined than the
+    /// `write(bytes)` as they can optimise away the sponge flushing/if logic. Write bytes is
+    /// simply incurring a single function call, unless the bytes are of compile-time known length,
+    /// in which case there are large gains again.
     #[inline]  // TODO: choose what to set here
     fn hash_one<T: Hash>(&self, x: T) -> u64
     where
@@ -193,41 +198,52 @@ impl<const AVALANCHE: bool> RapidHasher<AVALANCHE> {
             "usize is wider than u64. Please raise a github issue to support this."
         );
 
-        self.seed = self.seed.wrapping_add(bytes.len() as u64);
+        // self.seed = self.seed.wrapping_add(bytes.len() as u64);
         let (a, b, seed) = rapidhash_core(self.a, self.b, self.seed, bytes);
         self.a = a;
         self.b = b;
         self.seed = seed;
     }
 
+    /// This function needs to be as small as possible to have as high a chance of being inlined as
+    /// possible... Annoyingly, not I'm sure we can get much smaller.
     // TODO: 32 and 64 bit usize
     #[inline(always)]
     const fn write_num<const N: u8>(&mut self, bytes: u128) {
-        // the order of this if/else is temperamental and can cause the compiler to not inline it
-        if self.buf_len + N > 128 {
-            // let mut a = self.a ^ self.buf as u64 ^ RAPID_SECRET[1];
-            // let mut b = self.b ^ (self.buf >> self.buf_len.saturating_sub(64)) as u64 ^ self.seed;
-            // let mut a = self.buf as u64; //  ^ RAPID_SECRET[1];
-            // let mut b = (self.buf >> 64) as u64; // ^ self.seed;
-            // let r = (a as u128) * (b as u128);
-            // self.seed = (r >> 64) as u64 ^ r as u64;
-            self.flush_buf();
-            self.buf = bytes;
-            self.buf_len = N;
-        } else {
-            self.buf |= bytes << self.buf_len;
-            self.buf_len += N;
-        }
+        self.a ^= bytes as u64 ^ RAPID_SECRET[1];
+        self.b ^= bytes as u64 ^ self.seed;
+        // let mut b = self.b ^ self.buf ^ self.seed;
+        let (a, b) = super::rapid_const::rapid_mum(self.a, self.b);
+        self.a = a;
+        self.b = b;
+
+        // // the order of this if/else is temperamental and can cause the compiler to not inline it
+        // if self.buf_len + N > 128 {
+        //     // let mut a = self.a ^ self.buf as u64 ^ RAPID_SECRET[1];
+        //     // let mut b = self.b ^ (self.buf >> self.buf_len.saturating_sub(64)) as u64 ^ self.seed;
+        //     // let mut a = self.buf as u64; //  ^ RAPID_SECRET[1];
+        //     // let mut b = (self.buf >> 64) as u64; // ^ self.seed;
+        //     // let r = (a as u128) * (b as u128);
+        //     // self.seed = (r >> 64) as u64 ^ r as u64;
+        //     self.flush_buf_no_inline::<N>(bytes);
+        //     // self.buf = bytes;
+        //     // self.buf_len = N;
+        // } else {
+        //     self.buf |= bytes << self.buf_len;
+        //     self.buf_len += N;
+        // }
     }
 
     #[cold]
     #[inline(never)]
-    const fn flush_buf_no_inline(&mut self) {
-        self.flush_buf()
+    const fn flush_buf_no_inline<const N: u8>(&mut self, bytes: u128) {
+        self.flush_buf();
+        self.buf = bytes;
+        self.buf_len = N;
     }
 
     #[inline(always)]
-    #[cold]
+    // #[cold]
     const fn flush_buf(&mut self) {
         // we use a saturating sub here so that if only half of the buffer has been written, we can
         // also take as much of the buffer as we can into the b state.
@@ -415,6 +431,8 @@ impl<const AVALANCHE: bool> Hasher for RapidHasher<AVALANCHE> {
     fn write_isize(&mut self, i: isize) {
         self.write_num::<64>(i as u128);
     }
+
+    // TODO: cfg on write_str?
 }
 
 #[cfg(test)]
