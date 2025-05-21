@@ -14,9 +14,9 @@ fn main() {
         panic!("Failed to properly resolve cpp/ dir: {}", dir.display());
     }
 
-    for i in ["1", "2", "2_1", "3"] {
+    for i in ["1", "2", "2_1", "2_2", "3"] {
         let header = format!("rapidhash_v{i}.hpp");
-        let wrapper = format!("rapidhash_v{i}_wrapper.cpp");
+        let wrapper = format!("rapidhash_v{i}.cpp");
         let library = format!("rapidhash_v{i}");
 
         cc::Build::new()

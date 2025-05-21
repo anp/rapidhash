@@ -36,9 +36,9 @@ pub fn rapidhash_file_seeded(data: &mut File, seed: u64) -> std::io::Result<u64>
 pub fn rapidhash_file_inline(data: &mut File, mut seed: u64) -> std::io::Result<u64> {
     let len = data.metadata()?.len();
     let mut reader = BufReader::new(data);
-    seed = rapidhash_seed(seed, len);
-    let (a, b, _) = rapidhash_file_core(0, 0, seed, len as usize, &mut reader)?;
-    Ok(rapidhash_finish(a, b, len))
+    seed = rapidhash_seed(seed).wrapping_add(len);
+    let (a, b, seed) = rapidhash_file_core(0, 0, seed, len as usize, &mut reader)?;
+    Ok(rapidhash_finish(a, b, seed))
 }
 
 #[inline(always)]
@@ -62,7 +62,7 @@ fn rapidhash_file_core(mut a: u64, mut b: u64, mut seed: u64, len: usize, iter: 
             a = ((data[0] as u64) << 56) | data[data.len() - 1] as u64;
             b = data[data.len() >> 1] as u64;
         }
-    } else if len > 64 {
+    } else if len > 288 {
         let mut remaining = len;
         let mut buf = [0u8; 448];
 
@@ -152,20 +152,60 @@ fn rapidhash_file_core(mut a: u64, mut b: u64, mut seed: u64, len: usize, iter: 
         a ^= read_u64(&buf, end - 16);
         b ^= read_u64(&buf, end - 8);
     } else {
-        let data = &mut [0u8; 64];
-        iter.read_exact(&mut data[0..len])?;
-        let slice = &data[..len];
+        let mut remaining = len;
+        let mut buf = [0u8; 192];
 
-        seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
-        if slice.len() > 32 {
-            seed = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ seed);
-            if slice.len() > 48 {
-                seed = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[1], read_u64(slice, 40) ^ seed);
+        // slice is a view on the buffer that we use for reading into, and reading from, depending
+        // on the stage of the loop.
+        let mut slice = &mut buf[..96];
+        let end;
+
+        if remaining > 48 {
+            // because we're using a buffered reader, it might be worth unrolling this loop further
+            let mut see1 = seed;
+            let mut see2 = seed;
+            while remaining >= 96 {
+                // read into and process using the first half of the buffer
+                iter.read_exact(&mut slice)?;
+                seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
+                see1 = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
+                see2 = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
+                seed = rapid_mix(read_u64(slice, 48) ^ RAPID_SECRET[0], read_u64(slice, 56) ^ seed);
+                see1 = rapid_mix(read_u64(slice, 64) ^ RAPID_SECRET[1], read_u64(slice, 72) ^ see1);
+                see2 = rapid_mix(read_u64(slice, 80) ^ RAPID_SECRET[2], read_u64(slice, 88) ^ see2);
+                remaining -= 96;
+            }
+
+            // remaining might be up to 95 bytes, so we read into the second half of the buffer,
+            // which allows us to negative index safely in the final a and b xor using `end`.
+            slice = &mut buf[96..96 + remaining];
+            iter.read_exact(&mut slice)?;
+            end = 96 + remaining;
+
+            if remaining >= 48 {
+                seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
+                see1 = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
+                see2 = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
+                slice = &mut buf[96 + 48..96 + remaining];
+                remaining -= 48;
+            }
+
+            seed ^= see1 ^ see2;
+        } else {
+            end = remaining;
+            slice = &mut buf[..remaining];
+            iter.read_exact(&mut slice)?;
+        }
+
+        if remaining > 16 {
+            seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
+            if remaining > 32 {
+                seed = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ seed);
             }
         }
 
-        a = read_u64(slice, slice.len() - 16);
-        b = read_u64(slice, slice.len() - 8);
+        a ^= read_u64(&buf, end - 16);
+        b ^= read_u64(&buf, end - 8);
     }
 
     a ^= RAPID_SECRET[1];
@@ -196,7 +236,7 @@ mod tests {
             file.seek(SeekFrom::Start(0)).unwrap();
 
             assert_eq!(
-                crate::v2::rapidhash(&data),
+                super::super::rapidhash(&data),
                 rapidhash_file(&mut file).unwrap(),
                 "Mismatch for input len: {}", &data.len()
             );

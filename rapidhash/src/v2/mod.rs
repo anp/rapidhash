@@ -174,7 +174,7 @@ mod tests {
     #[test]
     fn compare_to_c() {
         use rand::Rng;
-        use rapidhash_c::rapidhashcc_v2;
+        use rapidhash_c::rapidhashcc_v2_2;
 
         for len in 0..=512 {
             let mut data = std::vec![0; len];
@@ -186,7 +186,7 @@ mod tests {
                     data[byte] ^= 1 << bit;
 
                     let rust_hash = rapidhash_seeded(&data, RAPID_SEED);
-                    let c_hash = rapidhashcc_v2(&data, RAPID_SEED);
+                    let c_hash = rapidhashcc_v2_2(&data, RAPID_SEED);
                     assert_eq!(rust_hash, c_hash, "Mismatch with input {} byte {} bit {}", len, byte, bit);
 
                     let mut rust_hasher = RapidBuildHasher::default().build_hasher();

@@ -27,7 +27,7 @@ pub const fn rapidhash_inline(data: &[u8], mut seed: u64) -> u64 {
 
 #[inline(always)]
 pub(super) const fn rapid_mum(a: u64, b: u64) -> (u64, u64) {
-    let r = a as u128 * b as u128;
+    let r = (a as u128).wrapping_mul(b as u128);
     (r as u64, (r >> 64) as u64)
 }
 

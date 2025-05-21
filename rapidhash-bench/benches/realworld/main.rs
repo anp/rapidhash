@@ -162,7 +162,7 @@ fn profile_distr<D: Distribution>(distr: D, map_size: usize, c: &mut Criterion) 
     // profile_hashonly::<fxhash::FxBuildHasher, _>("fxhash", distr.clone(), c);
     // profile_hashonly::<ahash::RandomState, _>("ahash", distr.clone(), c);
     profile_hashonly::<std::hash::RandomState, _>("siphash", distr.clone(), c);
-
+    
     profile_lookup_miss::<RapidhashV1, _>("rapidhash-v1", distr.clone(), map_size, c);
     // profile_lookup_miss::<RapidhashV2, _>("rapidhash-v2", distr.clone(), map_size, c);
     profile_lookup_miss::<RapidhashV3, _>("rapidhash-v3", distr.clone(), map_size, c);
@@ -171,7 +171,7 @@ fn profile_distr<D: Distribution>(distr: D, map_size: usize, c: &mut Criterion) 
     // profile_lookup_miss::<fxhash::FxBuildHasher, _>("fxhash", distr.clone(), map_size, c);
     // profile_lookup_miss::<ahash::RandomState, _>("ahash", distr.clone(), map_size, c);
     profile_lookup_miss::<std::hash::RandomState, _>("siphash", distr.clone(), map_size, c);
-
+    
     profile_lookup_hit::<RapidhashV1, _>("rapidhash-v1", distr.clone(), map_size, c);
     // profile_lookup_hit::<RapidhashV2, _>("rapidhash-v2", distr.clone(), map_size, c);
     profile_lookup_hit::<RapidhashV3, _>("rapidhash-v3", distr.clone(), map_size, c);
@@ -180,7 +180,7 @@ fn profile_distr<D: Distribution>(distr: D, map_size: usize, c: &mut Criterion) 
     // profile_lookup_hit::<fxhash::FxBuildHasher, _>("fxhash", distr.clone(), map_size, c);
     // profile_lookup_hit::<ahash::RandomState, _>("ahash", distr.clone(), map_size, c);
     profile_lookup_hit::<std::hash::RandomState, _>("siphash", distr.clone(), map_size, c);
-
+    
     profile_set_build::<RapidhashV1, _>("rapidhash-v1", distr.clone(), map_size, c);
     // profile_set_build::<RapidhashV2, _>("rapidhash-v2", distr.clone(), map_size, c);
     profile_set_build::<RapidhashV3, _>("rapidhash-v3", distr.clone(), map_size, c);

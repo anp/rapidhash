@@ -35,9 +35,9 @@ pub const fn rapidhash_seeded(data: &[u8], seed: u64) -> u64 {
 /// Can provide large performance uplifts for fixed-length inputs at compile time.
 #[inline(always)]
 pub const fn rapidhash_inline(data: &[u8], mut seed: u64) -> u64 {
-    seed = rapidhash_seed(seed, data.len() as u64);
-    let (a, b, _) = rapidhash_core(0, 0, seed, data);
-    rapidhash_finish(a, b, data.len() as u64)
+    seed = rapidhash_seed(seed).wrapping_add(data.len() as u64);
+    let (a, b, seed) = rapidhash_core(0, 0, seed, data);
+    rapidhash_finish(a, b, seed)
 }
 
 /// 64*64 to 128 bit multiply
@@ -55,23 +55,27 @@ pub const fn rapidhash_inline(data: &[u8], mut seed: u64) -> u64 {
 /// Xors and overwrites A contents with C's low 64 bits.
 /// Xors and overwrites B contents with C's high 64 bits.
 #[inline(always)]
+#[must_use]
 pub(super) const fn rapid_mum(a: u64, b: u64) -> (u64, u64) {
-    let r = a as u128 * b as u128;
+    let r = (a as u128).wrapping_mul(b as u128);
     (r as u64, (r >> 64) as u64)
 }
 
 #[inline(always)]
+#[must_use]
 pub(super) const fn rapid_mix(a: u64, b: u64) -> u64 {
     let (a, b) = rapid_mum(a, b);
     a ^ b
 }
 
 #[inline(always)]
-pub(super) const fn rapidhash_seed(seed: u64, len: u64) -> u64 {
-    seed ^ rapid_mix(seed ^ RAPID_SECRET[2], RAPID_SECRET[1]) ^ len
+#[must_use]
+pub(super) const fn rapidhash_seed(seed: u64) -> u64 {
+    seed ^ rapid_mix(seed ^ RAPID_SECRET[2], RAPID_SECRET[1])
 }
 
 #[inline(always)]
+#[must_use]
 pub(super) const fn rapidhash_core(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
     // TODO: benchmark without the a,b XOR -- eg. a oneshot
     if data.len() <= 16 {
@@ -87,14 +91,12 @@ pub(super) const fn rapidhash_core(mut a: u64, mut b: u64, mut seed: u64, data: 
             a ^= ((data[0] as u64) << 56) | data[data.len() - 1] as u64;
             b ^= data[data.len() >> 1] as u64;
         }
-    // } else if data.len() <= 64 {
-    //     // len is 17..=56
-    //     (a, b, seed) = rapidhash_core_17_64(a, b, seed, data);
     } else if data.len() <= 288 {
-        // len is 57..=111
-        (a, b, seed) = rapidhash_core_65_288(a, b, seed, data);
+        // len is 16..=288
+        (a, b, seed) = rapidhash_core_16_288(a, b, seed, data);
     } else {
-        (a, b, seed) = rapidhash_core_cold(a, b, seed, data);
+        // len is >288
+        return rapidhash_core_cold(a, b, seed, data);
     }
 
     a ^= RAPID_SECRET[1];
@@ -104,26 +106,8 @@ pub(super) const fn rapidhash_core(mut a: u64, mut b: u64, mut seed: u64, data: 
     (a, b, seed)
 }
 
-#[inline]
-const fn rapidhash_core_17_64(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
-    let slice = data;
-
-    seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
-    if slice.len() > 32 {
-        seed = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ seed);
-        if slice.len() > 48 {
-            seed = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[1], read_u64(slice, 40) ^ seed);
-        }
-    }
-
-    a ^= read_u64(data, data.len() - 16);
-    b ^= read_u64(data, data.len() - 8);
-
-    (a, b, seed)
-}
-
-#[inline]
-const fn rapidhash_core_65_288(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
+#[must_use]
+const fn rapidhash_core_16_288(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
     let mut slice = data;
 
     if slice.len() > 48 {
@@ -148,13 +132,6 @@ const fn rapidhash_core_65_288(mut a: u64, mut b: u64, mut seed: u64, data: &[u8
             slice = split;
         }
         seed ^= see1 ^ see2;
-
-        if slice.len() > 16 {
-            seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
-            if slice.len() > 32 {
-                seed = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ seed);
-            }
-        }
     }
 
     if slice.len() > 16 {
@@ -175,6 +152,7 @@ const fn rapidhash_core_65_288(mut a: u64, mut b: u64, mut seed: u64, data: &[u8
 /// being inlined which would have a much higher penalty and prevent other optimisations.
 #[cold]
 #[inline(never)]
+#[must_use]
 const fn rapidhash_core_cold(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
     let mut slice = data;
 
@@ -252,12 +230,17 @@ const fn rapidhash_core_cold(mut a: u64, mut b: u64, mut seed: u64, data: &[u8])
     a ^= read_u64(data, data.len() - 16);
     b ^= read_u64(data, data.len() - 8);
 
+    a ^= RAPID_SECRET[1];
+    b ^= seed;
+
+    (a, b) = rapid_mum(a, b);
     (a, b, seed)
 }
 
 #[inline(always)]
-pub(super) const fn rapidhash_finish(a: u64, b: u64, len: u64) -> u64 {
-    rapid_mix(a ^ RAPID_SECRET[7] ^ len, b ^ RAPID_SECRET[1])
+#[must_use]
+pub(super) const fn rapidhash_finish(a: u64, b: u64, seed: u64) -> u64 {
+    rapid_mix(a ^ RAPID_SECRET[7] ^ seed, b ^ RAPID_SECRET[1])
 }
 
 /// Hacky const-friendly memory-safe unaligned bytes to u64. Compiler can't seem to remove the
