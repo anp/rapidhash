@@ -15,10 +15,6 @@ use crate::v2::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, R
 /// # Example
 /// ```
 /// use std::hash::Hasher;
-///
-/// #[cfg(not(feature = "v2"))]
-/// use rapidhash::RapidHasher;
-/// #[cfg(feature = "v2")]
 /// use rapidhash::v2::RapidHasher;
 ///
 /// let mut hasher = RapidHasher::default();
@@ -46,10 +42,6 @@ pub struct RapidHasher {
 /// ```
 /// use std::collections::HashMap;
 /// use std::hash::Hasher;
-///
-/// #[cfg(not(feature = "v2"))]
-/// use rapidhash::RapidBuildHasher;
-/// #[cfg(feature = "v2")]
 /// use rapidhash::v2::RapidBuildHasher;
 ///
 /// let mut map = HashMap::with_hasher(RapidBuildHasher::default());
@@ -108,9 +100,6 @@ impl Default for RapidBuildHasher {
 ///
 /// # Example
 /// ```
-/// #[cfg(not(feature = "v2"))]
-/// use rapidhash::RapidHashMap;
-/// #[cfg(feature = "v2")]
 /// use rapidhash::v2::RapidHashMap;
 ///
 /// let mut map = RapidHashMap::default();
@@ -127,9 +116,6 @@ pub type RapidHashMap<K, V> = std::collections::HashMap<K, V, RapidBuildHasher>;
 ///
 /// # Example
 /// ```
-/// #[cfg(not(feature = "v2"))]
-/// use rapidhash::RapidHashSet;
-/// #[cfg(feature = "v2")]
 /// use rapidhash::v2::RapidHashSet;
 ///
 /// let mut set = RapidHashSet::default();

@@ -4,9 +4,6 @@ mod rapid_const;
 mod rapid_hasher;
 #[cfg(any(feature = "std", docsrs))]
 mod rapid_file;
-#[cfg(any(feature = "std", feature = "rand", docsrs))]
-mod random_state;
-mod rng;
 
 #[doc(inline)]
 pub use rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, RAPID_SEED};
@@ -15,11 +12,6 @@ pub use rapid_hasher::*;
 #[doc(inline)]
 #[cfg(any(feature = "std", docsrs))]
 pub use rapid_file::*;
-#[doc(inline)]
-#[cfg(any(feature = "std", feature = "rand", docsrs))]
-pub use random_state::*;
-#[doc(inline)]
-pub use rng::*;
 
 #[cfg(test)]
 mod tests {

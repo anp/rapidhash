@@ -1,7 +1,12 @@
 #[cfg(feature = "rng")]
 use rand_core::{RngCore, SeedableRng, impls};
 use crate::mix::rapid_mix;
-use crate::v2::rapid_const::{RAPID_SEED, RAPID_SECRET};
+
+/// Uses the V1 rapid seed.
+const RAPID_SEED: u64 = 0xbdd89aa982704029;
+
+/// Uses the V1 rapid secrets.
+const RAPID_SECRET: [u64; 3] = [0x2d358dccaa6c78a5, 0x8bb84b93962eacc9, 0x4b33a62ed433d4a3];
 
 /// Generate a random number using rapidhash mixing.
 ///
@@ -33,10 +38,7 @@ pub fn rapidrng_fast(seed: &mut u64) -> u64 {
 ///
 /// # Example
 /// ```rust
-/// #[cfg(not(feature = "v2"))]
-/// use rapidhash::{rapidrng_fast, rapidrng_time};
-/// #[cfg(feature = "v2")]
-/// use rapidhash::v2::{rapidrng_fast, rapidrng_time};
+/// use rapidhash::rng::{rapidrng_fast, rapidrng_time};
 ///
 /// // choose a non-deterministic random seed (50-100ns)
 /// let mut seed = rapidrng_time(&mut 0);
@@ -55,8 +57,8 @@ pub fn rapidrng_time(seed: &mut u64) -> u64 {
     // This is why we further stretch the teed with multiple rounds of rapid_mix.
     let mut  teed = ((time.as_secs() as u64) << 32) | time.subsec_nanos() as u64;
     teed = rapid_mix::<false>(teed ^ RAPID_SECRET[0], *seed ^ RAPID_SECRET[1]);
-    *seed = rapid_mix::<false>(teed ^ RAPID_SECRET[2], RAPID_SECRET[3]);
-    rapid_mix::<false>(*seed, *seed ^ RAPID_SECRET[4])
+    *seed = rapid_mix::<false>(teed ^ RAPID_SECRET[0], RAPID_SECRET[2]);
+    rapid_mix::<false>(*seed, *seed ^ RAPID_SECRET[1])
 }
 
 /// A random number generator that uses the rapidhash mixing algorithm.
@@ -68,10 +70,7 @@ pub fn rapidrng_time(seed: &mut u64) -> u64 {
 ///
 /// # Example
 /// ```rust
-/// #[cfg(not(feature = "v2"))]
-/// use rapidhash::RapidRng;
-/// #[cfg(feature = "v2")]
-/// use rapidhash::v2::RapidRng;
+/// use rapidhash::rng::RapidRng;
 ///
 /// let mut rng = RapidRng::default();
 /// println!("{}", rng.next());
@@ -127,9 +126,7 @@ impl RapidRng {
     /// Export the current state of the random number generator.
     #[inline]
     pub fn state(&self) -> [u8; 8] {
-        let mut state = [0; 8];
-        state[0..8].copy_from_slice(&self.seed.to_le_bytes());
-        state
+        self.seed.to_le_bytes()
     }
 
     #[inline]
@@ -158,12 +155,12 @@ impl RngCore for RapidRng {
 
 #[cfg(feature = "rng")]
 impl SeedableRng for RapidRng {
-    type Seed = [u8; 24];
+    type Seed = [u8; 8];
 
     #[inline]
     fn from_seed(seed: Self::Seed) -> Self {
         Self {
-            seed: u64::from_le_bytes(seed[0..8].try_into().unwrap()),
+            seed: u64::from_le_bytes(seed),
         }
     }
 

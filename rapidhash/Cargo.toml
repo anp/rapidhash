@@ -3,13 +3,13 @@ name = "rapidhash"
 version = "2.0.0"
 edition = "2021"
 publish = true
-rust-version = "1.77.0"  # limited by slice::first_chunk
+rust-version = "1.82.0"  # limited by &mut const, TODO: benchmark back to 1.77 without mut const
 authors = ["Liam Gray <gmail@liamg.me>"]
 description = "A rust port of rapidhash: an extremely fast, high quality, platform-independent hashing algorithm."
 repository = "https://github.com/hoxxep/rapidhash"
 documentation = "https://docs.rs/rapidhash"
 license = "MIT OR Apache-2.0"
-readme = "README.md"
+readme = "../README.md"
 keywords = ["hash", "hasher", "no-std", "rapidhash"]
 categories = ["algorithms", "no-std"]
 exclude = ["Cargo.lock", ".github", "fuzz", "docs", "rapidhash-c", "rapidhash-bench"]
@@ -23,14 +23,10 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["std", "vlatest"]
+default = ["std"]
 std = []  # enable std library for RapidHashMap and RapidHashSet helpers
 rand = ["dep:rand", "std"]  # enable the rand library for random seed initialisation and RapidRandomState
 rng = ["dep:rand_core"]  # fast random number generator using rapidhash
-v1 = []  # expose the old v1 algorithm module
-v2 = []  # expose the current v2 algorithm module
-v3 = []  # expose the new v3 algorithm module
-vlatest = []  # expose the latest algorithm as default exports - exclude this feature to make all versions explicit
 unsafe = []  # enable unsafe pointer arithmetic to skip unnecessary bounds checks
 nightly = []  # enable nightly and #![feature(hasher_prefixfree_extras)] for a speed boost
 

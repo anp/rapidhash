@@ -1,6 +1,7 @@
 use std::cell::Cell;
 use std::hash::BuildHasher;
-use crate::v1::{rapidrng_fast, RapidHasher};
+use crate::inner::RapidHasher;
+use crate::rng::rapidrng_fast;
 
 /// A [std::collections::hash_map::RandomState] compatible hasher that initializes the [RapidHasher]
 /// algorithm with a random seed.
@@ -12,7 +13,8 @@ use crate::v1::{rapidrng_fast, RapidHasher};
 /// ```rust
 /// use std::collections::HashMap;
 /// use std::hash::Hasher;
-/// use rapidhash::v1::RapidRandomState;
+///
+/// use rapidhash::inner::RapidRandomState;
 ///
 /// let mut map = HashMap::with_hasher(RapidRandomState::default());
 /// map.insert(42, "the answer");
@@ -40,8 +42,8 @@ impl RapidRandomState {
         #[cfg(all(feature = "std", not(feature = "rand")))]
         thread_local! {
             static RANDOM_SEED: Cell<u64> = {
-                let mut seed = crate::v1::RAPID_SEED;
-                Cell::new(crate::v1::rapidrng_time(&mut seed))
+                let mut seed = crate::v2::RAPID_SEED;
+                Cell::new(crate::rng::rapidrng_time(&mut seed))
             }
         }
 
@@ -64,10 +66,10 @@ impl Default for RapidRandomState {
 }
 
 impl BuildHasher for RapidRandomState {
-    type Hasher = RapidHasher;
+    type Hasher = RapidHasher<true, false, false, false>;
 
     fn build_hasher(&self) -> Self::Hasher {
-        RapidHasher::new(self.seed)
+        RapidHasher::new_precomputed_seed(self.seed)
     }
 }
 

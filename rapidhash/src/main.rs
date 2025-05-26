@@ -64,7 +64,7 @@ pub fn main() {
 
     let hash: u64 = match filename {
         None => {
-            rapidhash::v3::rapidhash_file(std::io::stdin()).expect("Failed to read from stdin")
+            rapidhash::inner::rapidhash_file(std::io::stdin()).expect("Failed to read from stdin")
 
             // let mut buffer = Vec::with_capacity(1024);
             // std::io::stdin().read_to_end(&mut buffer).expect("Could not read from stdin.");
@@ -103,7 +103,7 @@ pub fn main() {
             }
 
             let mut file = std::fs::File::open(filename).expect("Could not open file.");
-            rapidhash::v3::rapidhash_file(&mut file).expect("Failed to hash file.")
+            rapidhash::inner::rapidhash_file(&mut file).expect("Failed to hash file.")
 
             // #[cfg(feature = "std")]
             // match (v1, v2) {

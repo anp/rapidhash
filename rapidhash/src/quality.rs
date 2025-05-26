@@ -1,5 +1,6 @@
 //! RapidHasher with a focus on hash quality.
 //!
+//! This is a specific instantiation of the [rapidhash::inner] module with the following settings:
 //! - `AVALANCHE` is enabled.
 //! - `FNV` is disabled.
 //! - `COMPACT` is disabled.
@@ -10,13 +11,13 @@ const FNV: bool = false;
 const COMPACT: bool = false;
 const PROTECTED: bool = false;
 
-use crate::v3;
+use crate::inner;
 
 // TODO: random state etc.
-pub type RapidHasher = v3::RapidHasher<AVALANCHE, FNV, COMPACT, PROTECTED>;
-pub type RapidBuildHasher = v3::RapidBuildHasher<AVALANCHE, FNV, COMPACT, PROTECTED>;
-pub type RapidHashMap<K, V> = v3::RapidHashMap<K, V, AVALANCHE, FNV, COMPACT, PROTECTED>;
-pub type RapidHashSet<K> = v3::RapidHashSet<K, AVALANCHE, FNV, COMPACT, PROTECTED>;
+pub type RapidHasher = inner::RapidHasher<AVALANCHE, FNV, COMPACT, PROTECTED>;
+pub type RapidBuildHasher = inner::RapidBuildHasher<AVALANCHE, FNV, COMPACT, PROTECTED>;
+pub type RapidHashMap<K, V> = inner::RapidHashMap<K, V, AVALANCHE, FNV, COMPACT, PROTECTED>;
+pub type RapidHashSet<K> = inner::RapidHashSet<K, AVALANCHE, FNV, COMPACT, PROTECTED>;
 
 // TODO: use params
-pub type RapidRandomState = v3::RapidRandomState;
+pub type RapidRandomState = inner::RapidRandomState;

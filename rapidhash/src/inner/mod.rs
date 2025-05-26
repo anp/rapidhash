@@ -1,4 +1,21 @@
-//! The rapidhash V2 algorithm.
+//! The rapidhash rust structs, traits, and datastructures.
+//!
+//! This module contains the Hasher, BuildHasher, HashMap, HashSet, and RandomState
+//! implementations. It is recomended to use [rapidhash::fast] or [rapidhash::quality], but for the
+//! advanced user, [rapidhash::inner] can be used directly to customise the compile time options to
+//! modify the hash function.
+//!
+//! Each structure may have the compile time const generics:
+//! - `AVALANCHE`: Whether to use a final avalanche mix step, required to pass SMHasher3. This
+//!   option changes the hash output. Enabled on [rapidhash::quality], disabled on [rapidhash::fast].
+//! - `FNV`: Allow RapidHasher to use FNV when hashing integer types: hashing ints will be twice as
+//!   fast but the hash quality will be lower. This changes the hash output when hashing integers.
+//!   Disabled on [rapidhash::quality], enabled on [rapidhash::fast].
+//! - `COMPACT`: Reduce the code size of the hasher by preventing manually unrolled loops. This does
+//!   _not_ affect the hash output. Disabled on both [rapidhash::quality] and [rapidhash::fast].
+//! - `PROTECTED`: When performing the folded multiply mix step, XOR the a and b back into their
+//!   original values to make it harder for an attacker to generate collisions. This changes the
+//!   hash ouput. Disabled on both [rapidhash::quality] and [rapidhash::fast].
 
 mod rapid_const;
 mod rapid_hasher;
@@ -6,7 +23,6 @@ mod rapid_hasher;
 mod rapid_file;
 #[cfg(any(feature = "std", feature = "rand", docsrs))]
 mod random_state;
-mod rng;
 
 #[doc(inline)]
 pub use rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, RAPID_SEED};
@@ -19,7 +35,7 @@ pub use rapid_file::*;
 #[cfg(any(feature = "std", feature = "rand", docsrs))]
 pub use random_state::*;
 #[doc(inline)]
-pub use rng::*;
+pub use crate::rng::*;
 
 #[cfg(test)]
 mod tests {

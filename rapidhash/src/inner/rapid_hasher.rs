@@ -17,10 +17,7 @@ use super::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, RAPID
 /// ```
 /// use std::hash::Hasher;
 ///
-/// #[cfg(not(feature = "v2"))]
-/// use rapidhash::RapidHasher;
-/// #[cfg(feature = "v2")]
-/// use rapidhash::v2::RapidHasher;
+/// use rapidhash::quality::RapidHasher;
 ///
 /// let mut hasher = RapidHasher::default();
 /// hasher.write(b"hello world");
@@ -48,10 +45,7 @@ pub struct RapidHasher<const AVALANCHE: bool, const FNV: bool, const COMPACT: bo
 /// use std::collections::HashMap;
 /// use std::hash::Hasher;
 ///
-/// #[cfg(not(feature = "v2"))]
-/// use rapidhash::RapidBuildHasher;
-/// #[cfg(feature = "v2")]
-/// use rapidhash::v2::RapidBuildHasher;
+/// use rapidhash::quality::RapidBuildHasher;
 ///
 /// let mut map = HashMap::with_hasher(RapidBuildHasher::default());
 /// map.insert(42, "the answer");
@@ -117,10 +111,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
 ///
 /// # Example
 /// ```
-/// #[cfg(not(feature = "v2"))]
-/// use rapidhash::RapidHashMap;
-/// #[cfg(feature = "v2")]
-/// use rapidhash::v2::RapidHashMap;
+/// use rapidhash::quality::RapidHashMap;
 ///
 /// let mut map = RapidHashMap::default();
 /// map.insert(42, "the answer");
@@ -136,10 +127,7 @@ pub type RapidHashMap<K, V, const AVALANCHE: bool, const FNV: bool, const COMPAC
 ///
 /// # Example
 /// ```
-/// #[cfg(not(feature = "v2"))]
-/// use rapidhash::RapidHashSet;
-/// #[cfg(feature = "v2")]
-/// use rapidhash::v2::RapidHashSet;
+/// use rapidhash::quality::RapidHashSet;
 ///
 /// let mut set = RapidHashSet::default();
 /// set.insert("the answer");
