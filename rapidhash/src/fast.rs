@@ -16,5 +16,7 @@ use crate::inner;
 // TODO: random state etc.
 pub type RapidHasher = inner::RapidHasher<AVALANCHE, FNV, COMPACT, PROTECTED>;
 pub type RapidBuildHasher = inner::RapidBuildHasher<AVALANCHE, FNV, COMPACT, PROTECTED>;
+#[cfg(any(feature = "std", docsrs))]
 pub type RapidHashMap<K, V> = inner::RapidHashMap<K, V, AVALANCHE, FNV, COMPACT, PROTECTED>;
+#[cfg(any(feature = "std", docsrs))]
 pub type RapidHashSet<K> = inner::RapidHashSet<K, AVALANCHE, FNV, COMPACT, PROTECTED>;

@@ -389,6 +389,7 @@ mod tests {
     /// Check the number of collisions when writing numbers.
     #[test]
     #[ignore]
+    #[cfg(feature = "std")]
     fn test_num_collisions() {
         let builder = RapidBuildHasher::<true, false>::default();
         let mut collisions = 0;
