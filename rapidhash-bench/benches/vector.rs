@@ -2,7 +2,6 @@ use std::hash::{BuildHasher, Hasher};
 use std::hint::black_box;
 use criterion::Bencher;
 use rand::Rng;
-use rapidhash::RAPID_SEED;
 
 /// Use .iter_batched_ref to avoid paying the Vec destruction cost, as it's 10x
 /// more expensive than our small benchmarks!!
@@ -13,7 +12,7 @@ pub fn bench_rapidhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            let mut hasher = rapidhash::RapidHasher::default();
+            let mut hasher = rapidhash::quality::RapidHasher::default();
             hasher.write(&bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
@@ -27,7 +26,7 @@ pub fn bench_rapidhash_raw(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            rapidhash::rapidhash_inline(&bytes, RAPID_SEED)
+            rapidhash::v2::rapidhash_inline::<false, false>(&bytes, 0)
         }, criterion::BatchSize::SmallInput);
     })
 }

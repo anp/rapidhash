@@ -10,7 +10,7 @@ use rand::Rng;
 
 /// cargo bench --bench quality --all-features
 fn main() {
-    bench_hasher_quality::<rapidhash::RapidRandomState>("RapidHash");
+    bench_hasher_quality::<rapidhash::quality::RapidRandomState>("RapidHash");
     bench_hasher_quality::<std::collections::hash_map::RandomState>("Default");
     bench_hasher_quality::<BuildHasherDefault<wyhash::WyHash>>("WyHash");
     bench_hasher_quality::<gxhash::GxBuildHasher>("GxHash");

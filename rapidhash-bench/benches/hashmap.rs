@@ -85,9 +85,9 @@ fn sample_string(count: usize, min: usize, max: usize) -> Vec<(String, u64)> {
             .iter()
             .map(|s| (s.clone(), rand::rng().random_range(0..100000)))
             .collect();
-        
+
         words.shuffle(&mut rand::rng());
-        
+
         return words;
     }
 
@@ -250,9 +250,9 @@ macro_rules! bench_hashset_obj {
     };
 }
 
-bench_hashmap_str!(bench_rapidhash, rapidhash::RapidBuildHasher::default());
-bench_hashmap_u64!(bench_rapidhash_u64, rapidhash::RapidBuildHasher::default());
-bench_hashset_obj!(bench_rapidhash_object, rapidhash::RapidBuildHasher::default());
+bench_hashmap_str!(bench_rapidhash, rapidhash::quality::RapidBuildHasher::default());
+bench_hashmap_u64!(bench_rapidhash_u64, rapidhash::quality::RapidBuildHasher::default());
+bench_hashset_obj!(bench_rapidhash_object, rapidhash::quality::RapidBuildHasher::default());
 
 bench_hashmap_str!(bench_default, std::hash::RandomState::default());
 bench_hashmap_u64!(bench_default_u64, std::hash::RandomState::default());

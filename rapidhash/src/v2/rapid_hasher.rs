@@ -1,5 +1,5 @@
 use core::hash::{BuildHasher, Hash, Hasher};
-use crate::v2::rapid_const::{rapid_mix, rapidhash_core, rapidhash_finish, RAPID_SECRET, RAPID_SEED};
+use crate::v2::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
 /// algorithm, and uses `#[inline(always)]` for all methods.
@@ -64,7 +64,7 @@ impl RapidBuildHasher {
     /// New rapid inline build hasher, and pre-compute the seed.
     #[inline]
     pub const fn new(mut seed: u64) -> Self {
-        seed ^= rapid_mix(seed ^ RAPID_SECRET[2], RAPID_SECRET[1]);
+        seed = rapidhash_seed(seed);
         Self { seed }
     }
 }
@@ -151,7 +151,7 @@ impl RapidHasher {
     #[must_use]
     pub const fn new(mut seed: u64) -> Self {
         // do most of the rapidhash_seed initialisation here to avoid doing it on each int
-        seed ^= rapid_mix(seed ^ RAPID_SECRET[2], RAPID_SECRET[1]);
+        seed = rapidhash_seed(seed);
         Self::new_precomputed_seed(seed)
     }
 
@@ -189,7 +189,7 @@ impl RapidHasher {
 
         self.size += bytes.len() as u64;
         self.seed ^= bytes.len() as u64;
-        let (a, b, seed) = rapidhash_core(self.a, self.b, self.seed, bytes);
+        let (a, b, seed) = rapidhash_core::<false, false>(self.a, self.b, self.seed, bytes);
         self.a = a;
         self.b = b;
         self.seed = seed;
@@ -200,7 +200,7 @@ impl RapidHasher {
     #[inline(always)]
     #[must_use]
     pub const fn finish_const(self) -> u64 {
-        rapidhash_finish(self.a, self.b, self.size)
+        rapidhash_finish::<false>(self.a, self.b, self.size)
     }
 }
 

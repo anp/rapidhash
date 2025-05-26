@@ -61,17 +61,21 @@ def table():
     ]
 
     name_repl = {
+        "rapidhash-v3na": "rapidhash-f",
+        "rapidhash-v3": "rapidhash-q",
         "foldhash-fast": "foldhash-f",
         "foldhash-quality": "foldhash-q",
     }
 
     bench_order = ["hashonly", "lookupmiss", "lookuphit", "setbuild"]
     hash_order = [
-        "rapidhash-v1",
-        "rapidhash-v2",
-        "rapidhash-v3",
-        # "foldhash-f",
+#         "rapidhash-v1",
+#         "rapidhash-v2",
+        "rapidhash-f",
+        "rapidhash-q",
+        "foldhash-f",
         "foldhash-q",
+#         "gxhash",
         "fxhash",
         "ahash",
         "siphash"

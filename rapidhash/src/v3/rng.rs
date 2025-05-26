@@ -1,6 +1,7 @@
 #[cfg(feature = "rng")]
 use rand_core::{RngCore, SeedableRng, impls};
-use super::rapid_const::{rapid_mix, RAPID_SECRET, RAPID_SEED};
+use crate::mix::rapid_mix;
+use super::rapid_const::{RAPID_SECRET, RAPID_SEED};
 
 /// Generate a random number using rapidhash mixing.
 ///
@@ -18,7 +19,7 @@ use super::rapid_const::{rapid_mix, RAPID_SECRET, RAPID_SEED};
 #[inline]
 pub fn rapidrng_fast(seed: &mut u64) -> u64 {
     *seed = seed.wrapping_add(RAPID_SECRET[0]);
-    rapid_mix(*seed, *seed ^ RAPID_SECRET[1])
+    rapid_mix::<false>(*seed, *seed ^ RAPID_SECRET[1])
 }
 
 /// Generate a random number non-deterministically by re-seeding with the current time.
@@ -53,9 +54,9 @@ pub fn rapidrng_time(seed: &mut u64) -> u64 {
     // time.subsec_nanos may only have milli- or micro-second precision on some platforms.
     // This is why we further stretch the teed with multiple rounds of rapid_mix.
     let mut  teed = ((time.as_secs() as u64) << 32) | time.subsec_nanos() as u64;
-    teed = rapid_mix(teed ^ RAPID_SECRET[0], *seed ^ RAPID_SECRET[1]);
-    *seed = rapid_mix(teed ^ RAPID_SECRET[2], RAPID_SECRET[3]);
-    rapid_mix(*seed, *seed ^ RAPID_SECRET[4])
+    teed = rapid_mix::<false>(teed ^ RAPID_SECRET[0], *seed ^ RAPID_SECRET[1]);
+    *seed = rapid_mix::<false>(teed ^ RAPID_SECRET[2], RAPID_SECRET[3]);
+    rapid_mix::<false>(*seed, *seed ^ RAPID_SECRET[4])
 }
 
 /// A random number generator that uses the rapidhash mixing algorithm.

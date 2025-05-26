@@ -1,5 +1,7 @@
 use std::io::Read;
-use crate::v3::rapid_const::{RAPID_SEED, RAPID_SECRET, rapid_mix, rapid_mum, rapidhash_finish, rapidhash_seed, read_u64, read_u32};
+use crate::mix::{rapid_mix, rapid_mum};
+use crate::read::{read_u32, read_u64};
+use crate::v3::rapid_const::{RAPID_SEED, RAPID_SECRET, rapidhash_finish, rapidhash_seed};
 
 /// Rapidhash a file, matching the C++ implementation.
 ///
@@ -7,7 +9,7 @@ use crate::v3::rapid_const::{RAPID_SEED, RAPID_SECRET, rapid_mix, rapid_mum, rap
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
 pub fn rapidhash_file<R: Read>(data: R) -> std::io::Result<u64> {
-    rapidhash_file_inline(data, RAPID_SEED)
+    rapidhash_file_inline::<R, false>(data, RAPID_SEED)
 }
 
 /// Rapidhash a file, matching the C++ implementation, with a custom seed.
@@ -16,7 +18,7 @@ pub fn rapidhash_file<R: Read>(data: R) -> std::io::Result<u64> {
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
 pub fn rapidhash_file_seeded<R: Read>(data: R, seed: u64) -> std::io::Result<u64> {
-    rapidhash_file_inline(data, seed)
+    rapidhash_file_inline::<R, false>(data, seed)
 }
 
 /// Rapidhash a file, matching the C++ implementation.
@@ -32,11 +34,11 @@ pub fn rapidhash_file_seeded<R: Read>(data: R, seed: u64) -> std::io::Result<u64
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
 /// Can provide large performance uplifts for inputs where the length is known at compile time.
 #[inline(always)]
-pub fn rapidhash_file_inline<R: Read>(data: R, mut seed: u64) -> std::io::Result<u64> {
+pub fn rapidhash_file_inline<R: Read, const PROTECTED: bool>(data: R, mut seed: u64) -> std::io::Result<u64> {
     seed = rapidhash_seed(seed);
     let mut reader = ChunkedStreamReader::new(data, 16);
-    let (a, b, seed) = rapidhash_file_core(0, 0, seed, &mut reader)?;
-    Ok(rapidhash_finish(a, b, seed))
+    let (a, b, seed) = rapidhash_file_core::<R, PROTECTED>(0, 0, seed, &mut reader)?;
+    Ok(rapidhash_finish::<PROTECTED>(a, b, seed))
 }
 
 struct ChunkedStreamReader<R: Read> {
@@ -133,7 +135,7 @@ impl<R: Read> ChunkedStreamReader<R> {
 }
 
 #[inline(always)]
-fn rapidhash_file_core<R: Read>(mut a: u64, mut b: u64, mut seed: u64, iter: &mut ChunkedStreamReader<R>) -> std::io::Result<(u64, u64, u64)> {
+fn rapidhash_file_core<R: Read, const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: u64, iter: &mut ChunkedStreamReader<R>) -> std::io::Result<(u64, u64, u64)> {
     let mut chunk = iter.read_chunk(300)?;
     let mut consumed = 0;
 
@@ -164,21 +166,21 @@ fn rapidhash_file_core<R: Read>(mut a: u64, mut b: u64, mut seed: u64, iter: &mu
         let mut see6 = seed;
 
         while chunk.len() >= 224 {
-            seed = rapid_mix(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
-            see1 = rapid_mix(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ see1);
-            see2 = rapid_mix(read_u64(chunk, 32) ^ RAPID_SECRET[2], read_u64(chunk, 40) ^ see2);
-            see3 = rapid_mix(read_u64(chunk, 48) ^ RAPID_SECRET[3], read_u64(chunk, 56) ^ see3);
-            see4 = rapid_mix(read_u64(chunk, 64) ^ RAPID_SECRET[4], read_u64(chunk, 72) ^ see4);
-            see5 = rapid_mix(read_u64(chunk, 80) ^ RAPID_SECRET[5], read_u64(chunk, 88) ^ see5);
-            see6 = rapid_mix(read_u64(chunk, 96) ^ RAPID_SECRET[6], read_u64(chunk, 104) ^ see6);
+            seed = rapid_mix::<PROTECTED>(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
+            see1 = rapid_mix::<PROTECTED>(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ see1);
+            see2 = rapid_mix::<PROTECTED>(read_u64(chunk, 32) ^ RAPID_SECRET[2], read_u64(chunk, 40) ^ see2);
+            see3 = rapid_mix::<PROTECTED>(read_u64(chunk, 48) ^ RAPID_SECRET[3], read_u64(chunk, 56) ^ see3);
+            see4 = rapid_mix::<PROTECTED>(read_u64(chunk, 64) ^ RAPID_SECRET[4], read_u64(chunk, 72) ^ see4);
+            see5 = rapid_mix::<PROTECTED>(read_u64(chunk, 80) ^ RAPID_SECRET[5], read_u64(chunk, 88) ^ see5);
+            see6 = rapid_mix::<PROTECTED>(read_u64(chunk, 96) ^ RAPID_SECRET[6], read_u64(chunk, 104) ^ see6);
 
-            seed = rapid_mix(read_u64(chunk, 112) ^ RAPID_SECRET[0], read_u64(chunk, 120) ^ seed);
-            see1 = rapid_mix(read_u64(chunk, 128) ^ RAPID_SECRET[1], read_u64(chunk, 136) ^ see1);
-            see2 = rapid_mix(read_u64(chunk, 144) ^ RAPID_SECRET[2], read_u64(chunk, 152) ^ see2);
-            see3 = rapid_mix(read_u64(chunk, 160) ^ RAPID_SECRET[3], read_u64(chunk, 168) ^ see3);
-            see4 = rapid_mix(read_u64(chunk, 176) ^ RAPID_SECRET[4], read_u64(chunk, 184) ^ see4);
-            see5 = rapid_mix(read_u64(chunk, 192) ^ RAPID_SECRET[5], read_u64(chunk, 200) ^ see5);
-            see6 = rapid_mix(read_u64(chunk, 208) ^ RAPID_SECRET[6], read_u64(chunk, 216) ^ see6);
+            seed = rapid_mix::<PROTECTED>(read_u64(chunk, 112) ^ RAPID_SECRET[0], read_u64(chunk, 120) ^ seed);
+            see1 = rapid_mix::<PROTECTED>(read_u64(chunk, 128) ^ RAPID_SECRET[1], read_u64(chunk, 136) ^ see1);
+            see2 = rapid_mix::<PROTECTED>(read_u64(chunk, 144) ^ RAPID_SECRET[2], read_u64(chunk, 152) ^ see2);
+            see3 = rapid_mix::<PROTECTED>(read_u64(chunk, 160) ^ RAPID_SECRET[3], read_u64(chunk, 168) ^ see3);
+            see4 = rapid_mix::<PROTECTED>(read_u64(chunk, 176) ^ RAPID_SECRET[4], read_u64(chunk, 184) ^ see4);
+            see5 = rapid_mix::<PROTECTED>(read_u64(chunk, 192) ^ RAPID_SECRET[5], read_u64(chunk, 200) ^ see5);
+            see6 = rapid_mix::<PROTECTED>(read_u64(chunk, 208) ^ RAPID_SECRET[6], read_u64(chunk, 216) ^ see6);
 
             iter.consume(224);
             consumed += 224;
@@ -186,30 +188,30 @@ fn rapidhash_file_core<R: Read>(mut a: u64, mut b: u64, mut seed: u64, iter: &mu
         }
 
         if chunk.len() >= 112 {
-            seed = rapid_mix(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
-            see1 = rapid_mix(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ see1);
-            see2 = rapid_mix(read_u64(chunk, 32) ^ RAPID_SECRET[2], read_u64(chunk, 40) ^ see2);
-            see3 = rapid_mix(read_u64(chunk, 48) ^ RAPID_SECRET[3], read_u64(chunk, 56) ^ see3);
-            see4 = rapid_mix(read_u64(chunk, 64) ^ RAPID_SECRET[4], read_u64(chunk, 72) ^ see4);
-            see5 = rapid_mix(read_u64(chunk, 80) ^ RAPID_SECRET[5], read_u64(chunk, 88) ^ see5);
-            see6 = rapid_mix(read_u64(chunk, 96) ^ RAPID_SECRET[6], read_u64(chunk, 104) ^ see6);
+            seed = rapid_mix::<PROTECTED>(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
+            see1 = rapid_mix::<PROTECTED>(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ see1);
+            see2 = rapid_mix::<PROTECTED>(read_u64(chunk, 32) ^ RAPID_SECRET[2], read_u64(chunk, 40) ^ see2);
+            see3 = rapid_mix::<PROTECTED>(read_u64(chunk, 48) ^ RAPID_SECRET[3], read_u64(chunk, 56) ^ see3);
+            see4 = rapid_mix::<PROTECTED>(read_u64(chunk, 64) ^ RAPID_SECRET[4], read_u64(chunk, 72) ^ see4);
+            see5 = rapid_mix::<PROTECTED>(read_u64(chunk, 80) ^ RAPID_SECRET[5], read_u64(chunk, 88) ^ see5);
+            see6 = rapid_mix::<PROTECTED>(read_u64(chunk, 96) ^ RAPID_SECRET[6], read_u64(chunk, 104) ^ see6);
 
             consumed += 112;
             chunk = &chunk[112..chunk.len()];
         }
 
         if chunk.len() >= 48 {
-            seed = rapid_mix(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
-            see1 = rapid_mix(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ see1);
-            see2 = rapid_mix(read_u64(chunk, 32) ^ RAPID_SECRET[2], read_u64(chunk, 40) ^ see2);
+            seed = rapid_mix::<PROTECTED>(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
+            see1 = rapid_mix::<PROTECTED>(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ see1);
+            see2 = rapid_mix::<PROTECTED>(read_u64(chunk, 32) ^ RAPID_SECRET[2], read_u64(chunk, 40) ^ see2);
 
             consumed += 48;
             chunk = &chunk[48..chunk.len()];
 
             if chunk.len() >= 48 {
-                seed = rapid_mix(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
-                see1 = rapid_mix(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ see1);
-                see2 = rapid_mix(read_u64(chunk, 32) ^ RAPID_SECRET[2], read_u64(chunk, 40) ^ see2);
+                seed = rapid_mix::<PROTECTED>(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
+                see1 = rapid_mix::<PROTECTED>(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ see1);
+                see2 = rapid_mix::<PROTECTED>(read_u64(chunk, 32) ^ RAPID_SECRET[2], read_u64(chunk, 40) ^ see2);
 
                 consumed += 48;
                 chunk = &chunk[48..chunk.len()];
@@ -224,10 +226,10 @@ fn rapidhash_file_core<R: Read>(mut a: u64, mut b: u64, mut seed: u64, iter: &mu
         seed ^= see3;
 
         if chunk.len() > 16 {
-            seed = rapid_mix(read_u64(chunk, 0) ^ RAPID_SECRET[2], read_u64(chunk, 8) ^ seed);
+            seed = rapid_mix::<PROTECTED>(read_u64(chunk, 0) ^ RAPID_SECRET[2], read_u64(chunk, 8) ^ seed);
             consumed += 16;
             if chunk.len() > 32 {
-                seed = rapid_mix(read_u64(chunk, 16) ^ RAPID_SECRET[2], read_u64(chunk, 24) ^ seed);
+                seed = rapid_mix::<PROTECTED>(read_u64(chunk, 16) ^ RAPID_SECRET[2], read_u64(chunk, 24) ^ seed);
                 consumed += 16;
             }
         }
@@ -241,21 +243,21 @@ fn rapidhash_file_core<R: Read>(mut a: u64, mut b: u64, mut seed: u64, iter: &mu
             let mut see1 = seed;
             let mut see2 = seed;
             while chunk.len() >= 96 {
-                seed = rapid_mix(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
-                see1 = rapid_mix(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ see1);
-                see2 = rapid_mix(read_u64(chunk, 32) ^ RAPID_SECRET[2], read_u64(chunk, 40) ^ see2);
-                seed = rapid_mix(read_u64(chunk, 48) ^ RAPID_SECRET[0], read_u64(chunk, 56) ^ seed);
-                see1 = rapid_mix(read_u64(chunk, 64) ^ RAPID_SECRET[1], read_u64(chunk, 72) ^ see1);
-                see2 = rapid_mix(read_u64(chunk, 80) ^ RAPID_SECRET[2], read_u64(chunk, 88) ^ see2);
+                seed = rapid_mix::<PROTECTED>(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
+                see1 = rapid_mix::<PROTECTED>(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ see1);
+                see2 = rapid_mix::<PROTECTED>(read_u64(chunk, 32) ^ RAPID_SECRET[2], read_u64(chunk, 40) ^ see2);
+                seed = rapid_mix::<PROTECTED>(read_u64(chunk, 48) ^ RAPID_SECRET[0], read_u64(chunk, 56) ^ seed);
+                see1 = rapid_mix::<PROTECTED>(read_u64(chunk, 64) ^ RAPID_SECRET[1], read_u64(chunk, 72) ^ see1);
+                see2 = rapid_mix::<PROTECTED>(read_u64(chunk, 80) ^ RAPID_SECRET[2], read_u64(chunk, 88) ^ see2);
 
                 consumed += 96;
                 chunk = &chunk[96..];
             }
 
             if chunk.len() >= 48 {
-                seed = rapid_mix(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
-                see1 = rapid_mix(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ see1);
-                see2 = rapid_mix(read_u64(chunk, 32) ^ RAPID_SECRET[2], read_u64(chunk, 40) ^ see2);
+                seed = rapid_mix::<PROTECTED>(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
+                see1 = rapid_mix::<PROTECTED>(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ see1);
+                see2 = rapid_mix::<PROTECTED>(read_u64(chunk, 32) ^ RAPID_SECRET[2], read_u64(chunk, 40) ^ see2);
 
                 consumed += 48;
                 chunk = &chunk[48..];
@@ -265,10 +267,10 @@ fn rapidhash_file_core<R: Read>(mut a: u64, mut b: u64, mut seed: u64, iter: &mu
         }
 
         if chunk.len() > 16 {
-            seed = rapid_mix(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
+            seed = rapid_mix::<PROTECTED>(read_u64(chunk, 0) ^ RAPID_SECRET[0], read_u64(chunk, 8) ^ seed);
             consumed += 16;
             if chunk.len() > 32 {
-                seed = rapid_mix(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ seed);
+                seed = rapid_mix::<PROTECTED>(read_u64(chunk, 16) ^ RAPID_SECRET[1], read_u64(chunk, 24) ^ seed);
                 consumed += 16;
             }
         }
@@ -283,7 +285,7 @@ fn rapidhash_file_core<R: Read>(mut a: u64, mut b: u64, mut seed: u64, iter: &mu
     a ^= RAPID_SECRET[1];
     b ^= seed;
 
-    let (a2, b2) = rapid_mum(a, b);
+    let (a2, b2) = rapid_mum::<PROTECTED>(a, b);
     a = a2;
     b = b2;
     Ok((a, b, seed))

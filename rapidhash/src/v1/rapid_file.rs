@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::{BufReader, Read};
-use crate::v1::rapid_const::{RAPID_SEED, RAPID_SECRET, rapid_mix, rapid_mum, rapidhash_finish, rapidhash_seed, read_u32_combined, read_u64};
+use crate::mix::{rapid_mix, rapid_mum};
+use crate::read::{read_u32_combined, read_u64};
+use crate::v1::rapid_const::{RAPID_SEED, RAPID_SECRET, rapidhash_finish, rapidhash_seed};
 
 /// Rapidhash a file, matching the C++ implementation.
 ///
@@ -8,7 +10,7 @@ use crate::v1::rapid_const::{RAPID_SEED, RAPID_SECRET, rapid_mix, rapid_mum, rap
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
 pub fn rapidhash_file(data: &mut File) -> std::io::Result<u64> {
-    rapidhash_file_inline(data, RAPID_SEED)
+    rapidhash_file_inline::<false>(data, RAPID_SEED)
 }
 
 /// Rapidhash a file, matching the C++ implementation, with a custom seed.
@@ -17,7 +19,7 @@ pub fn rapidhash_file(data: &mut File) -> std::io::Result<u64> {
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
 pub fn rapidhash_file_seeded(data: &mut File, seed: u64) -> std::io::Result<u64> {
-    rapidhash_file_inline(data, seed)
+    rapidhash_file_inline::<false>(data, seed)
 }
 
 /// Rapidhash a file, matching the C++ implementation.
@@ -33,16 +35,16 @@ pub fn rapidhash_file_seeded(data: &mut File, seed: u64) -> std::io::Result<u64>
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
 /// Can provide large performance uplifts for inputs where the length is known at compile time.
 #[inline(always)]
-pub fn rapidhash_file_inline(data: &mut File, mut seed: u64) -> std::io::Result<u64> {
+pub fn rapidhash_file_inline<const PROTECTED: bool>(data: &mut File, mut seed: u64) -> std::io::Result<u64> {
     let len = data.metadata()?.len();
     let mut reader = BufReader::new(data);
-    seed = rapidhash_seed(seed, len);
-    let (a, b, _) = rapidhash_file_core(0, 0, seed, len as usize, &mut reader)?;
-    Ok(rapidhash_finish(a, b, len))
+    seed = rapidhash_seed(seed) ^ len;
+    let (a, b, _) = rapidhash_file_core::<PROTECTED>(0, 0, seed, len as usize, &mut reader)?;
+    Ok(rapidhash_finish::<PROTECTED>(a, b, len))
 }
 
 #[inline(always)]
-fn rapidhash_file_core(mut a: u64, mut b: u64, mut seed: u64, len: usize, iter: &mut BufReader<&mut File>) -> std::io::Result<(u64, u64, u64)> {
+fn rapidhash_file_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: u64, len: usize, iter: &mut BufReader<&mut File>) -> std::io::Result<(u64, u64, u64)> {
     if len <= 16 {
         let mut data = [0u8; 16];
         iter.read_exact(&mut data[0..len])?;
@@ -85,12 +87,12 @@ fn rapidhash_file_core(mut a: u64, mut b: u64, mut seed: u64, len: usize, iter: 
             while remaining >= 96 {
                 // read into and process using the first half of the buffer
                 iter.read_exact(&mut slice)?;
-                seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
-                see1 = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
-                see2 = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
-                seed = rapid_mix(read_u64(slice, 48) ^ RAPID_SECRET[0], read_u64(slice, 56) ^ seed);
-                see1 = rapid_mix(read_u64(slice, 64) ^ RAPID_SECRET[1], read_u64(slice, 72) ^ see1);
-                see2 = rapid_mix(read_u64(slice, 80) ^ RAPID_SECRET[2], read_u64(slice, 88) ^ see2);
+                seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
+                see1 = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
+                see2 = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
+                seed = rapid_mix::<PROTECTED>(read_u64(slice, 48) ^ RAPID_SECRET[0], read_u64(slice, 56) ^ seed);
+                see1 = rapid_mix::<PROTECTED>(read_u64(slice, 64) ^ RAPID_SECRET[1], read_u64(slice, 72) ^ see1);
+                see2 = rapid_mix::<PROTECTED>(read_u64(slice, 80) ^ RAPID_SECRET[2], read_u64(slice, 88) ^ see2);
                 remaining -= 96;
             }
 
@@ -101,9 +103,9 @@ fn rapidhash_file_core(mut a: u64, mut b: u64, mut seed: u64, len: usize, iter: 
             end = 96 + remaining;
 
             if remaining >= 48 {
-                seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
-                see1 = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
-                see2 = rapid_mix(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
+                seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
+                see1 = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
+                see2 = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
                 slice = &mut buf[96 + 48..96 + remaining];
                 remaining -= 48;
             }
@@ -116,9 +118,9 @@ fn rapidhash_file_core(mut a: u64, mut b: u64, mut seed: u64, len: usize, iter: 
         }
 
         if remaining > 16 {
-            seed = rapid_mix(read_u64(slice, 0) ^ RAPID_SECRET[2], read_u64(slice, 8) ^ seed ^ RAPID_SECRET[1]);
+            seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ RAPID_SECRET[2], read_u64(slice, 8) ^ seed ^ RAPID_SECRET[1]);
             if remaining > 32 {
-                seed = rapid_mix(read_u64(slice, 16) ^ RAPID_SECRET[2], read_u64(slice, 24) ^ seed);
+                seed = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ RAPID_SECRET[2], read_u64(slice, 24) ^ seed);
             }
         }
 
@@ -129,7 +131,7 @@ fn rapidhash_file_core(mut a: u64, mut b: u64, mut seed: u64, len: usize, iter: 
     a ^= RAPID_SECRET[1];
     b ^= seed;
 
-    let (a2, b2) = rapid_mum(a, b);
+    let (a2, b2) = rapid_mum::<PROTECTED>(a, b);
     a = a2;
     b = b2;
     Ok((a, b, seed))

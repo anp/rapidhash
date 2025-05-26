@@ -1,6 +1,6 @@
 use std::cell::Cell;
 use std::hash::BuildHasher;
-use crate::v2::{rapidrng_fast, RapidHasher};
+use crate::v3::{rapidrng_fast, RapidHasher};
 
 /// A [std::collections::hash_map::RandomState] compatible hasher that initializes the [RapidHasher]
 /// algorithm with a random seed.
@@ -68,10 +68,10 @@ impl Default for RapidRandomState {
 }
 
 impl BuildHasher for RapidRandomState {
-    type Hasher = RapidHasher;
+    type Hasher = RapidHasher<true, false, false, false>;
 
     fn build_hasher(&self) -> Self::Hasher {
-        RapidHasher::new(self.seed)
+        RapidHasher::new_precomputed_seed(self.seed)
     }
 }
 

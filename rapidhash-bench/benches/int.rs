@@ -1,14 +1,14 @@
 use std::hash::{BuildHasher, Hasher};
 use std::hint::black_box;
 use criterion::Bencher;
-use rapidhash::RAPID_SEED;
+use rapidhash::v1::RAPID_SEED;
 
 pub fn bench_rapidhash() -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched(|| {
             rand::random::<u64>()
         }, |i: u64| {
-            let mut hasher = rapidhash::RapidHasher::default();
+            let mut hasher = rapidhash::quality::RapidHasher::default();
             hasher.write_u64(i);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
@@ -20,7 +20,7 @@ pub fn bench_rapidhash_u8() -> Box<dyn FnMut(&mut Bencher)> {
         b.iter_batched(|| {
             rand::random()
         }, |i| {
-            let mut hasher = rapidhash::RapidHasher::default();
+            let mut hasher = rapidhash::quality::RapidHasher::default();
             hasher.write_u8(i);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
@@ -32,7 +32,7 @@ pub fn bench_rapidhash_u16() -> Box<dyn FnMut(&mut Bencher)> {
         b.iter_batched(|| {
             rand::random()
         }, |i| {
-            let mut hasher = rapidhash::RapidHasher::default();
+            let mut hasher = rapidhash::quality::RapidHasher::default();
             hasher.write_u16(i);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
@@ -44,7 +44,7 @@ pub fn bench_rapidhash_u32() -> Box<dyn FnMut(&mut Bencher)> {
         b.iter_batched(|| {
             rand::random()
         }, |i| {
-            let mut hasher = rapidhash::RapidHasher::default();
+            let mut hasher = rapidhash::quality::RapidHasher::default();
             hasher.write_u32(i);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
@@ -56,7 +56,7 @@ pub fn bench_rapidhash_u128() -> Box<dyn FnMut(&mut Bencher)> {
         b.iter_batched(|| {
             rand::random()
         }, |i| {
-            let mut hasher = rapidhash::RapidHasher::default();
+            let mut hasher = rapidhash::quality::RapidHasher::default();
             hasher.write_u128(i);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
@@ -68,7 +68,7 @@ pub fn bench_rapidhash_raw() -> Box<dyn FnMut(&mut Bencher)> {
         b.iter_batched(|| {
             rand::random::<u64>()
         }, |i: u64| {
-            rapidhash::rapidhash_inline(&i.to_le_bytes(), RAPID_SEED)
+            rapidhash::v2::rapidhash_inline::<false, false>(&i.to_le_bytes(), RAPID_SEED)
         }, criterion::BatchSize::SmallInput);
     })
 }

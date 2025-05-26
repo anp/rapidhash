@@ -8,6 +8,9 @@
 #[deny(missing_docs)]
 #[deny(unused_must_use)]
 
+mod mix;
+mod read;
+
 /// Rapidhash V1 algorithm implementations. Only exposed with the `versioned` feature.
 #[cfg(any(feature = "v1", docsrs))]
 pub mod v1;
@@ -22,8 +25,11 @@ pub mod v3;
 #[cfg(all(feature = "vlatest", not(any(feature = "v2", docsrs))))]
 pub(crate) mod v2;
 
-#[cfg(any(feature = "vlatest", docsrs))]
-mod latest;
+// #[cfg(any(feature = "vlatest", docsrs))]
+// mod latest;
+//
+// #[cfg(any(feature = "vlatest", docsrs))]
+// pub use latest::*;
 
-#[cfg(any(feature = "vlatest", docsrs))]
-pub use latest::*;
+pub mod fast;
+pub mod quality;

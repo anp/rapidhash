@@ -11,7 +11,7 @@ mod rng;
 #[doc(inline)]
 pub use rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, RAPID_SEED};
 // #[doc(inline)]
-// pub use rapid_hasher::*;
+pub use rapid_hasher::*;
 #[doc(inline)]
 #[cfg(any(feature = "std", docsrs))]
 pub use rapid_file::*;
@@ -21,12 +21,6 @@ pub use random_state::*;
 #[doc(inline)]
 pub use rng::*;
 
-const AVALANCHE: bool = true;
-pub type RapidHasher = rapid_hasher::RapidHasher<AVALANCHE>;
-pub type RapidBuildHasher = rapid_hasher::RapidBuildHasher<AVALANCHE>;
-pub type RapidHashMap<K, V> = rapid_hasher::RapidHashMap<K, V, AVALANCHE>;
-pub type RapidHashSet<K> = rapid_hasher::RapidHashSet<K, AVALANCHE>;
-
 #[cfg(test)]
 mod tests {
     extern crate std;
@@ -34,7 +28,10 @@ mod tests {
     use std::hash::{BuildHasher, Hash, Hasher};
     use std::collections::BTreeSet;
     use rand::Rng;
-    use super::*;
+    use super::{rapidhash, rapidhash_seeded, RAPID_SEED};
+
+    type RapidHasher = super::RapidHasher<true, false>;
+    type RapidBuildHasher = super::RapidBuildHasher<true, false>;
 
     #[derive(Hash)]
     struct Object {
