@@ -30,7 +30,7 @@ jobs:
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
-        run: cargo test -p rapidhash --no-fail-fast --lib --no-default-features --features=v1,v2
+        run: cargo test -p rapidhash --no-fail-fast --lib --no-default-features
 
   test-unsafe:
     name: "Test (unsafe)"
@@ -41,13 +41,13 @@ jobs:
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
-        run: cargo test -p rapidhash --no-fail-fast --lib --no-default-features --features v1,v2,unsafe
+        run: cargo test -p rapidhash --no-fail-fast --lib --features=rand,rng,unsafe
 
   test-msrv:
     name: "Test (MSRV)"
     runs-on: ubuntu-latest
     env:
-      RUST_VERSION: 1.77.0
+      RUST_VERSION: 1.82.0
     steps:
       - uses: actions/checkout@v4
       - name: Rust dependency cache
@@ -58,7 +58,7 @@ jobs:
       - name: Compile and run tests (std)
         run: cargo test -p rapidhash --no-fail-fast --all-features
       - name: Compile and run tests (no_std)
-        run: cargo test -p rapidhash --no-fail-fast --lib --no-default-features --features=v1,v2,vlatest
+        run: cargo test -p rapidhash --no-fail-fast --lib
 
   test-c:
     name: "Test (C implementations)"
@@ -70,25 +70,3 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
         run: cargo test -p rapidhash-c --no-fail-fast
-
-  test-v1:
-    name: "Test (v1)"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Rust dependency cache
-        uses: Swatinem/rust-cache@v2
-      - name: Compile and run tests
-        run: cargo test -p rapidhash --no-fail-fast --no-default-features --features=std,v1
-
-  test-v2:
-    name: "Test (v2)"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Rust dependency cache
-        uses: Swatinem/rust-cache@v2
-      - name: Compile and run tests
-        run: cargo test -p rapidhash --no-fail-fast --no-default-features --features=std,v2
