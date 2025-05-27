@@ -5,7 +5,7 @@ mod rapid_const;
 mod rapid_file;
 
 #[doc(inline)]
-pub use rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, RAPID_SEED};
+pub use rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, rapidhash_micro_inline, rapidhash_nano_inline, RAPID_SEED};
 
 #[doc(inline)]
 #[cfg(any(feature = "std", docsrs))]
@@ -14,6 +14,7 @@ pub use rapid_file::*;
 #[cfg(test)]
 mod tests {
     extern crate std;
+
     use super::*;
 
     /// Ensure that changing a single bit flips at least 10 bits in the resulting hash, and on
@@ -54,7 +55,7 @@ mod tests {
     #[test]
     fn compare_to_c() {
         use rand::Rng;
-        use rapidhash_c::rapidhashcc_v3;
+        use rapidhash_c::{rapidhashcc_v3, rapidhashcc_v3_micro, rapidhashcc_v3_nano};
 
         for len in 0..=512 {
             let mut data = std::vec![0; len];
@@ -70,6 +71,14 @@ mod tests {
                     let c_hash = rapidhashcc_v3(&data, RAPID_SEED);
                     assert_eq!(rust_hash, c_hash, "Mismatch with C input {} byte {} bit {}", len, byte, bit);
                     assert_eq!(rust_hash, compact_hash, "Mismatch with COMPACT on input {} byte {} bit {}", len, byte, bit);
+
+                    let rust_hash = rapidhash_micro_inline::<false>(&data, RAPID_SEED);
+                    let c_hash = rapidhashcc_v3_micro(&data, RAPID_SEED);
+                    assert_eq!(rust_hash, c_hash, "Mismatch MICRO with C input {} byte {} bit {}", len, byte, bit);
+
+                    let rust_hash = rapidhash_nano_inline::<false>(&data, RAPID_SEED);
+                    let c_hash = rapidhashcc_v3_nano(&data, RAPID_SEED);
+                    assert_eq!(rust_hash, c_hash, "Mismatch NANO with C input {} byte {} bit {}", len, byte, bit);
                 }
             }
         }

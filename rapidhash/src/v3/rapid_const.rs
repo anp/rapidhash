@@ -43,6 +43,31 @@ pub const fn rapidhash_inline<const COMPACT: bool, const PROTECTED: bool>(data: 
     rapidhash_finish::<PROTECTED>(a, b, remainder)
 }
 
+/// Rapidhash V3 Micro, a very compact version of the rapidhash algorithm.
+///
+/// Designed for HPC and server applications, where cache misses make a noticeable performance
+/// detriment. Compiles it to ~140 instructions without stack usage, both on x86-64 and aarch64.
+/// Faster for sizes up to 512 bytes, just 15%-20% slower for inputs above 1kb.
+#[inline(always)]
+pub const fn rapidhash_micro_inline<const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
+    seed = rapidhash_seed(seed);
+    let (a, b, _, remainder) = rapidhash_micro_core::<PROTECTED>(0, 0, seed, data);
+    rapidhash_finish::<PROTECTED>(a, b, remainder)
+}
+
+/// Rapidhash V3 Nano, a very compact version of the rapidhash algorithm.
+///
+/// Designed for Mobile and embedded applications, where keeping a small code size is a top priority.
+/// This should compile it to less than 100 instructions with minimal stack usage, both on x86-64
+/// and aarch64. The fastest for sizes up to 48 bytes, but may be considerably slower for larger
+/// inputs.
+#[inline(always)]
+pub const fn rapidhash_nano_inline<const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
+    seed = rapidhash_seed(seed);
+    let (a, b, _, remainder) = rapidhash_nano_core::<PROTECTED>(0, 0, seed, data);
+    rapidhash_finish::<PROTECTED>(a, b, remainder)
+}
+
 #[inline(always)]
 pub(super) const fn rapidhash_seed(seed: u64) -> u64 {
     seed ^ rapid_mix::<false>(seed ^ RAPID_SECRET[2], RAPID_SECRET[1])
@@ -169,6 +194,130 @@ const fn rapidhash_core_cold<const COMPACT: bool, const PROTECTED: bool>(mut a: 
     b ^= read_u64(data, data.len() - 8);
 
     (a, b, seed, slice.len() as u64)
+}
+
+const fn rapidhash_micro_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64, u64) {
+    let remainder;
+    if data.len() <= 16 {
+        if data.len() >= 4 {
+            seed ^= data.len() as u64;
+            if data.len() >= 8 {
+                let plast = data.len() - 8;
+                a ^= read_u64(data, 0);
+                b ^= read_u64(data, plast);
+            } else {
+                let plast = data.len() - 4;
+                b ^= read_u32(data, 0) as u64;
+                a ^= read_u32(data, plast) as u64;
+            }
+        } else if data.len() > 0 {
+            a ^= ((data[0] as u64) << 45) | data[data.len() - 1] as u64;
+            b ^= data[data.len() >> 1] as u64;
+        }
+        remainder = data.len() as u64;
+    } else {
+        let mut slice = data;
+        if slice.len() > 80 {
+            let mut see1 = seed;
+            let mut see2 = seed;
+            let mut see3 = seed;
+            let mut see4 = seed;
+
+            while slice.len() > 80 {
+                seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
+                see1 = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
+                see2 = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
+                see3 = rapid_mix::<PROTECTED>(read_u64(slice, 48) ^ RAPID_SECRET[3], read_u64(slice, 56) ^ see3);
+                see4 = rapid_mix::<PROTECTED>(read_u64(slice, 64) ^ RAPID_SECRET[4], read_u64(slice, 72) ^ see4);
+                let (_, split) = slice.split_at(80);
+                slice = split;
+            }
+
+            seed ^= see1;
+            see2 ^= see3;
+            seed ^= see4;
+            seed ^= see2;
+        }
+
+        if slice.len() > 16 {
+            seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ RAPID_SECRET[2], read_u64(slice, 8) ^ seed);
+            if slice.len() > 32 {
+                seed = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ RAPID_SECRET[2], read_u64(slice, 24) ^ seed);
+                if slice.len() > 48 {
+                    seed = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ RAPID_SECRET[1], read_u64(slice, 40) ^ seed);
+                    if slice.len() > 64 {
+                        seed = rapid_mix::<PROTECTED>(read_u64(slice, 48) ^ RAPID_SECRET[1], read_u64(slice, 56) ^ seed);
+                    }
+                }
+            }
+        }
+
+        remainder = slice.len() as u64;
+        a ^= read_u64(data, data.len() - 16) ^ remainder;
+        b ^= read_u64(data, data.len() - 8);
+    }
+
+    a ^= RAPID_SECRET[1];
+    b ^= seed;
+
+    (a, b) = rapid_mum::<PROTECTED>(a, b);
+    (a, b, seed, remainder)
+}
+
+const fn rapidhash_nano_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64, u64) {
+    let remainder;
+    if data.len() <= 16 {
+        if data.len() >= 4 {
+            seed ^= data.len() as u64;
+            if data.len() >= 8 {
+                let plast = data.len() - 8;
+                a ^= read_u64(data, 0);
+                b ^= read_u64(data, plast);
+            } else {
+                let plast = data.len() - 4;
+                b ^= read_u32(data, 0) as u64;
+                a ^= read_u32(data, plast) as u64;
+            }
+        } else if data.len() > 0 {
+            a ^= ((data[0] as u64) << 45) | data[data.len() - 1] as u64;
+            b ^= data[data.len() >> 1] as u64;
+        }
+        remainder = data.len() as u64;
+    } else {
+        let mut slice = data;
+        if slice.len() > 48 {
+            let mut see1 = seed;
+            let mut see2 = seed;
+
+            while slice.len() > 48 {
+                seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
+                see1 = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
+                see2 = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
+                let (_, split) = slice.split_at(48);
+                slice = split;
+            }
+
+            seed ^= see1;
+            seed ^= see2;
+        }
+
+        if slice.len() > 16 {
+            seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ RAPID_SECRET[2], read_u64(slice, 8) ^ seed);
+            if slice.len() > 32 {
+                seed = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ RAPID_SECRET[2], read_u64(slice, 24) ^ seed);
+            }
+        }
+
+        remainder = slice.len() as u64;
+        a ^= read_u64(data, data.len() - 16) ^ remainder;
+        b ^= read_u64(data, data.len() - 8);
+    }
+
+    a ^= RAPID_SECRET[1];
+    b ^= seed;
+
+    (a, b) = rapid_mum::<PROTECTED>(a, b);
+    (a, b, seed, remainder)
 }
 
 #[inline(always)]
