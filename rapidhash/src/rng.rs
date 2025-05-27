@@ -1,6 +1,6 @@
 #[cfg(feature = "rng")]
 use rand_core::{RngCore, SeedableRng, impls};
-use crate::mix::rapid_mix;
+use crate::util::mix::rapid_mix;
 
 /// Uses the V1 rapid seed.
 const RAPID_SEED: u64 = 0xbdd89aa982704029;

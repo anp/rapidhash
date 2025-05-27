@@ -1,5 +1,5 @@
-use crate::mix::{rapid_mix, rapid_mum};
-use crate::read::{read_u32, read_u64};
+use crate::util::mix::{rapid_mix, rapid_mum};
+use crate::util::read::{read_u32, read_u64};
 
 /// The rapidhash default seed.
 pub const RAPID_SEED: u64 = 0;
@@ -63,7 +63,7 @@ pub(super) const fn rapidhash_core<const COMPACT: bool, const PROTECTED: bool>(m
                 b ^= read_u32(data, data.len() - 4) as u64;
             }
         } else if data.len() > 0 {
-            a ^= ((data[0] as u64) << 56) | data[data.len() - 1] as u64;
+            a ^= ((data[0] as u64) << 45) | data[data.len() - 1] as u64;
             b ^= data[data.len() >> 1] as u64;
         }
     } else if data.len() <= 288 {

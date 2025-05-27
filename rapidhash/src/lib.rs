@@ -8,17 +8,14 @@
 #[deny(missing_docs)]
 #[deny(unused_must_use)]
 
-mod mix;
-mod read;
+pub(crate) mod util;
 
-/// Rapidhash V1 algorithm implementations.
 pub mod v1;
-/// Rapidhash V2 algorithm implementations.
 pub mod v2;
+pub mod v3;
 
-/// Rapidhash rust trait implementations.
 pub mod inner;
-
 pub mod fast;
 pub mod quality;
+
 pub mod rng;

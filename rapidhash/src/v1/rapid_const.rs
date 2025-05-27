@@ -1,5 +1,5 @@
-use crate::mix::{rapid_mix, rapid_mum};
-use crate::read::{read_u32_combined, read_u64};
+use crate::util::mix::{rapid_mix, rapid_mum};
+use crate::util::read::{read_u32_combined, read_u64};
 
 /// The rapidhash default seed.
 pub const RAPID_SEED: u64 = 0xbdd89aa982704029;
@@ -65,7 +65,7 @@ pub(super) const fn rapidhash_core<const COMPACT: bool, const PROTECTED: bool>(m
             // most CPUs appear to benefit from this unrolled loop
             let mut see1 = seed;
             let mut see2 = seed;
-            
+
             if !COMPACT {
                 while slice.len() >= 96 {
                     seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);

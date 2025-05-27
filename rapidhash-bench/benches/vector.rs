@@ -103,6 +103,24 @@ pub fn bench_rapidhash_cc_v3(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     })
 }
 
+pub fn bench_rapidhash_cc_rs(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
+    let input_size = if size < 1024 * 1024 {
+        criterion::BatchSize::SmallInput
+    } else {
+        criterion::BatchSize::PerIteration
+    };
+
+    Box::new(move |b: &mut Bencher| {
+        b.iter_batched_ref(|| {
+            let mut slice = vec![0u8; size];
+            rand::rng().fill(slice.as_mut_slice());
+            slice
+        }, |bytes| {
+            black_box(rapidhash_c::rapidhashcc_rs(&bytes, black_box(rapidhash::v1::RAPID_SEED)))
+        }, input_size);
+    })
+}
+
 pub fn bench_default(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched_ref(|| {

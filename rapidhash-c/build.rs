@@ -14,10 +14,10 @@ fn main() {
         panic!("Failed to properly resolve cpp/ dir: {}", dir.display());
     }
 
-    for i in ["1", "2", "2_1", "2_2", "3"] {
-        let header = format!("rapidhash_v{i}.hpp");
-        let wrapper = format!("rapidhash_v{i}.cpp");
-        let library = format!("rapidhash_v{i}");
+    for i in ["v1", "v2", "v2_1", "v2_2", "v3", "rs"] {
+        let header = format!("rapidhash_{i}.hpp");
+        let wrapper = format!("rapidhash_{i}.cpp");
+        let library = format!("rapidhash_{i}");
 
         cc::Build::new()
             .cpp(true)

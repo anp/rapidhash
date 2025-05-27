@@ -113,6 +113,16 @@ pub fn bench_rapidhash_cc_v3() -> Box<dyn FnMut(&mut Bencher)> {
     })
 }
 
+pub fn bench_rapidhash_cc_rs() -> Box<dyn FnMut(&mut Bencher)> {
+    Box::new(move |b: &mut Bencher| {
+        b.iter_batched(|| {
+            rand::random::<u64>()
+        }, |i: u64| {
+            black_box(rapidhash_c::rapidhashcc_rs(&i.to_le_bytes(), black_box(rapidhash::v1::RAPID_SEED)))
+        }, criterion::BatchSize::SmallInput);
+    })
+}
+
 pub fn bench_default() -> Box<dyn FnMut(&mut Bencher)> {
     Box::new(move |b: &mut Bencher| {
         b.iter_batched(|| {

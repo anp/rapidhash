@@ -60,6 +60,9 @@ bindings!(rapidhash_v2_extern, rapidhashcc_v2, "rapidhash_v2", tests_v2);
 bindings!(rapidhash_v2_1_extern, rapidhashcc_v2_1, "rapidhash_v2_1", tests_v2_1);
 bindings!(rapidhash_v2_2_extern, rapidhashcc_v2_2, "rapidhash_v2_2", tests_v2_2);
 bindings!(rapidhash_v3_extern, rapidhashcc_v3, "rapidhash_v3", tests_v3);
+bindings!(rapidhash_v3_micro_extern, rapidhashcc_v3_micro, "rapidhash_v3", tests_v3_micro);
+bindings!(rapidhash_v3_nano_extern, rapidhashcc_v3_nano, "rapidhash_v3", tests_v3_nano);
+bindings!(rapidhash_rs_extern, rapidhashcc_rs, "rapidhash_rs", tests_rs);
 
 #[cfg(test)]
 mod tests_verification {
@@ -67,7 +70,7 @@ mod tests_verification {
 
     /// Used to generate the SMHasher3 selftest expected values.
     #[test]
-    fn verification_v3() {
+    fn verification_rs() {
         let inputs: [(u64, &str); 8] = [
             (0x0fce4257ab06643c, ""),
             (0x6068093a933c79ad, "a"),
@@ -81,7 +84,7 @@ mod tests_verification {
 
         for (i, (expected, input)) in inputs.iter().enumerate() {
             // let seed = preseed_v3(0);
-            let result = rapidhashcc_v3(input.as_bytes(), i as u64);
+            let result = rapidhashcc_rs(input.as_bytes(), i as u64);
             let prefix: String = input.chars().take(16).collect();
             assert_eq!(
                 result, *expected,

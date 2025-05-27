@@ -14,6 +14,7 @@ def main():
 def draw_hash():
     hash_settings = [
 #         ("rapidhash", "b"),
+        ("rapidhash_cc_rs", "orange"),
         ("rapidhash_cc_v3", "b"),
         ("rapidhash_cc_v2_1", "y"),
         ("rapidhash_cc_v2", "g"),

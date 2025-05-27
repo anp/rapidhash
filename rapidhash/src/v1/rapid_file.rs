@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{BufReader, Read};
-use crate::mix::{rapid_mix, rapid_mum};
-use crate::read::{read_u32_combined, read_u64};
+use crate::util::mix::{rapid_mix, rapid_mum};
+use crate::util::read::{read_u32_combined, read_u64};
 use crate::v1::rapid_const::{RAPID_SEED, RAPID_SECRET, rapidhash_finish, rapidhash_seed};
 
 /// Rapidhash a file, matching the C++ implementation.

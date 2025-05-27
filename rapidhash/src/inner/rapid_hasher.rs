@@ -1,5 +1,5 @@
 use core::hash::{BuildHasher, Hash, Hasher};
-use crate::mix::rapid_mum;
+use crate::util::mix::rapid_mum;
 use super::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, RAPID_SECRET, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)

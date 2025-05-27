@@ -1,4 +1,4 @@
-//! The rapidhash rust structs, traits, and datastructures.
+//! The rapidhash-inspired rust structs, traits, and datastructures.
 //!
 //! This module contains the Hasher, BuildHasher, HashMap, HashSet, and RandomState
 //! implementations. It is recomended to use [rapidhash::fast] or [rapidhash::quality], but for the
@@ -16,6 +16,14 @@
 //! - `PROTECTED`: When performing the folded multiply mix step, XOR the a and b back into their
 //!   original values to make it harder for an attacker to generate collisions. This changes the
 //!   hash ouput. Disabled on both [rapidhash::quality] and [rapidhash::fast].
+//!
+//! The `RapidHasher` struct is _inspired by_ rapidhash, but is not a direct port and will output
+//! different hash values. It keeps the same hasher quality but uses various optimisations to
+//! improve performance when used in the Rust Hasher trait.
+//!
+//! The output values of functions in the `inner` module are not guaranteed to be stable between
+//! versions. Please use the `v1`, `v2`, or `v3` modules for stable output values between rapidhash
+//! crate versions.
 
 mod rapid_const;
 mod rapid_hasher;
@@ -26,7 +34,7 @@ mod random_state;
 
 #[doc(inline)]
 pub use rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, RAPID_SEED};
-// #[doc(inline)]
+#[doc(inline)]
 pub use rapid_hasher::*;
 #[doc(inline)]
 #[cfg(any(feature = "std", docsrs))]
@@ -178,7 +186,7 @@ mod tests {
     #[test]
     fn compare_to_c() {
         use rand::Rng;
-        use rapidhash_c::rapidhashcc_v3;
+        use rapidhash_c::rapidhashcc_rs;
 
         for len in 0..=512 {
             let mut data = std::vec![0; len];
@@ -190,7 +198,7 @@ mod tests {
                     data[byte] ^= 1 << bit;
 
                     let rust_hash = rapidhash_seeded(&data, RAPID_SEED);
-                    let c_hash = rapidhashcc_v3(&data, RAPID_SEED);
+                    let c_hash = rapidhashcc_rs(&data, RAPID_SEED);
                     assert_eq!(rust_hash, c_hash, "Mismatch with input {} byte {} bit {}", len, byte, bit);
 
                     let mut rust_hasher = RapidBuildHasher::default().build_hasher();

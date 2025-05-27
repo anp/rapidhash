@@ -1,7 +1,8 @@
 use std::io::Read;
-use crate::mix::{rapid_mix, rapid_mum};
-use crate::read::{read_u32, read_u64};
 use crate::inner::rapid_const::{RAPID_SEED, RAPID_SECRET, rapidhash_finish, rapidhash_seed};
+use crate::util::chunked_stream_reader::ChunkedStreamReader;
+use crate::util::mix::{rapid_mix, rapid_mum};
+use crate::util::read::{read_u32, read_u64};
 
 /// Rapidhash a file, matching the C++ implementation.
 ///
@@ -39,99 +40,6 @@ pub fn rapidhash_file_inline<R: Read, const PROTECTED: bool>(data: R, mut seed: 
     let mut reader = ChunkedStreamReader::new(data, 16);
     let (a, b, seed) = rapidhash_file_core::<R, PROTECTED>(0, 0, seed, &mut reader)?;
     Ok(rapidhash_finish::<PROTECTED>(a, b, seed))
-}
-
-struct ChunkedStreamReader<R: Read> {
-    reader: R,
-    start: usize,
-    end: usize,
-    total_read: usize,
-    buffer: Vec<u8>,
-    last: Vec<u8>,
-}
-
-impl<R: Read> ChunkedStreamReader<R> {
-    pub fn new(reader: R, keep_last: usize) -> Self {
-        Self {
-            reader,
-            start: 0,
-            end: 0,
-            total_read: 0,
-            buffer: vec![0; 8 * 1024],
-            last: vec![0; keep_last],
-        }
-    }
-
-    #[inline(always)]
-    pub fn debug_invariants(&self) {
-        debug_assert!(self.start <= self.end);
-        debug_assert!(self.end <= self.buffer.len());
-    }
-
-    /// Returns the buffer size.
-    pub fn fill_buffer(&mut self, chunk_size: usize) -> std::io::Result<usize> {
-        self.debug_invariants();
-        if chunk_size > self.buffer.len() {
-            self.buffer.resize(chunk_size, 0);
-        }
-
-        let mut read_in_round = 0;
-
-        while self.end - self.start < chunk_size {
-            if self.buffer.len() - self.start < chunk_size {
-                self.buffer.copy_within(self.start..self.end, 0);
-                self.end -= self.start;
-                self.start = 0;
-            }
-
-            let read = self.reader.read(&mut self.buffer[self.end..])?;
-            if read == 0 {
-                break;
-            }
-            read_in_round += read;
-            self.end += read;
-        }
-
-        self.total_read += read_in_round;
-        self.debug_invariants();
-        Ok(read_in_round)
-    }
-
-    pub fn consume(&mut self, consume: usize) {
-        self.debug_invariants();
-        self.start += consume;
-        self.debug_invariants();
-        if self.start > self.end {
-            self.start = self.end;
-        }
-    }
-
-    /// Read a chunk of data, guaranteeing to return at least `chunk_size` unless the reader has
-    /// reached the end. May return larger than `chunk_size` if available.
-    pub fn read_chunk(&mut self, chunk_size: usize) -> std::io::Result<&[u8]> {
-        let read = self.fill_buffer(chunk_size)?;
-
-        if read > 0 {
-            if read < self.last.len() {
-                self.last.copy_within(read.., 0);
-            }
-
-            let read = read.min(self.last.len());
-            let offset = self.last.len() - read;
-
-            self.last[offset..].copy_from_slice(&self.buffer[self.end - read..self.end]);
-        }
-
-        Ok(&self.buffer[self.start..self.end])
-    }
-
-    pub fn last_read(&self) -> &[u8] {
-        &self.last
-    }
-
-    pub fn total_read(&self) -> usize {
-        self.total_read
-    }
 }
 
 #[inline(always)]

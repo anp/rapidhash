@@ -178,8 +178,10 @@ mod tests {
                     data[byte] ^= 1 << bit;
 
                     let rust_hash = rapidhash_seeded(&data, RAPID_SEED);
+                    let compact_hash = rapidhash_inline::<true, false>(&data, RAPID_SEED);
                     let c_hash = rapidhashcc_v1(&data, RAPID_SEED);
-                    assert_eq!(rust_hash, c_hash, "Mismatch with input {} byte {} bit {}", len, byte, bit);
+                    assert_eq!(rust_hash, c_hash, "Mismatch with C on input {} byte {} bit {}", len, byte, bit);
+                    assert_eq!(rust_hash, compact_hash, "Mismatch with COMPACT on input {} byte {} bit {}", len, byte, bit);
 
                     let mut rust_hasher = RapidBuildHasher::default().build_hasher();
                     rust_hasher.write(&data);
