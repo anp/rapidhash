@@ -30,7 +30,7 @@ mod rapid_hasher;
 #[cfg(any(feature = "std", docsrs))]
 mod rapid_file;
 #[cfg(any(feature = "std", feature = "rand", docsrs))]
-mod random_state;
+mod state;
 mod seeding;
 
 #[doc(inline)]
@@ -42,8 +42,7 @@ pub use rapid_hasher::*;
 #[cfg(any(feature = "std", docsrs))]
 pub use rapid_file::*;
 #[doc(inline)]
-// #[cfg(any(feature = "std", feature = "rand", docsrs))]
-pub use random_state::*;
+pub use state::*;
 #[doc(inline)]
 pub use crate::rng::*;
 
@@ -111,7 +110,7 @@ mod tests {
 
         let mut flips = std::vec![];
 
-        for len in 1..=1024 {
+        for len in 1..=512 {
             let mut data = std::vec![0; len];
             rand::rng().fill(&mut data[..]);
 

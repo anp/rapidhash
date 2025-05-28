@@ -23,4 +23,4 @@ pub type RapidHashSet<K> = inner::RapidHashSet<K, AVALANCHE, FNV, COMPACT, PROTE
 
 // TODO: use params
 #[cfg(any(feature = "std", feature = "rand", docsrs))]
-pub type RapidRandomState = inner::RapidRandomState;
+pub type RapidRandomState = inner::RandomState;

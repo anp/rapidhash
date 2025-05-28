@@ -37,9 +37,10 @@ pub fn rapidhash_rs_file_seeded<R: Read>(data: R, seed: u64) -> std::io::Result<
 #[inline(always)]
 pub fn rapidhash_rs_file_inline<R: Read, const PROTECTED: bool>(data: R, mut seed: u64) -> std::io::Result<u64> {
     seed = rapidhash_seed(seed);
+    let secrets = RAPID_SECRET.first_chunk().unwrap();
     let mut reader = ChunkedStreamReader::new(data, 16);
     let (a, b, seed) = rapidhash_file_core::<R, PROTECTED>(0, 0, seed, &mut reader)?;
-    Ok(rapidhash_finish::<PROTECTED>(a, b, seed))
+    Ok(rapidhash_finish::<PROTECTED>(a, b, seed, secrets))
 }
 
 #[inline(always)]

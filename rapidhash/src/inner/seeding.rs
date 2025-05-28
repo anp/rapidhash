@@ -22,7 +22,7 @@ pub(super) mod seed {
 
             seed = RANDOM_SEED.with(|cell| {
                 let mut seed = cell.get();
-                seed = rapid_mix::<false>(seed, arbitrary ^ RAPID_SECRET[0]);
+                seed = rapid_mix::<false>(seed ^ RAPID_SECRET[1], arbitrary ^ RAPID_SECRET[0]);
                 cell.set(seed);
                 seed
             });
@@ -35,7 +35,7 @@ pub(super) mod seed {
             static RANDOM_SEED: AtomicUsize = AtomicUsize::new(0);
 
             seed = RANDOM_SEED.load(Ordering::Relaxed) as u64;
-            seed = crate::util::mix::rapid_mix::<false>(seed, arbitrary ^ RAPID_SECRET[0]);
+            seed = crate::util::mix::rapid_mix::<false>(seed ^ RAPID_SECRET[1], arbitrary ^ RAPID_SECRET[0]);
             RANDOM_SEED.store(seed as usize, Ordering::Relaxed);
         }
 
@@ -57,7 +57,7 @@ pub(super) mod secrets {
 pub(super) mod secrets {
     use core::cell::UnsafeCell;
     use core::sync::atomic::{AtomicUsize, Ordering};
-    use crate::inner::rapid_const::{RAPID_SEED, RAPID_SECRET};
+    use crate::inner::rapid_const::RAPID_SECRET;
     use crate::util::mix::rapid_mix;
 
     /// A hacky sync-friendly, std-free, OnceCell that sadly needs unsafe inspired by foldhash's
@@ -147,6 +147,8 @@ pub(super) mod secrets {
 
         #[cfg(not(feature = "rand"))]
         {
+            use crate::inner::rapid_const::{RAPID_SEED, RAPID_SECRET, RAPID_CONST};
+
             // trying out best to generate a good random number on all platforms
             let mut seed = RAPID_SEED;
             let stack_ptr = core::ptr::addr_of!(seed) as u64;
@@ -178,7 +180,7 @@ pub(super) mod secrets {
             }
 
             // final avalanche step
-            seed = rapid_mix::<true>(seed ^ RAPID_SECRET[7], RAPID_SECRET[0]);
+            seed = rapid_mix::<true>(seed ^ RAPID_CONST, RAPID_SECRET[0]);
             seed
         }
     }

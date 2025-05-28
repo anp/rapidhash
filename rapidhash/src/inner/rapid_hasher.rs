@@ -31,6 +31,7 @@ pub struct RapidHasher<const AVALANCHE: bool, const FNV: bool, const COMPACT: bo
     a: u64,
     b: u64,
     seed: u64,
+    secrets: &'static [u64; 7],  // FUTURE: non-static secrets?
 }
 
 /// A [std::hash::BuildHasher] trait compatible hasher that uses the [RapidHasher] algorithm.
@@ -53,6 +54,7 @@ pub struct RapidHasher<const AVALANCHE: bool, const FNV: bool, const COMPACT: bo
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct RapidBuildHasher<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool = false, const PROTECTED: bool = false> {
     seed: u64,
+    secrets: &'static [u64; 7],
 }
 
 impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTED: bool> RapidBuildHasher<AVALANCHE, FNV, COMPACT, PROTECTED> {
@@ -60,7 +62,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     #[inline]
     pub const fn new(mut seed: u64) -> Self {
         seed = rapidhash_seed(seed);
-        Self { seed }
+        Self { seed, secrets: &RAPID_SECRET.first_chunk().unwrap() }
     }
 }
 
@@ -70,7 +72,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
 
     #[inline(always)]
     fn build_hasher(&self) -> Self::Hasher {
-        Self::Hasher::new_precomputed_seed(self.seed)
+        Self::Hasher::new_precomputed_seed(self.seed, self.secrets)
     }
 
     /// The aim of the game here is twofold:
@@ -149,16 +151,17 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     pub const fn new(mut seed: u64) -> Self {
         // do most of the rapidhash_seed initialisation here to avoid doing it on each int
         seed = rapidhash_seed(seed);
-        Self::new_precomputed_seed(seed)
+        Self::new_precomputed_seed(seed, &RAPID_SECRET.first_chunk().unwrap())
     }
 
     #[inline(always)]
     #[must_use]
-    pub(super) const fn new_precomputed_seed(seed: u64) -> Self {
+    pub(super) const fn new_precomputed_seed(seed: u64, secrets: &'static [u64; 7]) -> Self {
         Self {
-            seed,
             a: 0,
             b: 0,
+            seed,
+            secrets,
         }
     }
 
@@ -183,7 +186,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
         );
 
         // self.seed = self.seed.wrapping_add(bytes.len() as u64);
-        let (a, b, seed) = rapidhash_core::<COMPACT, PROTECTED>(self.a, self.b, self.seed, bytes);
+        let (a, b, seed) = rapidhash_core::<COMPACT, PROTECTED>(self.a, self.b, self.seed, self.secrets, bytes);
         self.a = a;
         self.b = b;
         self.seed = seed;
@@ -237,7 +240,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     #[must_use]
     pub const fn finish_const(&self) -> u64 {
         if AVALANCHE {
-            rapidhash_finish::<PROTECTED>(self.a, self.b, self.seed)
+            rapidhash_finish::<PROTECTED>(self.a, self.b, self.seed, self.secrets)
         } else {
             self.a ^ self.b ^ self.seed
         }
