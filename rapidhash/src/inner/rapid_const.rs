@@ -18,18 +18,18 @@ pub(super) const RAPID_SECRET: [u64; 8] = [
 
 /// Rapidhash a single byte stream, matching the C++ implementation, with the default seed.
 ///
-/// Fixed length inputs will greatly benefit from inlining with [rapidhash_inline] instead.
+/// Fixed length inputs will greatly benefit from inlining with [rapidhash_rs_inline] instead.
 #[inline]
-pub const fn rapidhash(data: &[u8]) -> u64 {
-    rapidhash_inline::<false, false>(data, RAPID_SEED)
+pub(crate) const fn rapidhash_rs(data: &[u8]) -> u64 {
+    rapidhash_rs_inline::<false, false>(data, RAPID_SEED)
 }
 
 /// Rapidhash a single byte stream, matching the C++ implementation, with a custom seed.
 ///
-/// Fixed length inputs will greatly benefit from inlining with [rapidhash_inline] instead.
+/// Fixed length inputs will greatly benefit from inlining with [rapidhash_rs_inline] instead.
 #[inline]
-pub const fn rapidhash_seeded(data: &[u8], seed: u64) -> u64 {
-    rapidhash_inline::<false, false>(data, seed)
+pub(crate) const fn rapidhash_rs_seeded(data: &[u8], seed: u64) -> u64 {
+    rapidhash_rs_inline::<false, false>(data, seed)
 }
 
 /// Rapidhash a single byte stream, matching the C++ implementation.
@@ -37,7 +37,7 @@ pub const fn rapidhash_seeded(data: &[u8], seed: u64) -> u64 {
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
 /// Can provide large performance uplifts for fixed-length inputs at compile time.
 #[inline(always)]
-pub const fn rapidhash_inline<const COMPACT: bool, const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
+pub(crate) const fn rapidhash_rs_inline<const COMPACT: bool, const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
     seed = rapidhash_seed(seed);  // .wrapping_add(data.len() as u64);
     let (a, b, seed) = rapidhash_core::<COMPACT, PROTECTED>(0, 0, seed, data);
     rapidhash_finish::<PROTECTED>(a, b, seed)

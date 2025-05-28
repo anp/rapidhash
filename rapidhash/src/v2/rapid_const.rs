@@ -16,30 +16,39 @@ pub(super) const RAPID_SECRET: [u64; 8] = [
     0xaaaaaaaaaaaaaaaa,
 ];
 
-/// Rapidhash a single byte stream, matching the C++ implementation, with the default seed.
+/// Rapidhash V2.2 a single byte stream, matching the C++ implementation, with the default seed.
+///
+/// See [rapidhash_v2_inline] to compute the hash value using V2.0 or V2.2.
 ///
 /// Fixed length inputs will greatly benefit from inlining with [rapidhash_inline] instead.
 #[inline]
-pub const fn rapidhash(data: &[u8]) -> u64 {
-    rapidhash_inline::<false, false>(data, RAPID_SEED)
+pub const fn rapidhash_v2_2(data: &[u8]) -> u64 {
+    rapidhash_v2_inline::<2, false, false>(data, RAPID_SEED)
 }
 
-/// Rapidhash a single byte stream, matching the C++ implementation, with a custom seed.
+/// Rapidhash V2.2 a single byte stream, matching the C++ implementation, with a custom seed.
+///
+/// See [rapidhash_v2_inline] to compute the hash value using V2.0 or V2.2.
 ///
 /// Fixed length inputs will greatly benefit from inlining with [rapidhash_inline] instead.
 #[inline]
-pub const fn rapidhash_seeded(data: &[u8], seed: u64) -> u64 {
-    rapidhash_inline::<false, false>(data, seed)
+pub const fn rapidhash_v2_2_seeded(data: &[u8], seed: u64) -> u64 {
+    rapidhash_v2_inline::<2, false, false>(data, seed)
 }
 
-/// Rapidhash a single byte stream, matching the C++ implementation.
+/// Rapidhash V2 a single byte stream, matching the C++ implementation.
 ///
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
 /// Can provide large performance uplifts for fixed-length inputs at compile time.
+///
+/// `MINOR` is the minor version of the rapidhash algorithm:
+/// - 0: v2.0
+/// - 1: v2.1
+/// - 2: v2.2
 #[inline(always)]
-pub const fn rapidhash_inline<const COMPACT: bool, const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
+pub const fn rapidhash_v2_inline<const MINOR: u8, const COMPACT: bool, const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
     seed = rapidhash_seed(seed) ^ data.len() as u64;
-    let (a, b, _) = rapidhash_core::<COMPACT, PROTECTED>(0, 0, seed, data);
+    let (a, b, _) = rapidhash_core::<MINOR, COMPACT, PROTECTED>(0, 0, seed, data);
     rapidhash_finish::<PROTECTED>(a, b, data.len() as u64)
 }
 
@@ -49,8 +58,11 @@ pub(super) const fn rapidhash_seed(seed: u64) -> u64 {
 }
 
 #[inline(always)]
-pub(super) const fn rapidhash_core<const COMPACT: bool, const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
-    // TODO: benchmark without the a,b XOR -- eg. a oneshot
+pub(super) const fn rapidhash_core<const MINOR: u8, const COMPACT: bool, const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
+    if MINOR > 2 {
+        panic!("rapidhash_core unsupported minor version. Supported versions are 0, 1, and 2.");
+    }
+
     if data.len() <= 16 {
         if data.len() >= 4 {
             if data.len() >= 8 {
@@ -63,12 +75,16 @@ pub(super) const fn rapidhash_core<const COMPACT: bool, const PROTECTED: bool>(m
                 b ^= read_u32(data, plast) as u64;
             }
         } else if data.len() > 0 {
-            a ^= ((data[0] as u64) << 56) | data[data.len() - 1] as u64;
-            b ^= data[data.len() >> 1] as u64;
+            if MINOR < 2 {
+                a ^= ((data[0] as u64) << 56) | ((data[data.len() >> 1] as u64) << 32) | data[data.len() - 1] as u64;
+            } else {
+                a ^= ((data[0] as u64) << 56) | data[data.len() - 1] as u64;
+                b ^= data[data.len() >> 1] as u64;
+            }
         }
-    } else if data.len() <= 64 {
+    } else if (MINOR == 0 && data.len() <= 56) || (MINOR > 0 && data.len() <= 64) {
         // len is 17..=64
-        (a, b, seed) = rapidhash_core_17_64::<PROTECTED>(a, b, seed, data);
+        (a, b, seed) = rapidhash_core_17_64::<MINOR, PROTECTED>(a, b, seed, data);
     } else {
         (a, b, seed) = rapidhash_core_cold::<COMPACT, PROTECTED>(a, b, seed, data);
     }
@@ -81,14 +97,15 @@ pub(super) const fn rapidhash_core<const COMPACT: bool, const PROTECTED: bool>(m
 }
 
 #[inline]  // intentionally not always
-const fn rapidhash_core_17_64<const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
+const fn rapidhash_core_17_64<const MINOR: u8, const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: u64, data: &[u8]) -> (u64, u64, u64) {
     let slice = data;
 
     seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
     if slice.len() > 32 {
         seed = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ seed);
         if slice.len() > 48 {
-            seed = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ RAPID_SECRET[1], read_u64(slice, 40) ^ seed);
+            let index: usize = if MINOR < 2 { 0 } else { 1 };
+            seed = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ RAPID_SECRET[index], read_u64(slice, 40) ^ seed);
         }
     }
 

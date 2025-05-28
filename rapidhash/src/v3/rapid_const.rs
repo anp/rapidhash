@@ -16,28 +16,30 @@ pub(super) const RAPID_SECRET: [u64; 8] = [
     0xaaaaaaaaaaaaaaaa,
 ];
 
-/// Rapidhash a single byte stream, matching the C++ implementation, with the default seed.
+/// Rapidhash V3 a single byte stream, matching the C++ implementation, with the default seed.
 ///
 /// Fixed length inputs will greatly benefit from inlining with [rapidhash_inline] instead.
 #[inline]
-pub const fn rapidhash(data: &[u8]) -> u64 {
-    rapidhash_inline::<false, false>(data, RAPID_SEED)
+pub const fn rapidhash_v3(data: &[u8]) -> u64 {
+    rapidhash_v3_inline::<false, false>(data, RAPID_SEED)
 }
 
-/// Rapidhash a single byte stream, matching the C++ implementation, with a custom seed.
+/// Rapidhash V3 a single byte stream, matching the C++ implementation, with a custom seed.
 ///
 /// Fixed length inputs will greatly benefit from inlining with [rapidhash_inline] instead.
 #[inline]
-pub const fn rapidhash_seeded(data: &[u8], seed: u64) -> u64 {
-    rapidhash_inline::<false, false>(data, seed)
+pub const fn rapidhash_v3_seeded(data: &[u8], seed: u64) -> u64 {
+    rapidhash_v3_inline::<false, false>(data, seed)
 }
 
-/// Rapidhash a single byte stream, matching the C++ implementation.
+/// Rapidhash V3 a single byte stream, matching the C++ implementation.
 ///
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
 /// Can provide large performance uplifts for fixed-length inputs at compile time.
+///
+/// Exposes `COMPACT` and `PROTECTED` consts to allow for different hashing modes.
 #[inline(always)]
-pub const fn rapidhash_inline<const COMPACT: bool, const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
+pub const fn rapidhash_v3_inline<const COMPACT: bool, const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
     seed = rapidhash_seed(seed);
     let (a, b, _, remainder) = rapidhash_core::<COMPACT, PROTECTED>(0, 0, seed, data);
     rapidhash_finish::<PROTECTED>(a, b, remainder)
@@ -48,8 +50,10 @@ pub const fn rapidhash_inline<const COMPACT: bool, const PROTECTED: bool>(data: 
 /// Designed for HPC and server applications, where cache misses make a noticeable performance
 /// detriment. Compiles it to ~140 instructions without stack usage, both on x86-64 and aarch64.
 /// Faster for sizes up to 512 bytes, just 15%-20% slower for inputs above 1kb.
+///
+/// Exposes `PROTECTED` const to allow for different hashing modes.
 #[inline(always)]
-pub const fn rapidhash_micro_inline<const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
+pub const fn rapidhash_v3_micro_inline<const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
     seed = rapidhash_seed(seed);
     let (a, b, _, remainder) = rapidhash_micro_core::<PROTECTED>(0, 0, seed, data);
     rapidhash_finish::<PROTECTED>(a, b, remainder)
@@ -61,8 +65,10 @@ pub const fn rapidhash_micro_inline<const PROTECTED: bool>(data: &[u8], mut seed
 /// This should compile it to less than 100 instructions with minimal stack usage, both on x86-64
 /// and aarch64. The fastest for sizes up to 48 bytes, but may be considerably slower for larger
 /// inputs.
+///
+/// Exposes `PROTECTED` const to allow for different hashing modes.
 #[inline(always)]
-pub const fn rapidhash_nano_inline<const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
+pub const fn rapidhash_v3_nano_inline<const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
     seed = rapidhash_seed(seed);
     let (a, b, _, remainder) = rapidhash_nano_core::<PROTECTED>(0, 0, seed, data);
     rapidhash_finish::<PROTECTED>(a, b, remainder)

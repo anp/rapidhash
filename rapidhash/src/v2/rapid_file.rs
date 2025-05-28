@@ -4,25 +4,29 @@ use crate::util::mix::{rapid_mix, rapid_mum};
 use crate::util::read::{read_u32, read_u64};
 use crate::v2::rapid_const::{RAPID_SEED, RAPID_SECRET, rapidhash_finish, rapidhash_seed};
 
-/// Rapidhash a file, matching the C++ implementation.
+/// Rapidhash V2.2 a file, matching the C++ implementation.
+///
+/// See [rapidhash_v2_file_inline] to compute the hash value using V2.0 or V2.2.
 ///
 /// This method will check the metadata for a file length, and then stream the file with a
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
-pub fn rapidhash_file(data: &mut File) -> std::io::Result<u64> {
-    rapidhash_file_inline::<false>(data, RAPID_SEED)
+pub fn rapidhash_v2_2_file(data: &mut File) -> std::io::Result<u64> {
+    rapidhash_v2_file_inline::<2, false>(data, RAPID_SEED)
 }
 
-/// Rapidhash a file, matching the C++ implementation, with a custom seed.
+/// Rapidhash V2.2 a file, matching the C++ implementation, with a custom seed.
+///
+/// See [rapidhash_v2_file_inline] to compute the hash value using V2.0 or V2.2.
 ///
 /// This method will check the metadata for a file length, and then stream the file with a
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
-pub fn rapidhash_file_seeded(data: &mut File, seed: u64) -> std::io::Result<u64> {
-    rapidhash_file_inline::<false>(data, seed)
+pub fn rapidhash_v2_2_file_seeded(data: &mut File, seed: u64) -> std::io::Result<u64> {
+    rapidhash_v2_file_inline::<2, false>(data, seed)
 }
 
-/// Rapidhash a file, matching the C++ implementation.
+/// Rapidhash V2 a file, matching the C++ implementation. (2.0, 2.1, and 2.2 supported)
 ///
 /// This method will check the metadata for a file length, and then stream the file with a
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
@@ -34,17 +38,26 @@ pub fn rapidhash_file_seeded(data: &mut File, seed: u64) -> std::io::Result<u64>
 ///
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
 /// Can provide large performance uplifts for inputs where the length is known at compile time.
+///
+/// `MINOR` is the minor version of the rapidhash algorithm:
+/// - 0: v2.0
+/// - 1: v2.1
+/// - 2: v2.2
 #[inline(always)]
-pub fn rapidhash_file_inline<const PROTECTED: bool>(data: &mut File, mut seed: u64) -> std::io::Result<u64> {
+pub fn rapidhash_v2_file_inline<const MINOR: u8, const PROTECTED: bool>(data: &mut File, mut seed: u64) -> std::io::Result<u64> {
     let len = data.metadata()?.len();
     let mut reader = BufReader::new(data);
     seed = rapidhash_seed(seed) ^ len;
-    let (a, b, _) = rapidhash_file_core::<PROTECTED>(0, 0, seed, len as usize, &mut reader)?;
+    let (a, b, _) = rapidhash_file_core::<MINOR, PROTECTED>(0, 0, seed, len as usize, &mut reader)?;
     Ok(rapidhash_finish::<PROTECTED>(a, b, len))
 }
 
 #[inline(always)]
-fn rapidhash_file_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: u64, len: usize, iter: &mut BufReader<&mut File>) -> std::io::Result<(u64, u64, u64)> {
+fn rapidhash_file_core<const MINOR: u8, const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: u64, len: usize, iter: &mut BufReader<&mut File>) -> std::io::Result<(u64, u64, u64)> {
+    if MINOR > 2 {
+        panic!("rapidhash_file_core does not support minor version {}. Supported versions are 0, 1, and 2.", MINOR);
+    }
+
     if len <= 16 {
         let mut buf = [0u8; 16];
         iter.read_exact(&mut buf[0..len])?;
@@ -61,10 +74,14 @@ fn rapidhash_file_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: 
                 b = read_u32(&data, plast) as u64;
             }
         } else if data.len() > 0 {
-            a = ((data[0] as u64) << 56) | data[data.len() - 1] as u64;
-            b = data[data.len() >> 1] as u64;
+            if MINOR >= 2 {
+                a = ((data[0] as u64) << 56) | data[data.len() - 1] as u64;
+                b = data[data.len() >> 1] as u64;
+            } else {
+                a = ((data[0] as u64) << 56) | data[data.len() - 1] as u64 | data[data.len() >> 1] as u64;
+            }
         }
-    } else if len > 64 {
+    } else if (MINOR >= 1 && len > 64) || (MINOR == 0 && len > 56) {
         let mut remaining = len;
         let mut buf = [0u8; 448];
 
@@ -162,7 +179,8 @@ fn rapidhash_file_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: 
         if slice.len() > 32 {
             seed = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ seed);
             if slice.len() > 48 {
-                seed = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ RAPID_SECRET[1], read_u64(slice, 40) ^ seed);
+                let index: usize = if MINOR < 2 { 0 } else { 1 };
+                seed = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ RAPID_SECRET[index], read_u64(slice, 40) ^ seed);
             }
         }
 
@@ -173,9 +191,7 @@ fn rapidhash_file_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: 
     a ^= RAPID_SECRET[1];
     b ^= seed;
 
-    let (a2, b2) = rapid_mum::<PROTECTED>(a, b);
-    a = a2;
-    b = b2;
+    (a, b) = rapid_mum::<PROTECTED>(a, b);
     Ok((a, b, seed))
 }
 
@@ -185,7 +201,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_compare_rapidhash_file() {
+    fn test_compare_rapidhash_file_v2_0() {
         use rand::RngCore;
 
         const LENGTH: usize = 1024;
@@ -198,8 +214,8 @@ mod tests {
             file.seek(SeekFrom::Start(0)).unwrap();
 
             assert_eq!(
-                crate::v2::rapidhash(&data),
-                rapidhash_file(&mut file).unwrap(),
+                crate::v2::rapidhash_v2_2(&data),
+                rapidhash_v2_2_file(&mut file).unwrap(),
                 "Mismatch for input len: {}", &data.len()
             );
         }

@@ -9,8 +9,8 @@ use crate::v1::rapid_const::{RAPID_SEED, RAPID_SECRET, rapidhash_finish, rapidha
 /// This method will check the metadata for a file length, and then stream the file with a
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
-pub fn rapidhash_file(data: &mut File) -> std::io::Result<u64> {
-    rapidhash_file_inline::<false>(data, RAPID_SEED)
+pub fn rapidhash_v1_file(data: &mut File) -> std::io::Result<u64> {
+    rapidhash_v1_file_inline::<false>(data, RAPID_SEED)
 }
 
 /// Rapidhash a file, matching the C++ implementation, with a custom seed.
@@ -18,8 +18,8 @@ pub fn rapidhash_file(data: &mut File) -> std::io::Result<u64> {
 /// This method will check the metadata for a file length, and then stream the file with a
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
-pub fn rapidhash_file_seeded(data: &mut File, seed: u64) -> std::io::Result<u64> {
-    rapidhash_file_inline::<false>(data, seed)
+pub fn rapidhash_v1_file_seeded(data: &mut File, seed: u64) -> std::io::Result<u64> {
+    rapidhash_v1_file_inline::<false>(data, seed)
 }
 
 /// Rapidhash a file, matching the C++ implementation.
@@ -35,7 +35,7 @@ pub fn rapidhash_file_seeded(data: &mut File, seed: u64) -> std::io::Result<u64>
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
 /// Can provide large performance uplifts for inputs where the length is known at compile time.
 #[inline(always)]
-pub fn rapidhash_file_inline<const PROTECTED: bool>(data: &mut File, mut seed: u64) -> std::io::Result<u64> {
+pub fn rapidhash_v1_file_inline<const PROTECTED: bool>(data: &mut File, mut seed: u64) -> std::io::Result<u64> {
     let len = data.metadata()?.len();
     let mut reader = BufReader::new(data);
     seed = rapidhash_seed(seed) ^ len;
@@ -131,9 +131,7 @@ fn rapidhash_file_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: 
     a ^= RAPID_SECRET[1];
     b ^= seed;
 
-    let (a2, b2) = rapid_mum::<PROTECTED>(a, b);
-    a = a2;
-    b = b2;
+    (a, b) = rapid_mum::<PROTECTED>(a, b);
     Ok((a, b, seed))
 }
 
@@ -156,8 +154,8 @@ mod tests {
             file.seek(SeekFrom::Start(0)).unwrap();
 
             assert_eq!(
-                crate::v1::rapidhash(&data),
-                rapidhash_file(&mut file).unwrap(),
+                crate::v1::rapidhash_v1(&data),
+                rapidhash_v1_file(&mut file).unwrap(),
                 "Mismatch for input len: {}", &data.len()
             );
         }

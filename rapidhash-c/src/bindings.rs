@@ -73,8 +73,8 @@ mod tests_verification {
     fn verification_rs() {
         let inputs: [(u64, &str); 8] = [
             (0x0fce4257ab06643c, ""),
-            (0x6068093a933c79ad, "a"),
-            (0x4dd5a1964cd5e715, "abc"),
+            (0xed6a07793969b797, "a"),
+            (0x7cfa284389ee95cb, "abc"),
             (0x4005b3c2c8cf6b85, "message digest"),
             (0x4846cfa4bda06275, "abcdefghijklmnopqrstuvwxyz"),
             (0x3420e11fc0f7ae03, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"),

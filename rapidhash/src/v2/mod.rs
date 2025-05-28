@@ -6,7 +6,7 @@ mod rapid_hasher;
 mod rapid_file;
 
 #[doc(inline)]
-pub use rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, RAPID_SEED};
+pub use rapid_const::*;
 #[doc(inline)]
 pub use rapid_hasher::*;
 #[doc(inline)]
@@ -20,6 +20,7 @@ mod tests {
     use std::hash::{BuildHasher, Hash, Hasher};
     use std::collections::BTreeSet;
     use rand::Rng;
+    use crate::util::macros::compare_to_c;
     use super::*;
 
     #[derive(Hash)]
@@ -30,7 +31,7 @@ mod tests {
     /// Check the [rapidhash] oneshot function is equivalent to [RapidHasher]
     #[test]
     fn hasher_equivalent_to_oneshot() {
-        let hash = rapidhash(b"hello world");
+        let hash = rapidhash_v2_2(b"hello world");
         assert_ne!(hash, 0);
         assert_eq!(hash, 1722744455612372674);
 
@@ -38,7 +39,7 @@ mod tests {
         hasher.write(b"hello world");
         assert_eq!(hasher.finish(), 1722744455612372674);
 
-        let hash = rapidhash(b"hello world!");
+        let hash = rapidhash_v2_2(b"hello world!");
         assert_eq!(hash, 14157057347469129788);
     }
 
@@ -67,7 +68,7 @@ mod tests {
             let mut data = std::vec![0; size];
             rand::rng().fill(data.as_mut_slice());
 
-            let hash1 = rapidhash(&data);
+            let hash1 = rapidhash_v2_2(&data);
             let mut hasher = RapidHasher::default();
             hasher.write(&data);
             let hash2 = hasher.finish();
@@ -93,12 +94,12 @@ mod tests {
             let mut data = std::vec![0; len];
             rand::rng().fill(&mut data[..]);
 
-            let hash = rapidhash(&data);
+            let hash = rapidhash_v2_2(&data);
             for byte in 0..len {
                 for bit in 0..8 {
                     let mut data = data.clone();
                     data[byte] ^= 1 << bit;
-                    let new_hash = rapidhash(&data);
+                    let new_hash = rapidhash_v2_2(&data);
                     assert_ne!(hash, new_hash, "Flipping byte {} bit {} did not change hash for input len {}", byte, bit, len);
                     let xor = hash ^ new_hash;
                     let flipped = xor.count_ones() as u64;
@@ -162,35 +163,9 @@ mod tests {
         assert!(average > 31.95 && average < 32.05, "Did not flip an average of half the bits. average: {average}, expected: 32.0");
     }
 
-    /// Compare to the C rapidhash implementation to ensure we match perfectly.
-    #[test]
-    fn compare_to_c() {
-        use rand::Rng;
-        use rapidhash_c::rapidhashcc_v2_2;
-
-        for len in 0..=512 {
-            let mut data = std::vec![0; len];
-            rand::rng().fill(&mut data[..]);
-
-            for byte in 0..len {
-                for bit in 0..8 {
-                    let mut data = data.clone();
-                    data[byte] ^= 1 << bit;
-
-                    let rust_hash = rapidhash_seeded(&data, RAPID_SEED);
-                    let compact_hash = rapidhash_inline::<true, false>(&data, RAPID_SEED);
-                    let c_hash = rapidhashcc_v2_2(&data, RAPID_SEED);
-                    assert_eq!(rust_hash, c_hash, "Mismatch with C on input {} byte {} bit {}", len, byte, bit);
-                    assert_eq!(rust_hash, compact_hash, "Mismatch with COMPACT on input {} byte {} bit {}", len, byte, bit);
-
-                    let mut rust_hasher = RapidBuildHasher::default().build_hasher();
-                    rust_hasher.write(&data);
-                    let rust_hasher_hash = rust_hasher.finish();
-                    assert_eq!(rust_hash, rust_hasher_hash, "Hasher mismatch with input {} byte {} bit {}", len, byte, bit);
-                }
-            }
-        }
-    }
+    compare_to_c!(compare_to_c_v2_0, rapidhash_v2_inline::<0, false, false>, rapidhash_v2_inline::<0, true, false>, rapidhashcc_v2);
+    compare_to_c!(compare_to_c_v2_1, rapidhash_v2_inline::<1, false, false>, rapidhash_v2_inline::<1, true, false>, rapidhashcc_v2_1);
+    compare_to_c!(compare_to_c_v2_2, rapidhash_v2_inline::<2, false, false>, rapidhash_v2_inline::<2, true, false>, rapidhashcc_v2_2);
 
     #[test]
     fn disambiguation_check() {

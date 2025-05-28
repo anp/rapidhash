@@ -408,7 +408,7 @@ RAPIDHASH_INLINE_CONSTEXPR uint64_t rapidhash_internal(const void *key, size_t l
         b = rapid_read32(plast);
       }
     } else if (_likely_(len > 0)) {
-      a = (((uint64_t)p[0])<<56)|p[len-1];
+      a = (((uint64_t)p[0])<<45)|p[len-1];
       b = p[len>>1];
     } else
       a = b = 0;

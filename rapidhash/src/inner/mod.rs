@@ -33,9 +33,10 @@ mod rapid_file;
 mod random_state;
 
 #[doc(inline)]
-pub use rapid_const::{rapidhash, rapidhash_inline, rapidhash_seeded, RAPID_SEED};
+pub use rapid_const::*;
 #[doc(inline)]
 pub use rapid_hasher::*;
+#[allow(unused_imports)]
 #[doc(inline)]
 #[cfg(any(feature = "std", docsrs))]
 pub use rapid_file::*;
@@ -52,7 +53,7 @@ mod tests {
     use std::hash::{BuildHasher, Hash, Hasher};
     use std::collections::BTreeSet;
     use rand::Rng;
-    use super::{rapidhash, rapidhash_seeded, RAPID_SEED};
+    use super::{rapidhash_rs, rapidhash_rs_seeded, RAPID_SEED};
 
     type RapidHasher = super::RapidHasher<true, false>;
     type RapidBuildHasher = super::RapidBuildHasher<true, false>;
@@ -87,7 +88,7 @@ mod tests {
             let mut data = std::vec![0; size];
             rand::rng().fill(data.as_mut_slice());
 
-            let hash1 = rapidhash(&data);
+            let hash1 = rapidhash_rs(&data);
             let mut hasher = RapidHasher::default();
             hasher.write(&data);
             let hash2 = hasher.finish();
@@ -113,12 +114,12 @@ mod tests {
             let mut data = std::vec![0; len];
             rand::rng().fill(&mut data[..]);
 
-            let hash = rapidhash(&data);
+            let hash = rapidhash_rs(&data);
             for byte in 0..len {
                 for bit in 0..8 {
                     let mut data = data.clone();
                     data[byte] ^= 1 << bit;
-                    let new_hash = rapidhash(&data);
+                    let new_hash = rapidhash_rs(&data);
                     assert_ne!(hash, new_hash, "Flipping byte {} bit {} did not change hash for input len {}", byte, bit, len);
                     let xor = hash ^ new_hash;
                     let flipped = xor.count_ones() as u64;
@@ -197,7 +198,7 @@ mod tests {
                     let mut data = data.clone();
                     data[byte] ^= 1 << bit;
 
-                    let rust_hash = rapidhash_seeded(&data, RAPID_SEED);
+                    let rust_hash = rapidhash_rs_seeded(&data, RAPID_SEED);
                     let c_hash = rapidhashcc_rs(&data, RAPID_SEED);
                     assert_eq!(rust_hash, c_hash, "Mismatch with input {} byte {} bit {}", len, byte, bit);
 

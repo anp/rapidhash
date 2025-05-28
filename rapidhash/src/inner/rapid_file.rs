@@ -9,8 +9,8 @@ use crate::util::read::{read_u32, read_u64};
 /// This method will check the metadata for a file length, and then stream the file with a
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
-pub fn rapidhash_file<R: Read>(data: R) -> std::io::Result<u64> {
-    rapidhash_file_inline::<R, false>(data, RAPID_SEED)
+pub fn rapidhash_rs_file<R: Read>(data: R) -> std::io::Result<u64> {
+    rapidhash_rs_file_inline::<R, false>(data, RAPID_SEED)
 }
 
 /// Rapidhash a file, matching the C++ implementation, with a custom seed.
@@ -18,8 +18,8 @@ pub fn rapidhash_file<R: Read>(data: R) -> std::io::Result<u64> {
 /// This method will check the metadata for a file length, and then stream the file with a
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
-pub fn rapidhash_file_seeded<R: Read>(data: R, seed: u64) -> std::io::Result<u64> {
-    rapidhash_file_inline::<R, false>(data, seed)
+pub fn rapidhash_rs_file_seeded<R: Read>(data: R, seed: u64) -> std::io::Result<u64> {
+    rapidhash_rs_file_inline::<R, false>(data, seed)
 }
 
 /// Rapidhash a file, matching the C++ implementation.
@@ -35,7 +35,7 @@ pub fn rapidhash_file_seeded<R: Read>(data: R, seed: u64) -> std::io::Result<u64
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
 /// Can provide large performance uplifts for inputs where the length is known at compile time.
 #[inline(always)]
-pub fn rapidhash_file_inline<R: Read, const PROTECTED: bool>(data: R, mut seed: u64) -> std::io::Result<u64> {
+pub fn rapidhash_rs_file_inline<R: Read, const PROTECTED: bool>(data: R, mut seed: u64) -> std::io::Result<u64> {
     seed = rapidhash_seed(seed);
     let mut reader = ChunkedStreamReader::new(data, 16);
     let (a, b, seed) = rapidhash_file_core::<R, PROTECTED>(0, 0, seed, &mut reader)?;
@@ -60,7 +60,7 @@ fn rapidhash_file_core<R: Read, const PROTECTED: bool>(mut a: u64, mut b: u64, m
                 b = read_u32(chunk, plast) as u64;
             }
         } else if len > 0 {
-            a = ((chunk[0] as u64) << 56) | chunk[chunk.len() - 1] as u64;
+            a = ((chunk[0] as u64) << 45) | chunk[chunk.len() - 1] as u64;
             b = chunk[chunk.len() >> 1] as u64;
         }
         consumed += chunk.len();
@@ -143,8 +143,8 @@ fn rapidhash_file_core<R: Read, const PROTECTED: bool>(mut a: u64, mut b: u64, m
         }
 
         let last = iter.last_read();
-        a ^= read_u64(&last, last.len() - 16);
-        b ^= read_u64(&last, last.len() - 8);
+        a ^= read_u64(last, last.len() - 16);
+        b ^= read_u64(last, last.len() - 8);
     } else {
         if chunk.len() > 48 {
             // because we're using a buffered reader, it might be worth unrolling this loop further
@@ -218,8 +218,8 @@ mod tests {
             file.seek(SeekFrom::Start(0)).unwrap();
 
             assert_eq!(
-                super::super::rapidhash(&data),
-                rapidhash_file(&mut file).unwrap(),
+                super::super::rapidhash_rs(&data),
+                rapidhash_rs_file(&mut file).unwrap(),
                 "Mismatch for input len: {}", &data.len()
             );
         }
