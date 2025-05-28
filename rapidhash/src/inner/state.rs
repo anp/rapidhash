@@ -79,8 +79,8 @@ impl BuildHasher for RandomState {
 
 #[cfg(test)]
 mod tests {
+    use core::hash::BuildHasher;
     use super::*;
-    use std::hash::{BuildHasher};
 
     #[test]
     fn test_random_state() {

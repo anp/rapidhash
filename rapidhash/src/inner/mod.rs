@@ -29,7 +29,6 @@ mod rapid_const;
 mod rapid_hasher;
 #[cfg(any(feature = "std", docsrs))]
 mod rapid_file;
-#[cfg(any(feature = "std", feature = "rand", docsrs))]
 mod state;
 mod seeding;
 

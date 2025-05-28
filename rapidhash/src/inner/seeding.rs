@@ -1,7 +1,6 @@
 //! Internal module for seeding the hash functions.
 
 pub(super) mod seed {
-    use core::cell::Cell;
     use crate::inner::rapid_const::{rapidhash_seed, RAPID_SECRET};
     use crate::util::mix::rapid_mix;
 
@@ -14,6 +13,8 @@ pub(super) mod seed {
 
         // with std we avoid using global atomics
         #[cfg(feature = "std")] {
+            use core::cell::Cell;
+            
             thread_local! {
                 static RANDOM_SEED: Cell<u64> = const {
                     Cell::new(0)
@@ -35,7 +36,7 @@ pub(super) mod seed {
             static RANDOM_SEED: AtomicUsize = AtomicUsize::new(0);
 
             seed = RANDOM_SEED.load(Ordering::Relaxed) as u64;
-            seed = crate::util::mix::rapid_mix::<false>(seed ^ RAPID_SECRET[1], arbitrary ^ RAPID_SECRET[0]);
+            seed = rapid_mix::<false>(seed ^ RAPID_SECRET[1], arbitrary ^ RAPID_SECRET[0]);
             RANDOM_SEED.store(seed as usize, Ordering::Relaxed);
         }
 

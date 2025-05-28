@@ -1,6 +1,3 @@
-use std::fs::File;
-use std::io::{Read};
-
 /// Command-line tool for rapidhash.
 ///
 /// Rapidhash produces a `u64` hash value, and terminal output is a decimal string of the hash
@@ -46,56 +43,59 @@ pub fn main() {
         panic!("CLI must be compiled with the `std` feature. Try: `cargo install rapidhash --all-features`");
     }
 
-    let args: Vec<String> = std::env::args().collect();
-    // TODO: --version arg
-    // TODO: multiple output types (hex, decimal)
-    // TODO: --seed arg, with hex input support
-    if args.iter().any(|a| a == "--help" || a == "-h") || args.len() < 2 {
-        println!("Usage: rapidhash <version> [opts] [filename]");
-        println!("<version>");
-        println!("  --v1    Use v1 hashing algorithm (no streaming)");
-        println!("  --v2    Use v2 hashing algorithm (no streaming)");
-        println!("  --v2.1  Use v2.1 hashing algorithm (no streaming)");
-        println!("  --v2.2  Use v2.2 hashing algorithm (no streaming)");
-        println!("  --v3    Use v3 hashing algorithm");
-        println!("  --rs    Use the rust algorithm variant (non-standard)");
-        println!("[opts]");
-        println!("  --protected  Use the protected variant (default: false)");
-        println!("[filename]");
-        println!("  Providing a filename is optional and will read a file directly. Otherwise input");
-        println!("  is read from stdin.");
-        println!();
-        println!("Note that only some rapidhash versions support streaming, others require");
-        println!("buffering the entire input in memory.");
-        println!();
-        println!("Docs: https://github.com/hoxxep/rapidhash?tab=readme-ov-file#cli");
-        return;
+    #[cfg(feature = "std")] {
+        let args: Vec<String> = std::env::args().collect();
+        // TODO: --version arg
+        // TODO: multiple output types (hex, decimal)
+        // TODO: --seed arg, with hex input support
+        if args.iter().any(|a| a == "--help" || a == "-h") || args.len() < 2 {
+            println!("Usage: rapidhash <version> [opts] [filename]");
+            println!("<version>");
+            println!("  --v1    Use v1 hashing algorithm (no streaming)");
+            println!("  --v2    Use v2 hashing algorithm (no streaming)");
+            println!("  --v2.1  Use v2.1 hashing algorithm (no streaming)");
+            println!("  --v2.2  Use v2.2 hashing algorithm (no streaming)");
+            println!("  --v3    Use v3 hashing algorithm");
+            println!("  --rs    Use the rust algorithm variant (non-standard)");
+            println!("[opts]");
+            println!("  --protected  Use the protected variant (default: false)");
+            println!("[filename]");
+            println!("  Providing a filename is optional and will read a file directly. Otherwise input");
+            println!("  is read from stdin.");
+            println!();
+            println!("Note that only some rapidhash versions support streaming, others require");
+            println!("buffering the entire input in memory.");
+            println!();
+            println!("Docs: https://github.com/hoxxep/rapidhash?tab=readme-ov-file#cli");
+            return;
+        }
+
+        // file name is the first non-option argument
+        let filename = args.iter().skip(1).filter(|a| !a.starts_with('-')).next();
+
+        // get the rapidhash version from the command line arguments
+        let version = RapidhashVersion::new(&args[1..])
+            .expect("You must specify a single rapidhash version to use. See --help for more.");
+
+        let hash: u64 = match filename {
+            None => {
+                version.hash_stdin()
+            }
+
+            #[allow(unreachable_code)]
+            #[allow(unused_variables)]
+            Some(filename) => {
+                let mut file = std::fs::File::open(filename).expect("Could not open file.");
+                version.hash_file(&mut file)
+            }
+        };
+
+        println!("{hash}");
     }
-
-    // file name is the first non-option argument
-    let filename = args.iter().skip(1).filter(|a| !a.starts_with('-')).next();
-
-    // get the rapidhash version from the command line arguments
-    let version = RapidhashVersion::new(&args[1..])
-        .expect("You must specify a single rapidhash version to use. See --help for more.");
-
-    let hash: u64 = match filename {
-        None => {
-            version.hash_stdin()
-        }
-
-        #[allow(unreachable_code)]
-        #[allow(unused_variables)]
-        Some(filename) => {
-            let mut file = File::open(filename).expect("Could not open file.");
-            version.hash_file(&mut file)
-        }
-    };
-
-    println!("{hash}");
 }
 
 /// Ohhhh boy, this one ain't pretty. Sorry!
+#[cfg(feature = "std")]
 enum RapidhashVersion {
     V1 { protected: bool },
     V2 { protected: bool, version: u8 },
@@ -103,6 +103,7 @@ enum RapidhashVersion {
     Rs { protected: bool },
 }
 
+#[cfg(feature = "std")]
 impl RapidhashVersion {
     pub fn new(args: &[String]) -> Option<Self> {
         let v1 = args.iter().any(|a| a == "--v1");
@@ -135,6 +136,8 @@ impl RapidhashVersion {
     }
 
     pub fn hash_stdin(&self) -> u64 {
+        use std::io::Read;
+
         match self {
             RapidhashVersion::V1 { protected } => {
                 let mut buffer = Vec::with_capacity(1024);
@@ -198,7 +201,7 @@ impl RapidhashVersion {
         }
     }
 
-    pub fn hash_file(&self, reader: &mut File) -> u64 {
+    pub fn hash_file(&self, reader: &mut std::fs::File) -> u64 {
         match self {
             RapidhashVersion::V1 { protected } => {
                 if *protected {

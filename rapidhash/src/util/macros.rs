@@ -64,4 +64,3 @@ macro_rules! flip_bit_trial {
 
 pub(crate) use compare_to_c;
 pub(crate) use flip_bit_trial;
-use crate::v3::RAPID_SEED;
