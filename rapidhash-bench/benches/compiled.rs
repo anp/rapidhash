@@ -237,7 +237,7 @@ pub fn bench_hashmap_get() -> Box<dyn FnMut(&mut Bencher)> {
         let hashmap: RapidHashMap<Vec<u8>, u64> = INPUTS
             .into_iter()
             .map(|i| i.to_vec())
-            .zip(HASHES.into_iter())
+            .zip(HASHES)
             .collect();
 
         b.iter_batched_ref(|| {

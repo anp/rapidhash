@@ -74,7 +74,7 @@ pub(super) const fn rapidhash_core<const MINOR: u8, const COMPACT: bool, const P
                 a ^= read_u32(data, 0) as u64;
                 b ^= read_u32(data, plast) as u64;
             }
-        } else if data.len() > 0 {
+        } else if !data.is_empty() {
             if MINOR < 2 {
                 a ^= ((data[0] as u64) << 56) | ((data[data.len() >> 1] as u64) << 32) | data[data.len() - 1] as u64;
             } else {

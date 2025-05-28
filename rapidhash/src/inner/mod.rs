@@ -42,8 +42,6 @@ pub use rapid_hasher::*;
 pub use collections::*;
 #[doc(inline)]
 pub use state::*;
-#[doc(inline)]
-pub use crate::rng::*;
 
 #[cfg(test)]
 mod tests {

@@ -125,7 +125,7 @@ fn profile_set_build<S: BuildHasher + Default, D: Distribution>(
         b.iter_custom(|iters| {
             // Repeat each key 10 times.
             let keys: Vec<_> = (0..map_size).map(|_| distr.sample(&mut rng)).collect();
-            let mut keys: Vec<_> = keys.iter().cycle().cloned().take(10 * map_size).collect();
+            let mut keys: Vec<_> = keys.iter().cycle().take(10 * map_size).cloned().collect();
             keys.shuffle(&mut rng);
             let keys = black_box(keys);
 

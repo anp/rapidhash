@@ -149,26 +149,9 @@ fn rapidhash_file_core<R: Read, const PROTECTED: bool>(mut a: u64, mut b: u64, m
 #[cfg(test)]
 mod tests {
     use std::io::{Seek, SeekFrom, Write};
+    use crate::util::macros::compare_rapidhash_file;
+    use crate::v3::rapidhash_v3_inline;
     use super::*;
 
-    #[test]
-    fn test_compare_rapidhash_file() {
-        use rand::RngCore;
-
-        const LENGTH: usize = 1024;
-        for len in 1..=LENGTH {
-            let mut data = vec![0u8; len];
-            rand::rng().fill_bytes(&mut data);
-
-            let mut file = tempfile::tempfile().unwrap();
-            file.write(&data).unwrap();
-            file.seek(SeekFrom::Start(0)).unwrap();
-
-            assert_eq!(
-                crate::v3::rapidhash_v3(&data),
-                rapidhash_v3_file(&mut file).unwrap(),
-                "Mismatch for input len: {}", &data.len()
-            );
-        }
-    }
+    compare_rapidhash_file!(compare_rapidhash_v1_file, rapidhash_v3_inline::<false, false>, rapidhash_v3_file_inline::<_, false>);
 }

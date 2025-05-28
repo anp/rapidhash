@@ -14,7 +14,7 @@ criterion_group!(
     basic::bench,
     emails::bench,
     hashmap::bench,
-    // rng::bench,
-    // compiled::bench,
+    rng::bench,
+    compiled::bench,
 );
 criterion_main!(benches);

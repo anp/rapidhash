@@ -86,7 +86,7 @@ fn rapidhash_file_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: 
             let mut see2 = seed;
             while remaining >= 96 {
                 // read into and process using the first half of the buffer
-                iter.read_exact(&mut slice)?;
+                iter.read_exact(slice)?;
                 seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
                 see1 = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
                 see2 = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ RAPID_SECRET[2], read_u64(slice, 40) ^ see2);
@@ -99,7 +99,7 @@ fn rapidhash_file_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: 
             // remaining might be up to 95 bytes, so we read into the second half of the buffer,
             // which allows us to negative index safely in the final a and b xor using `end`.
             slice = &mut buf[96..96 + remaining];
-            iter.read_exact(&mut slice)?;
+            iter.read_exact(slice)?;
             end = 96 + remaining;
 
             if remaining >= 48 {
@@ -114,7 +114,7 @@ fn rapidhash_file_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: 
         } else {
             end = remaining;
             slice = &mut buf[..remaining];
-            iter.read_exact(&mut slice)?;
+            iter.read_exact(slice)?;
         }
 
         if remaining > 16 {
@@ -138,26 +138,9 @@ fn rapidhash_file_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: 
 #[cfg(test)]
 mod tests {
     use std::io::{Seek, SeekFrom, Write};
+    use crate::util::macros::compare_rapidhash_file;
+    use crate::v1::rapidhash_v1_inline;
     use super::*;
-
-    #[test]
-    fn test_compare_rapidhash_file() {
-        use rand::RngCore;
-
-        const LENGTH: usize = 1024;
-        for len in 1..=LENGTH {
-            let mut data = vec![0u8; len];
-            rand::rng().fill_bytes(&mut data);
-
-            let mut file = tempfile::tempfile().unwrap();
-            file.write(&data).unwrap();
-            file.seek(SeekFrom::Start(0)).unwrap();
-
-            assert_eq!(
-                crate::v1::rapidhash_v1(&data),
-                rapidhash_v1_file(&mut file).unwrap(),
-                "Mismatch for input len: {}", &data.len()
-            );
-        }
-    }
+    
+    compare_rapidhash_file!(compare_rapidhash_v1_file, rapidhash_v1_inline::<false, false>, rapidhash_v1_file_inline::<false>);
 }

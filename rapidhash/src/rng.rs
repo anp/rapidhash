@@ -298,7 +298,7 @@ mod tests {
             lam += 1;
         }
 
-        assert!(false, "Cycle found after {power}:{lam} iterations.");
+        panic!("Cycle found after {power}:{lam} iterations.");
     }
 
     #[cfg(feature = "rng")]

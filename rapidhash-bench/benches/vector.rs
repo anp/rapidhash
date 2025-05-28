@@ -13,7 +13,7 @@ pub fn bench_rapidhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = rapidhash::quality::RapidHasher::default();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })
@@ -26,7 +26,7 @@ pub fn bench_rapidhash_raw(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            rapidhash::v3::rapidhash_v3_inline::<false, false>(&bytes, 0)
+            rapidhash::v3::rapidhash_v3_inline::<false, false>(bytes, 0)
         }, criterion::BatchSize::SmallInput);
     })
 }
@@ -44,7 +44,7 @@ pub fn bench_rapidhash_cc_v1(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            black_box(rapidhash_c::rapidhashcc_v1(&bytes, black_box(rapidhash::v1::RAPID_SEED)))
+            black_box(rapidhash_c::rapidhashcc_v1(bytes, black_box(rapidhash::v1::RAPID_SEED)))
         }, input_size);
     })
 }
@@ -62,7 +62,7 @@ pub fn bench_rapidhash_cc_v2(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            black_box(rapidhash_c::rapidhashcc_v2(&bytes, black_box(rapidhash::v1::RAPID_SEED)))
+            black_box(rapidhash_c::rapidhashcc_v2(bytes, black_box(rapidhash::v1::RAPID_SEED)))
         }, input_size);
     })
 }
@@ -80,7 +80,7 @@ pub fn bench_rapidhash_cc_v2_1(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            black_box(rapidhash_c::rapidhashcc_v2_1(&bytes, black_box(rapidhash::v1::RAPID_SEED)))
+            black_box(rapidhash_c::rapidhashcc_v2_1(bytes, black_box(rapidhash::v1::RAPID_SEED)))
         }, input_size);
     })
 }
@@ -98,7 +98,7 @@ pub fn bench_rapidhash_cc_v3(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            black_box(rapidhash_c::rapidhashcc_v3(&bytes, black_box(rapidhash::v1::RAPID_SEED)))
+            black_box(rapidhash_c::rapidhashcc_v3(bytes, black_box(rapidhash::v1::RAPID_SEED)))
         }, input_size);
     })
 }
@@ -116,7 +116,7 @@ pub fn bench_rapidhash_cc_rs(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            black_box(rapidhash_c::rapidhashcc_rs(&bytes, black_box(rapidhash::v1::RAPID_SEED)))
+            black_box(rapidhash_c::rapidhashcc_rs(bytes, black_box(rapidhash::v1::RAPID_SEED)))
         }, input_size);
     })
 }
@@ -129,7 +129,7 @@ pub fn bench_default(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = std::collections::hash_map::DefaultHasher::default();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })
@@ -143,7 +143,7 @@ pub fn bench_fxhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = fxhash::FxHasher::default();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })
@@ -157,7 +157,7 @@ pub fn bench_t1ha(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = t1ha::T1haHasher::default();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })
@@ -171,7 +171,7 @@ pub fn bench_wyhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = wyhash::WyHash::default();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })
@@ -184,7 +184,7 @@ pub fn bench_wyhash_raw(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            wyhash::wyhash(&bytes, 0)
+            wyhash::wyhash(bytes, 0)
         }, criterion::BatchSize::SmallInput);
     })
 }
@@ -197,7 +197,7 @@ pub fn bench_xxhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = twox_hash::XxHash::default();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })
@@ -211,7 +211,7 @@ pub fn bench_metrohash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = metrohash::MetroHash::default();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })
@@ -225,7 +225,7 @@ pub fn bench_seahash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = seahash::SeaHasher::default();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })
@@ -239,7 +239,7 @@ pub fn bench_ahash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = ahash::AHasher::default();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })
@@ -253,7 +253,7 @@ pub fn bench_gxhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = gxhash::GxHasher::default();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })
@@ -267,7 +267,7 @@ pub fn bench_farmhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = farmhash::FarmHasher::default();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })
@@ -281,7 +281,7 @@ pub fn bench_highwayhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = highway::HighwayHasher::default();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })
@@ -295,7 +295,7 @@ pub fn bench_rustchash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = rustc_hash::FxHasher::default();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })
@@ -309,7 +309,7 @@ pub fn bench_foldhash(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             slice
         }, |bytes| {
             let mut hasher = foldhash::quality::RandomState::default().build_hasher();
-            hasher.write(&bytes);
+            hasher.write(bytes);
             hasher.finish()
         }, criterion::BatchSize::SmallInput);
     })

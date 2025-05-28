@@ -66,14 +66,14 @@ fn rapidhash_file_core<const MINOR: u8, const PROTECTED: bool>(mut a: u64, mut b
         if data.len() >= 4 {
             if data.len() >= 8 {
                 let plast = data.len() - 8;
-                a = read_u64(&data, 0);
-                b = read_u64(&data, plast);
+                a = read_u64(data, 0);
+                b = read_u64(data, plast);
             } else {
                 let plast = data.len() - 4;
-                a = read_u32(&data, 0) as u64;
-                b = read_u32(&data, plast) as u64;
+                a = read_u32(data, 0) as u64;
+                b = read_u32(data, plast) as u64;
             }
-        } else if data.len() > 0 {
+        } else if !data.is_empty() {
             if MINOR >= 2 {
                 a = ((data[0] as u64) << 56) | data[data.len() - 1] as u64;
                 b = data[data.len() >> 1] as u64;
@@ -99,7 +99,7 @@ fn rapidhash_file_core<const MINOR: u8, const PROTECTED: bool>(mut a: u64, mut b
 
         while remaining >= 224 {
             // read into and process using the first half of the buffer
-            iter.read_exact(&mut slice)?;
+            iter.read_exact(slice)?;
 
             seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ RAPID_SECRET[0], read_u64(slice, 8) ^ seed);
             see1 = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ RAPID_SECRET[1], read_u64(slice, 24) ^ see1);
@@ -123,7 +123,7 @@ fn rapidhash_file_core<const MINOR: u8, const PROTECTED: bool>(mut a: u64, mut b
         // remaining might be up to 224 bytes, so we read into the second half of the buffer,
         // which allows us to negative index safely in the final a and b xor using `end`.
         slice = &mut buf[224..224 + remaining];
-        iter.read_exact(&mut slice)?;
+        iter.read_exact(slice)?;
         let end = 224 + remaining;
 
         if slice.len() >= 112 {
@@ -198,26 +198,11 @@ fn rapidhash_file_core<const MINOR: u8, const PROTECTED: bool>(mut a: u64, mut b
 #[cfg(test)]
 mod tests {
     use std::io::{Seek, SeekFrom, Write};
+    use crate::util::macros::compare_rapidhash_file;
+    use crate::v2::rapidhash_v2_inline;
     use super::*;
 
-    #[test]
-    fn test_compare_rapidhash_file_v2_0() {
-        use rand::RngCore;
-
-        const LENGTH: usize = 1024;
-        for len in 1..=LENGTH {
-            let mut data = vec![0u8; len];
-            rand::rng().fill_bytes(&mut data);
-
-            let mut file = tempfile::tempfile().unwrap();
-            file.write(&data).unwrap();
-            file.seek(SeekFrom::Start(0)).unwrap();
-
-            assert_eq!(
-                crate::v2::rapidhash_v2_2(&data),
-                rapidhash_v2_2_file(&mut file).unwrap(),
-                "Mismatch for input len: {}", &data.len()
-            );
-        }
-    }
+    compare_rapidhash_file!(compare_rapidhash_v2_0_file, rapidhash_v2_inline::<0, false, false>, rapidhash_v2_file_inline::<0, false>);
+    compare_rapidhash_file!(compare_rapidhash_v2_1_file, rapidhash_v2_inline::<1, false, false>, rapidhash_v2_file_inline::<1, false>);
+    compare_rapidhash_file!(compare_rapidhash_v2_2_file, rapidhash_v2_inline::<2, false, false>, rapidhash_v2_file_inline::<2, false>);
 }

@@ -47,8 +47,8 @@ fn sample_emails(count: usize) -> Vec<String> {
     (0..count)
         .map(|_| {
             let length = index.sample(&mut rng);
-            let address = Alphanumeric.sample_string(&mut rng, length);
-            address
+            
+            Alphanumeric.sample_string(&mut rng, length)
         })
         .collect()
 }

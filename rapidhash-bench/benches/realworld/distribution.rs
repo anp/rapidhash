@@ -7,10 +7,10 @@ use uuid::Uuid;
 
 // 10,000 URL subsample from
 // https://github.com/ada-url/url-various-datasets/blob/main/top100/top100.txt
-static RAW_URLS: &'static str = include_str!("urls-10000.txt");
+static RAW_URLS: &str = include_str!("urls-10000.txt");
 
 // https://github.com/first20hours/google-10000-english/blob/master/google-10000-english.txt
-static RAW_ENGLISH_WORDS: &'static str = include_str!("google-10000-english.txt");
+static RAW_ENGLISH_WORDS: &str = include_str!("google-10000-english.txt");
 
 pub trait Distribution: Clone {
     type Value: Hash + Eq + Clone + std::fmt::Debug;
@@ -211,7 +211,6 @@ impl Distribution for StrWordList {
 impl StrWordList {
     pub fn english() -> Self {
         let words = RAW_ENGLISH_WORDS
-            .trim()
             .split_whitespace()
             .map(|s| s.to_owned())
             .collect();
@@ -223,7 +222,6 @@ impl StrWordList {
 
     pub fn urls() -> Self {
         let words = RAW_URLS
-            .trim()
             .split_whitespace()
             .map(|s| s.to_owned())
             .collect();

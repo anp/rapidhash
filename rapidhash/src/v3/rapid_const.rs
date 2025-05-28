@@ -95,7 +95,7 @@ pub(super) const fn rapidhash_core<const COMPACT: bool, const PROTECTED: bool>(m
                 a ^= read_u32(data, 0) as u64;
                 b ^= read_u32(data, plast) as u64;
             }
-        } else if data.len() > 0 {
+        } else if !data.is_empty() {
             a ^= ((data[0] as u64) << 45) | data[data.len() - 1] as u64;
             b ^= data[data.len() >> 1] as u64;
         }
@@ -216,7 +216,7 @@ const fn rapidhash_micro_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut
                 b ^= read_u32(data, 0) as u64;
                 a ^= read_u32(data, plast) as u64;
             }
-        } else if data.len() > 0 {
+        } else if !data.is_empty() {
             a ^= ((data[0] as u64) << 45) | data[data.len() - 1] as u64;
             b ^= data[data.len() >> 1] as u64;
         }
@@ -284,7 +284,7 @@ const fn rapidhash_nano_core<const PROTECTED: bool>(mut a: u64, mut b: u64, mut 
                 b ^= read_u32(data, 0) as u64;
                 a ^= read_u32(data, plast) as u64;
             }
-        } else if data.len() > 0 {
+        } else if !data.is_empty() {
             a ^= ((data[0] as u64) << 45) | data[data.len() - 1] as u64;
             b ^= data[data.len() >> 1] as u64;
         }

@@ -1,6 +1,4 @@
 use criterion::{Bencher, Criterion};
-use rand8::RngCore as RngCore8;
-use rand8::SeedableRng as SeedableRng8;
 use rand_core::{RngCore, SeedableRng};
 
 macro_rules! bench_rng {
@@ -28,7 +26,7 @@ pub fn bench_rapidhash(count: usize) -> Box<dyn FnMut(&mut Bencher)> {
             rand::random::<u64>()
         }, |i: u64| {
             let mut out = 0;
-            let mut rng = rapidhash::inner::RapidRng::seed_from_u64(i);
+            let mut rng = rapidhash::rng::RapidRng::seed_from_u64(i);
             for _ in 0..count {
                 out ^= rng.next_u64();
             }
@@ -44,7 +42,7 @@ pub fn bench_rapidhash_fast(count: usize) -> Box<dyn FnMut(&mut Bencher)> {
         }, |mut i: u64| {
             let mut out = 0;
             for _ in 0..count {
-                out ^= rapidhash::inner::rapidrng_fast(&mut i);
+                out ^= rapidhash::rng::rapidrng_fast(&mut i);
             }
             out
         }, criterion::BatchSize::SmallInput);
@@ -58,7 +56,7 @@ pub fn bench_rapidhash_time(count: usize) -> Box<dyn FnMut(&mut Bencher)> {
         }, |mut i: u64| {
             let mut out: u64 = 0;
             for _ in 0..=count {
-                out ^= rapidhash::inner::rapidrng_time(&mut i);
+                out ^= rapidhash::rng::rapidrng_time(&mut i);
             }
             out
         }, criterion::BatchSize::SmallInput);
