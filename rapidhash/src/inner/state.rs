@@ -19,12 +19,12 @@ use crate::inner::RapidHasher;
 /// map.insert(42, "the answer");
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq)]
-pub struct RandomState {
+pub struct RandomState<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTED: bool> {
     seed: u64,
     secrets: &'static [u64; 7],
 }
 
-impl RandomState {
+impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTED: bool> RandomState<AVALANCHE, FNV, COMPACT, PROTECTED> {
     /// Create a new random state with a random seed.
     ///
     /// With the `rand` feature enabled, this will use [rand::random] to initialise the seed.
@@ -61,15 +61,15 @@ impl RandomState {
 }
 
 #[cfg(target_has_atomic = "ptr")]
-impl Default for RandomState {
+impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTED: bool> Default for RandomState<AVALANCHE, FNV, COMPACT, PROTECTED> {
     #[inline]
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl BuildHasher for RandomState {
-    type Hasher = RapidHasher<true, false, false, false>;
+impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTED: bool>  BuildHasher for RandomState<AVALANCHE, FNV, COMPACT, PROTECTED> {
+    type Hasher = RapidHasher<AVALANCHE, FNV, COMPACT, PROTECTED>;
 
     #[inline(always)]
     fn build_hasher(&self) -> Self::Hasher {
@@ -80,7 +80,8 @@ impl BuildHasher for RandomState {
 #[cfg(test)]
 mod tests {
     use core::hash::BuildHasher;
-    use super::*;
+    
+    type RandomState = super::RandomState<false, true, false, false>;
 
     #[test]
     fn test_random_state() {

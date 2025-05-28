@@ -7,8 +7,8 @@ macro_rules! hash_benchmark {
     ($name:ident, $input:expr) => {
         #[library_benchmark]
         #[bench::rapidhash_v1(&rapidhash::v1::RapidBuildHasher::default(), $input)]
-        #[bench::rapidhash_v2(&rapidhash::v2::RapidBuildHasher::default(), $input)]
-        #[bench::rapidhash_v3(&rapidhash::quality::RapidBuildHasher::default(), $input)]
+        #[bench::rapidhash_f(&rapidhash::fast::RapidBuildHasher::default(), $input)]
+        #[bench::rapidhash_q(&rapidhash::quality::RapidBuildHasher::default(), $input)]
         #[bench::foldhash_quality(&foldhash::quality::FixedState::default(), $input)]
         #[bench::foldhash_fast(&foldhash::fast::FixedState::default(), $input)]
         fn $name<H: BuildHasher + Sized, I: Hash>(hasher: &H, input: I) -> u64 {
@@ -21,8 +21,8 @@ macro_rules! hash_bytes {
     ($name:ident, $input:expr) => {
         #[library_benchmark]
         #[bench::rapidhash_v1(&rapidhash::v1::RapidBuildHasher::default(), $input)]
-        #[bench::rapidhash_v2(&rapidhash::v2::RapidBuildHasher::default(), $input)]
-        #[bench::rapidhash_v3(&rapidhash::quality::RapidBuildHasher::default(), $input)]
+        #[bench::rapidhash_f(&rapidhash::fast::RapidBuildHasher::default(), $input)]
+        #[bench::rapidhash_q(&rapidhash::quality::RapidBuildHasher::default(), $input)]
         #[bench::foldhash_quality(&foldhash::quality::FixedState::default(), $input)]
         #[bench::foldhash_fast(&foldhash::fast::FixedState::default(), $input)]
         fn $name<H: BuildHasher + Sized>(hasher: &H, input: &[u8]) -> u64 {

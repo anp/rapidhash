@@ -1,3 +1,5 @@
+//! Fast random number generator using rapidhash mixing.
+
 #[cfg(feature = "rng")]
 use rand_core::{RngCore, SeedableRng, impls};
 use crate::util::mix::rapid_mix;
@@ -65,7 +67,7 @@ pub fn rapidrng_time(seed: &mut u64) -> u64 {
     // NOTE limited entropy: only a few of the time.as_secs bits will change between calls, and the
     // time.subsec_nanos may only have milli- or micro-second precision on some platforms.
     // This is why we further stretch the teed with multiple rounds of rapid_mix.
-    let mut  teed = ((time.as_secs() as u64) << 32) | time.subsec_nanos() as u64;
+    let mut  teed = (time.as_secs() << 32) | time.subsec_nanos() as u64;
     teed = rapid_mix::<false>(teed ^ RAPID_SECRET[0], *seed ^ RAPID_SECRET[1]);
     *seed = rapid_mix::<false>(teed ^ RAPID_SECRET[0], RAPID_SECRET[2]);
     rapid_mix::<false>(*seed, *seed ^ RAPID_SECRET[1])
@@ -139,7 +141,9 @@ impl RapidRng {
         self.seed.to_le_bytes()
     }
 
+    /// Get the next random number from this PRNG.
     #[inline]
+    #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> u64 {
         rapidrng_fast(&mut self.seed)
     }

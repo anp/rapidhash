@@ -1,5 +1,7 @@
 use std::io::Read;
 
+/// Internal reader that reads data in chunks from a stream, and caches a certain number of
+/// last-read bytes. This facilitates streamed hashing for rapidhash V3.
 pub(crate) struct ChunkedStreamReader<R: Read> {
     reader: R,
     start: usize,
@@ -10,6 +12,7 @@ pub(crate) struct ChunkedStreamReader<R: Read> {
 }
 
 impl<R: Read> ChunkedStreamReader<R> {
+    #[inline]
     pub fn new(reader: R, keep_last: usize) -> Self {
         Self {
             reader,
@@ -56,6 +59,7 @@ impl<R: Read> ChunkedStreamReader<R> {
         Ok(read_in_round)
     }
 
+    #[inline]
     pub fn consume(&mut self, consume: usize) {
         self.debug_invariants();
         self.start += consume;
@@ -84,11 +88,8 @@ impl<R: Read> ChunkedStreamReader<R> {
         Ok(&self.buffer[self.start..self.end])
     }
 
+    #[inline]
     pub fn last_read(&self) -> &[u8] {
         &self.last
-    }
-
-    pub fn total_read(&self) -> usize {
-        self.total_read
     }
 }

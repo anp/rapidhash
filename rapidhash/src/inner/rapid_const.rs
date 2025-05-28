@@ -23,6 +23,7 @@ pub(super) const RAPID_CONST: u64 = 0xaaaaaaaaaaaaaaaa;
 ///
 /// Fixed length inputs will greatly benefit from inlining with [rapidhash_rs_inline] instead.
 #[inline]
+#[cfg(test)]
 pub(crate) const fn rapidhash_rs(data: &[u8]) -> u64 {
     rapidhash_rs_inline::<false, false>(data, RAPID_SEED)
 }
@@ -31,6 +32,7 @@ pub(crate) const fn rapidhash_rs(data: &[u8]) -> u64 {
 ///
 /// Fixed length inputs will greatly benefit from inlining with [rapidhash_rs_inline] instead.
 #[inline]
+#[cfg(test)]
 pub(crate) const fn rapidhash_rs_seeded(data: &[u8], seed: u64) -> u64 {
     rapidhash_rs_inline::<false, false>(data, seed)
 }
@@ -40,9 +42,10 @@ pub(crate) const fn rapidhash_rs_seeded(data: &[u8], seed: u64) -> u64 {
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
 /// Can provide large performance uplifts for fixed-length inputs at compile time.
 #[inline(always)]
+#[cfg(test)]
 pub(crate) const fn rapidhash_rs_inline<const COMPACT: bool, const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
     seed = rapidhash_seed(seed);
-    let secrets = RAPID_SECRET.first_chunk().unwrap();
+    let secrets = &RAPID_SECRET;
     let (a, b, seed) = rapidhash_core::<COMPACT, PROTECTED>(0, 0, seed, secrets, data);
     rapidhash_finish::<PROTECTED>(a, b, seed, secrets)
 }

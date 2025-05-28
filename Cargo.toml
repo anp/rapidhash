@@ -23,3 +23,9 @@ opt-level = 3
 debug = true
 debug-assertions = false
 strip = false
+
+[workspace.lints.rust]
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+manual_hash_one = "allow"

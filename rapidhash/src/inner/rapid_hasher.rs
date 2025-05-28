@@ -62,7 +62,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     #[inline]
     pub const fn new(mut seed: u64) -> Self {
         seed = rapidhash_seed(seed);
-        Self { seed, secrets: &RAPID_SECRET.first_chunk().unwrap() }
+        Self { seed, secrets: &RAPID_SECRET }
     }
 }
 
@@ -109,38 +109,6 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     }
 }
 
-/// A [std::collections::HashMap] type that uses the [RapidBuildHasher] hasher.
-///
-/// # Example
-/// ```
-/// use rapidhash::quality::RapidHashMap;
-///
-/// let mut map = RapidHashMap::default();
-/// map.insert(42, "the answer");
-///
-/// // with capacity
-/// let mut map = RapidHashMap::with_capacity_and_hasher(10, Default::default());
-/// map.insert(42, "the answer");
-/// ```
-#[cfg(any(feature = "std", docsrs))]
-pub type RapidHashMap<K, V, const AVALANCHE: bool, const FNV: bool, const COMPACT: bool = false, const PROTECTED: bool = false> = std::collections::HashMap<K, V, RapidBuildHasher<AVALANCHE, FNV, COMPACT, PROTECTED>>;
-
-/// A [std::collections::HashSet] type that uses the [RapidBuildHasher] hasher.
-///
-/// # Example
-/// ```
-/// use rapidhash::quality::RapidHashSet;
-///
-/// let mut set = RapidHashSet::default();
-/// set.insert("the answer");
-///
-/// // with capacity
-/// let mut set = RapidHashSet::with_capacity_and_hasher(10, Default::default());
-/// set.insert("the answer");
-/// ```
-#[cfg(any(feature = "std", docsrs))]
-pub type RapidHashSet<K, const AVALANCHE: bool, const FNV: bool, const COMPACT: bool = false, const PROTECTED: bool = false> = std::collections::HashSet<K, RapidBuildHasher<AVALANCHE, FNV, COMPACT, PROTECTED>>;
-
 impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTED: bool> RapidHasher<AVALANCHE, FNV, COMPACT, PROTECTED> {
     /// Default `RapidHasher` seed.
     pub const DEFAULT_SEED: u64 = RAPID_SEED;
@@ -151,7 +119,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     pub const fn new(mut seed: u64) -> Self {
         // do most of the rapidhash_seed initialisation here to avoid doing it on each int
         seed = rapidhash_seed(seed);
-        Self::new_precomputed_seed(seed, &RAPID_SECRET.first_chunk().unwrap())
+        Self::new_precomputed_seed(seed, &RAPID_SECRET)
     }
 
     #[inline(always)]
@@ -290,7 +258,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
 
     #[inline(always)]
     fn write_u64(&mut self, i: u64) {
-        self.write_num::<64>(i.into());
+        self.write_num::<64>(i);
     }
 
     #[inline(always)]
@@ -362,6 +330,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
 
 #[cfg(test)]
 mod tests {
+    use crate::inner::RapidHashSet;
     use super::*;
 
     /// Test that writing a single u64 outputs the same as writing the equivalent bytes.

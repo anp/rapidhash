@@ -50,7 +50,7 @@ pub(super) mod secrets {
     pub(crate) fn get_secrets() -> &'static [u64; 7] {
         // This is a no-op for platforms that do not support atomic pointers.
         // The secrets are not used, so we return an empty slice.
-        &crate::inner::rapid_const::RAPID_SECRET.first_chunk().unwrap()
+        &crate::inner::rapid_const::RAPID_SECRET
     }
 }
 

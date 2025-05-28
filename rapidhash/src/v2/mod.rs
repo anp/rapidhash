@@ -1,14 +1,11 @@
 //! The rapidhash V2.2 algorithm.
 
 mod rapid_const;
-mod rapid_hasher;
 #[cfg(any(feature = "std", docsrs))]
 mod rapid_file;
 
 #[doc(inline)]
 pub use rapid_const::*;
-#[doc(inline)]
-pub use rapid_hasher::*;
 #[doc(inline)]
 #[cfg(any(feature = "std", docsrs))]
 pub use rapid_file::*;

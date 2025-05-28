@@ -151,12 +151,10 @@ fn profile_distr<D: Distribution>(distr: D, map_size: usize, c: &mut Criterion) 
     c.sampling_mode(criterion::SamplingMode::Flat);
 
     type RapidhashV1 = rapidhash::v1::RapidBuildHasher;
-    type RapidhashV2 = rapidhash::v2::RapidBuildHasher;
-    type RapidhashQuality = rapidhash::quality::RapidRandomState;
-    type RapidhashFast = rapidhash::fast::RapidBuildHasher;
+    type RapidhashQuality = rapidhash::quality::RandomState;
+    type RapidhashFast = rapidhash::fast::RandomState;
 
     profile_hashonly::<RapidhashV1, _>("rapidhash-v1", distr.clone(), c);
-    // profile_hashonly::<RapidhashV2, _>("rapidhash-v2", distr.clone(), c);
     profile_hashonly::<RapidhashQuality, _>("rapidhash-q", distr.clone(), c);
     profile_hashonly::<RapidhashFast, _>("rapidhash-f", distr.clone(), c);
     profile_hashonly::<foldhash::fast::RandomState, _>("foldhash-fast", distr.clone(), c);
@@ -167,7 +165,6 @@ fn profile_distr<D: Distribution>(distr: D, map_size: usize, c: &mut Criterion) 
     profile_hashonly::<gxhash::GxBuildHasher, _>("gxhash", distr.clone(), c);
 
     profile_lookup_miss::<RapidhashV1, _>("rapidhash-v1", distr.clone(), map_size, c);
-    // profile_lookup_miss::<RapidhashV2, _>("rapidhash-v2", distr.clone(), map_size, c);
     profile_lookup_miss::<RapidhashQuality, _>("rapidhash-q", distr.clone(), map_size, c);
     profile_lookup_miss::<RapidhashFast, _>("rapidhash-f", distr.clone(), map_size, c);
     profile_lookup_miss::<foldhash::fast::RandomState, _>("foldhash-fast", distr.clone(), map_size, c);
@@ -178,7 +175,6 @@ fn profile_distr<D: Distribution>(distr: D, map_size: usize, c: &mut Criterion) 
     profile_lookup_miss::<std::hash::RandomState, _>("siphash", distr.clone(), map_size, c);
 
     profile_lookup_hit::<RapidhashV1, _>("rapidhash-v1", distr.clone(), map_size, c);
-    // profile_lookup_hit::<RapidhashV2, _>("rapidhash-v2", distr.clone(), map_size, c);
     profile_lookup_hit::<RapidhashQuality, _>("rapidhash-q", distr.clone(), map_size, c);
     profile_lookup_hit::<RapidhashFast, _>("rapidhash-f", distr.clone(), map_size, c);
     profile_lookup_hit::<foldhash::fast::RandomState, _>("foldhash-fast", distr.clone(), map_size, c);
@@ -189,7 +185,6 @@ fn profile_distr<D: Distribution>(distr: D, map_size: usize, c: &mut Criterion) 
     profile_lookup_hit::<std::hash::RandomState, _>("siphash", distr.clone(), map_size, c);
 
     profile_set_build::<RapidhashV1, _>("rapidhash-v1", distr.clone(), map_size, c);
-    // profile_set_build::<RapidhashV2, _>("rapidhash-v2", distr.clone(), map_size, c);
     profile_set_build::<RapidhashQuality, _>("rapidhash-q", distr.clone(), map_size, c);
     profile_set_build::<RapidhashFast, _>("rapidhash-f", distr.clone(), map_size, c);
     profile_set_build::<foldhash::fast::RandomState, _>("foldhash-fast", distr.clone(), map_size, c);

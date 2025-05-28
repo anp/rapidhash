@@ -25,10 +25,11 @@
 //! versions. Please use the `v1`, `v2`, or `v3` modules for stable output values between rapidhash
 //! crate versions.
 
+
+#[cfg(any(feature = "std", docsrs))]
+mod collections;
 mod rapid_const;
 mod rapid_hasher;
-#[cfg(any(feature = "std", docsrs))]
-mod rapid_file;
 mod state;
 mod seeding;
 
@@ -36,10 +37,9 @@ mod seeding;
 pub use rapid_const::*;
 #[doc(inline)]
 pub use rapid_hasher::*;
-#[allow(unused_imports)]
 #[doc(inline)]
 #[cfg(any(feature = "std", docsrs))]
-pub use rapid_file::*;
+pub use collections::*;
 #[doc(inline)]
 pub use state::*;
 #[doc(inline)]
