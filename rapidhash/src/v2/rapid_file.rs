@@ -74,11 +74,11 @@ fn rapidhash_file_core<const MINOR: u8, const PROTECTED: bool>(mut a: u64, mut b
                 b = read_u32(data, plast) as u64;
             }
         } else if !data.is_empty() {
-            if MINOR >= 2 {
+            if MINOR < 2 {
+                a = ((data[0] as u64) << 56) | ((data[data.len() >> 1] as u64) << 32) | data[data.len() - 1] as u64;
+            } else {
                 a = ((data[0] as u64) << 56) | data[data.len() - 1] as u64;
                 b = data[data.len() >> 1] as u64;
-            } else {
-                a = ((data[0] as u64) << 56) | data[data.len() - 1] as u64 | data[data.len() >> 1] as u64;
             }
         }
     } else if (MINOR >= 1 && len > 64) || (MINOR == 0 && len > 56) {

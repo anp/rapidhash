@@ -15,7 +15,7 @@ use crate::inner::RapidHasher;
 ///
 /// use rapidhash::inner::RandomState;
 ///
-/// let mut map = HashMap::with_hasher(RandomState::default());
+/// let mut map = HashMap::with_hasher(RandomState::<false, true, false, false>::default());
 /// map.insert(42, "the answer");
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -80,7 +80,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
 #[cfg(test)]
 mod tests {
     use core::hash::BuildHasher;
-    
+
     type RandomState = super::RandomState<false, true, false, false>;
 
     #[test]

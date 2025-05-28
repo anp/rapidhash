@@ -67,7 +67,11 @@ Rapidhash has multiple versions of the algorithm.
 
 Fixed versioning with C++ compatibility is presented in `rapidhash::v1`, `rapidhash::v2`, and `rapidhash::v3` modules.
 
-Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in `rapidhash::fast`, `rapidhash::quality`, and `rapidhash::inner` modules. These are not guaranteed to give a consistent hash output between crate versions as the rust `Hasher` trait is not designed for this. `rapidhash::fast` and `rapidhash::quality` are optimised for hashing speed and quality respectively; while `rapidhash::inner` exposes advanced parameters to configure the hash function specifically to your use case. Read more in the [rust documentation](https://docs.rs/rapidhash/latest/rapidhash/).
+Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in `rapidhash::fast`, `rapidhash::quality`, and `rapidhash::inner` modules. These are not guaranteed to give a consistent hash output between crate versions as the rust `Hasher` trait is not designed for this.
+
+- Use `rapidhash::fast` for optimal hashing speed with a slightly lower hash quality. Best for most datastructures such as HashMap and HashSet usage.
+- Use `rapidhash::quality` where statistical hash quality is the priority, such as HyperLogLog or MinHash algorithms.
+- Use `rapidhash::inner` to configure advanced parameters to configure the hash function specifically to your use case. This allows enabling/disabling avalanching, FNV on integer types, compact mode to generate fewer instructions at compile time, and protected mode. Read more in the [rust documentation](https://docs.rs/rapidhash/latest/rapidhash/).
 
 ## Features
 
