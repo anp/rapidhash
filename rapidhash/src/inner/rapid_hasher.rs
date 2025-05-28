@@ -330,7 +330,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
 
 #[cfg(test)]
 mod tests {
-    use crate::inner::RapidHashSet;
+    extern crate std;
     use super::*;
 
     /// Test that writing a single u64 outputs the same as writing the equivalent bytes.
@@ -365,7 +365,7 @@ mod tests {
     fn test_num_collisions() {
         let builder = RapidBuildHasher::<true, false>::default();
         let mut collisions = 0;
-        let mut set = RapidHashSet::<u64, true, false>::default();
+        let mut set = std::collections::HashSet::new();
         for i in 0..=u16::MAX {
             let hash_u16 = builder.hash_one(i) & 0xFFFFFF;
             if set.contains(&hash_u16) {
