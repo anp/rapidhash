@@ -1,7 +1,5 @@
-use std::cell::Cell;
-use std::hash::BuildHasher;
+use core::hash::BuildHasher;
 use crate::inner::RapidHasher;
-use crate::rng::rapidrng_fast;
 
 /// A [std::collections::hash_map::RandomState] compatible hasher that initializes the [RapidHasher]
 /// algorithm with a random seed.
@@ -22,6 +20,7 @@ use crate::rng::rapidrng_fast;
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct RapidRandomState {
     seed: u64,
+    secrets: &'static [u64; 7],
 }
 
 impl RapidRandomState {
@@ -31,35 +30,17 @@ impl RapidRandomState {
     ///
     /// Without `rand` but with the `std` feature enabled, this will use [crate::rapidrng_time] to
     /// initialise the seed.
+    #[inline]
     pub fn new() -> Self {
-        #[cfg(feature = "rand")]
-        thread_local! {
-            static RANDOM_SEED: Cell<u64> = {
-                Cell::new(rand::random())
-            }
-        }
-
-        #[cfg(all(feature = "std", not(feature = "rand")))]
-        thread_local! {
-            static RANDOM_SEED: Cell<u64> = {
-                let mut seed = crate::v2::RAPID_SEED;
-                Cell::new(crate::rng::rapidrng_time(&mut seed))
-            }
-        }
-
-        let mut seed = RANDOM_SEED.with(|cell| {
-            let seed = cell.get();
-            cell.set(seed.wrapping_add(1));
-            seed
-        });
-
         Self {
-            seed: rapidrng_fast(&mut seed),
+            seed: super::seeding::seed::get_seed(),
+            secrets: super::seeding::secrets::get_secrets(),
         }
     }
 }
 
 impl Default for RapidRandomState {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }
@@ -68,6 +49,7 @@ impl Default for RapidRandomState {
 impl BuildHasher for RapidRandomState {
     type Hasher = RapidHasher<true, false, false, false>;
 
+    #[inline(always)]
     fn build_hasher(&self) -> Self::Hasher {
         RapidHasher::new_precomputed_seed(self.seed)
     }
@@ -75,26 +57,16 @@ impl BuildHasher for RapidRandomState {
 
 #[cfg(test)]
 mod tests {
-    use std::hash::{BuildHasher, Hasher, RandomState};
+    use std::hash::{BuildHasher, RandomState};
 
     #[test]
     fn test_random_state() {
-        // the same state should produce the equivalent hashes
         let state1 = RandomState::new();
-        let mut hash1a = state1.build_hasher();
-        let mut hash1b = state1.build_hasher();
-
-        // different state should produce different hashes
         let state2 = RandomState::new();
-        let mut hash2a = state2.build_hasher();
 
-        hash1a.write(b"hello");
-        hash1b.write(b"hello");
-        hash2a.write(b"hello");
-
-        let finish1a = hash1a.finish();
-        let finish1b = hash1b.finish();
-        let finish2a = hash2a.finish();
+        let finish1a = state1.hash_one(b"hello");
+        let finish1b = state1.hash_one(b"hello");
+        let finish2a = state2.hash_one(b"hello");
 
         assert_eq!(finish1a, finish1b);
         assert_ne!(finish1a, finish2a);

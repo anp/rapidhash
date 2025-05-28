@@ -31,6 +31,7 @@ mod rapid_hasher;
 mod rapid_file;
 #[cfg(any(feature = "std", feature = "rand", docsrs))]
 mod random_state;
+mod seeding;
 
 #[doc(inline)]
 pub use rapid_const::*;
@@ -41,7 +42,7 @@ pub use rapid_hasher::*;
 #[cfg(any(feature = "std", docsrs))]
 pub use rapid_file::*;
 #[doc(inline)]
-#[cfg(any(feature = "std", feature = "rand", docsrs))]
+// #[cfg(any(feature = "std", feature = "rand", docsrs))]
 pub use random_state::*;
 #[doc(inline)]
 pub use crate::rng::*;

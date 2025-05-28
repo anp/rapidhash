@@ -2,34 +2,29 @@
 
 A rust implementation of the [rapidhash](https://github.com/Nicoshev/rapidhash) function, the official successor to [wyhash](https://github.com/wangyi-fudan/wyhash).
 
-- **High quality**, the fastest hash passing all tests in the SMHasher and SMHasher3 benchmark. Collision-based study showed a collision probability lower than wyhash and close to ideal.
-- **Very fast**, the fastest passing hash in SMHasher3. Significant throughput improvement over wyhash. Fastest memory-safe hash. Fastest platform-independent hash. Fastest const hash.
+- **High quality**, the fastest hash passing all tests in the SMHasher and SMHasher3 benchmark. Collision-based study showed a collision probability lower than wyhash, foldhash, and close to ideal.
+- **Very fast**, the fastest passing hash in SMHasher3. Significant throughput improvement over wyhash and foldhash. Fastest memory-safe hash. Fastest platform-independent hash. Fastest const hash.
 - **Platform independent**, works on all platforms, no dependency on machine-specific vectorized or cryptographic hardware instructions. Optimised for both AMD64 and AArch64.
 - **Memory safe**, when the `unsafe` feature is disabled (default). This implementation has also been fuzz-tested with `cargo fuzz`.
-- **No dependencies and no-std compatible** when disabling the `std` feature.
-- **Official successor to wyhash**, with improved speed, quality, and compatibility.
+- **No dependencies and no-std compatible** when disabling default features.
+- **Official successor to wyhash** with improved speed, quality, and compatibility.
 - **Inline variants** that use `#[inline(always)]` on `RapidInlineHash` and `RapidInlineHashBuilder` to force compiler optimisations on specific input types (can double the hash performance depending on the hashed type).
 - **Run-time and compile-time hashing** as the hash implementation is fully `const`.
 - **Idiomatic** `std::hash::Hasher` compatible hasher for `HashMap` and `HashSet` usage.
-- **Non-cryptographic** hash function.
+- **Non-cryptographic** hash function that's "minimally DoS resistant" in the same manner as foldhash.
 
 ## Usage
 ### Hashing
 ```rust
 use std::hash::Hasher;
-use rapidhash::{rapidhash, RapidHasher, RapidInlineHasher};
+use rapidhash::fast::RapidHasher;
+use rapidhash::v3::rapidhash_v3;
 
 // direct const usage
-assert_eq!(rapidhash(b"hello world"), 1722744455612372674);
+assert_eq!(rapidhash_v3(b"hello world"), 1722744455612372674);
 
 // a std::hash::Hasher compatible hasher
 let mut hasher = RapidHasher::default();
-hasher.write(b"hello world");
-assert_eq!(hasher.finish(), 1722744455612372674);
-
-// a forced-inline(always) hasher which sometimes can be faster than the default,
-// benchmark your use case.
-let mut hasher = RapidInlineHasher::default();
 hasher.write(b"hello world");
 assert_eq!(hasher.finish(), 1722744455612372674);
 
@@ -43,20 +38,15 @@ assert_eq!(HASH, 1722744455612372674);
 ### Helper Types
 ```rust
 // also includes HashSet equivalents
-use rapidhash::{RapidHashMap, RapidInlineHashMap};
+use rapidhash::fast::RapidHashMap;
 
 // std HashMap with the RapidHashBuilder hasher.
 let mut map = RapidHashMap::default();
 map.insert("hello", "world");
-
-// a hash map type using the RapidInlineHashBuilder to force the compiler to
-// inline the hash function for further optimisations (can be over 30% faster).
-let mut map = RapidInlineHashMap::default();
-map.insert("hello", "world");
 ```
 
 ### CLI
-Rapidhash can also be installed as a CLI tool to hash files or stdin. This is not a cryptographic hash, but should be much faster than cryptographic hashes.
+Rapidhash can also be installed as a CLI tool to streaming hash files or stdin. This is not a cryptographic hash, but should be much faster than cryptographic hashes. This is fully compatible with C++ rapidhash V1, V2, and V3 algorithms.
 
 Output is the decimal string of the `u64` hash value.
 
@@ -65,29 +55,23 @@ Output is the decimal string of the `u64` hash value.
 cargo install rapidhash
 
 # hash a file (output: 8543579700415218186)
-# this reads the file metadata for the length, and then streams the file
-rapidhash example.txt
+rapidhash --v3 example.txt
 
 # hash stdin (output: 8543579700415218186)
-# this caches the entire stdin in memory before hashing, as rapidhash needs to know
-# the data length before hashing
-echo "example" | rapidhash
+echo "example" | rapidhash --v3
 ```
 
 ## Rapidhash Versions
 
-Rapidhash has multiple versions of the algorithm. By default, rapidhash uses the V2 algorithm.
+Rapidhash has multiple versions of the algorithm.
 
-The main `use rapidhash::*` functions will always use the latest algorithm. The rapidhash crate will use a minor version bump when adding support for future algorithms.
+Fixed versioning with C++ compatibility is presented in `rapidhash::v1`, `rapidhash::v2`, and `rapidhash::v3` modules.
 
-A user can fix their algorithm version by enabling the `v1` or `v2` feature flags and importing rapidhash via `use rapidhash::v1::*` or `use rapidhash::v2::*`.
+Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in `rapidhash::fast`, `rapidhash::quality`, and `rapidhash::inner` modules. These are not guaranteed to give a consistent hash output between crate versions as the rust `Hasher` trait is not designed for this. `rapidhash::fast` and `rapidhash::quality` are optimised for hashing speed and quality respectively; while `rapidhash::inner` exposes advanced parameters to configure the hash function specifically to your use case. Read more in the [rust documentation](https://docs.rs/rapidhash/latest/rapidhash/).
 
 ## Features
 
-- `default`: `std`, `vlatest`
-- `vlatest`: enables `use crate::rapidhash::*` which aliases the latest algorithm version, V2.
-- `v1`: enables `use crate::rapidhash::v1` to fix to the rapidhash V1 algorithm.
-- `v2`: enables `use crate::rapidhash::v2` to fix to the rapidhash V2 algorithm.
+- `default`: `std`
 - `std`: Enables the `RapidHashMap` and `RapidHashSet` helper types.
 - `rand`: Enables `RapidRandomState`, a `BuildHasher` that randomly initializes the seed. Includes the `rand` crate dependency.
 - `rng`: Enables `RapidRng`, a fast, non-cryptographic random number generator based on rapidhash. Includes the `rand_core` crate dependency.
@@ -97,10 +81,11 @@ A user can fix their algorithm version by enabling the `v1` or `v2` feature flag
 
 Hash functions are not a one-size fits all. Benchmark your use case to find the best hash function for your needs, but here are some general guidelines on choosing a hash function:
 
-- `default`: Use the std lib hasher when hashing is not in the critical path, or if you need strong HashDoS resistance.
-- `rapidhash`: You are hashing complex objects or byte streams, need compile-time hashing, or a performant high-quality hash. Benchmark the `RapidInline` variants if you need the utmost performance.
-- `fxhash`: You are hashing integers, or structs of only integers, and the lower quality hash doesn't affect your use case.
-- `gxhash`: You are hashing long byte streams on platforms with the necessary instruction sets and only care about throughput. You don't need memory safety, HashDoS resistance, or platform independence (for example, gxhash doesn't currently compile on Github Actions workflows).
+- `default`: Use the std lib hasher when hashing is not in the critical path, or if you need strong DoS resistance.
+- `rapidhash::fast`: You don't require any DoS resistance, and you want the fastest portable hash function available.
+- `rapidhash::quality`: You require minimal DoS resistance, and you want a fast, general purpose, portable hash function.
+- `foldhash`: You are hashing many tuples of small integers, whcih will be slightly faster with the foldhash sponge construction.
+- `gxhash`: You are hashing long byte streams on platforms with the necessary instruction sets and only care about throughput. You don't need memory safety, HashDoS resistance, or platform independence.
 
 ## Benchmarks
 

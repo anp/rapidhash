@@ -22,7 +22,6 @@ pub fn bench(c: &mut Criterion) {
         ("hash/rapidhash_cc_v2_1", Box::new(vector::bench_rapidhash_cc_v2_1), Box::new(int::bench_rapidhash_cc_v2_1), Box::new(object::bench_rapidhash)),
         ("hash/rapidhash_cc_v3", Box::new(vector::bench_rapidhash_cc_v3), Box::new(int::bench_rapidhash_cc_v3), Box::new(object::bench_rapidhash)),
         ("hash/rapidhash_cc_rs", Box::new(vector::bench_rapidhash_cc_rs), Box::new(int::bench_rapidhash_cc_rs), Box::new(object::bench_rapidhash)),
-        // ("hash/rapidhash_cc_v3na", Box::new(vector::bench_rapidhash_cc_v3), Box::new(int::bench_rapidhash_cc_v3), Box::new(object::bench_rapidhash)),
         ("hash/default", Box::new(vector::bench_default), Box::new(int::bench_default), Box::new(object::bench_default)),
         ("hash/fxhash", Box::new(vector::bench_fxhash), Box::new(int::bench_fxhash), Box::new(object::bench_fxhash)),
         ("hash/gxhash", Box::new(vector::bench_gxhash), Box::new(int::bench_gxhash), Box::new(object::bench_gxhash)),

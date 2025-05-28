@@ -26,7 +26,7 @@ pub fn bench_rapidhash_raw(size: usize) -> Box<dyn FnMut(&mut Bencher)> {
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            rapidhash::v2::rapidhash_inline::<false, false>(&bytes, 0)
+            rapidhash::v3::rapidhash_v3_inline::<false, false>(&bytes, 0)
         }, criterion::BatchSize::SmallInput);
     })
 }

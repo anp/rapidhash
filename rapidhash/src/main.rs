@@ -47,7 +47,9 @@ pub fn main() {
     }
 
     let args: Vec<String> = std::env::args().collect();
-    // TODO: add support for `--version`, multiple output types (hex, decimal).
+    // TODO: --version arg
+    // TODO: multiple output types (hex, decimal)
+    // TODO: --seed arg, with hex input support
     if args.iter().any(|a| a == "--help" || a == "-h") || args.len() < 2 {
         println!("Usage: rapidhash <version> [opts] [filename]");
         println!("<version>");

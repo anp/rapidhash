@@ -48,7 +48,17 @@ pub fn rapidrng_fast(seed: &mut u64) -> u64 {
 ///     println!("{}", rapidrng_fast(&mut seed));
 /// }
 /// ```
-#[cfg(any(feature = "std", docsrs))]
+#[cfg(any(
+    all(
+        feature = "std",
+        not(any(
+            miri,
+            all(target_family = "wasm", target_os = "unknown"),
+            target_os = "zkvm"
+        ))
+    ),
+    docsrs
+))]
 #[inline]
 pub fn rapidrng_time(seed: &mut u64) -> u64 {
     let time = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap();

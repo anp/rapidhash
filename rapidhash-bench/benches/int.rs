@@ -68,7 +68,7 @@ pub fn bench_rapidhash_raw() -> Box<dyn FnMut(&mut Bencher)> {
         b.iter_batched(|| {
             rand::random::<u64>()
         }, |i: u64| {
-            rapidhash::v2::rapidhash_inline::<false, false>(&i.to_le_bytes(), RAPID_SEED)
+            rapidhash::v3::rapidhash_v3_inline::<false, false>(&i.to_le_bytes(), RAPID_SEED)
         }, criterion::BatchSize::SmallInput);
     })
 }

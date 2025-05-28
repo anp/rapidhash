@@ -93,7 +93,7 @@ bench_hash_emails!(bench_rapidhash, rapidhash::quality::RapidBuildHasher::defaul
 bench_hash_emails_raw!(bench_rapidhash_cc_v1, rapidhash_c::rapidhashcc_v1);
 bench_hash_emails_raw!(bench_rapidhash_cc_v2, rapidhash_c::rapidhashcc_v2);
 bench_hash_emails_raw!(bench_rapidhash_cc_v3, rapidhash_c::rapidhashcc_v3);
-bench_hash_emails_raw!(bench_rapidhash_raw, rapidhash::v2::rapidhash_seeded);
+bench_hash_emails_raw!(bench_rapidhash_raw, rapidhash::v3::rapidhash_v3_seeded);
 bench_hash_emails!(bench_default, std::hash::RandomState::default());
 bench_hash_emails!(bench_fxhash, fxhash::FxBuildHasher::default());
 bench_hash_emails!(bench_gxhash, gxhash::GxBuildHasher::default());

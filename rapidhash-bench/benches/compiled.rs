@@ -1,8 +1,8 @@
 use const_random::const_random;
 use criterion::{Bencher, Criterion};
 use rand::prelude::*;
-use rapidhash::v2::rapidhash;
 use rapidhash::quality::RapidHashMap;
+use rapidhash::v3::rapidhash_v3;
 
 /// Benchmark approaches for matching bytes against compile-time known values.
 ///
@@ -103,7 +103,7 @@ const HASHES: [u64; INPUT_COUNT] = {
     let mut hashes = [0u64; INPUTS.len()];
     let mut i = 0;
     while i < hashes.len() {
-        hashes[i] = rapidhash(&INPUTS[i]);
+        hashes[i] = rapidhash_v3(&INPUTS[i]);
         if i > 0 {
             assert!(hashes[i] != hashes[i - 1]);
         }
@@ -129,7 +129,7 @@ pub fn bench_match_hash() -> Box<dyn FnMut(&mut Bencher)> {
         b.iter_batched_ref(|| {
             random_input().to_vec()
         }, |i: &mut Vec<u8>| {
-            let hash = rapidhash(i.as_slice());
+            let hash = rapidhash_v3(i.as_slice());
             match hash {
                 h if h == HASHES[0] => const_random!(u64),
                 h if h == HASHES[1] => const_random!(u64),
