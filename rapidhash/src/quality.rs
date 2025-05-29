@@ -63,10 +63,12 @@ pub type RapidHashMap<K, V> = inner::RapidHashMap<K, V, AVALANCHE, FNV, COMPACT,
 #[cfg(any(feature = "std", docsrs))]
 pub type RapidHashSet<K> = inner::RapidHashSet<K, AVALANCHE, FNV, COMPACT, PROTECTED>;
 
+#[cfg(any(feature = "std", docsrs))]
 pub use inner::HashMapExt;
+#[cfg(any(feature = "std", docsrs))]
 pub use inner::HashSetExt;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use super::*;
 

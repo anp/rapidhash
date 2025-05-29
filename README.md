@@ -73,7 +73,7 @@ Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in 
 - Use `rapidhash::quality` where statistical hash quality is the priority, such as HyperLogLog or MinHash algorithms.
 - Use `rapidhash::inner` to configure advanced parameters to configure the hash function specifically to your use case. This allows tweaking the following compile time parameters:
   - `AVALANCHE`: Enables the final avalanche mixing step to improve hash quality. Enabled on quality, disabled on fast.
-  - `FNV`: Hash integer types using FNV instead of the rapidhash algorithm. Enabled on fast, disabled on quality.
+  - `FNV`: Hash integer types using FNV instead of the rapidhash algorithm. Reduces DoS resistance on integer types. Enabled on fast, disabled on quality.
   - `COMPACT`: Generates fewer instructions at compile time, but may be slower on some platforms. Disabled by default.
   - `PROTECTED`: Slightly stronger hash quality and DoS resistance by performing two extra XOR instructions on every mix step. Disabled by default.
 
@@ -81,8 +81,8 @@ Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in 
 
 - `default`: `std`
 - `std`: Enables the `RapidHashMap` and `RapidHashSet` helper types.
-- `rand`: Enables `RapidRandomState`, a `BuildHasher` that randomly initializes the seed. Includes the `rand` crate dependency.
-- `rng`: Enables `RapidRng`, a fast, non-cryptographic random number generator based on rapidhash. Includes the `rand_core` crate dependency.
+- `rand`: Enables using the `rand` library to more securely initialise `RandomState`. Includes the `rand` crate dependency.
+- `rng`: Enables `RapidRng`, a fast, non-cryptographic PRNG based on rapidrng. Includes the `rand_core` crate dependency.
 - `unsafe`: Uses unsafe pointer arithmetic to skip some unnecessary bounds checks for a small 3-4% performance improvement.
 
 ## How to choose your hash function

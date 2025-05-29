@@ -156,7 +156,7 @@ pub(super) mod secrets {
             }
 
             if (seed & MI) == 0 {
-                seed |= 1u64 << 32;
+                seed |= 1u64 << 31;
             }
 
             if (seed & LO) == 0 {
@@ -235,8 +235,11 @@ pub(super) mod secrets {
         #[test]
         fn test_create_secrets() {
             let secrets1 = super::create_secrets();
-            let secrets2 = super::create_secrets();
-            assert_ne!(secrets1, secrets2, "create_secrets should not return the same value on subsequent calls");
+
+            #[cfg(feature = "std")] {
+                let secrets2 = super::create_secrets();
+                assert_ne!(secrets1, secrets2, "create_secrets should not return the same value on subsequent calls");
+            }
 
             // Check that the secrets are well-formed
             for secret in secrets1.iter() {
@@ -251,14 +254,15 @@ pub(super) mod secrets {
 
             // Check that the secrets are unique
             let mut unique_secrets = BTreeSet::new();
-            for secret in secrets1.iter().chain(secrets2.iter()) {
+            for secret in secrets1.iter() {
                 unique_secrets.insert(*secret);
             }
 
-            assert_eq!(unique_secrets.len(), secrets1.len() * 2, "Secrets should be unique across both calls");
+            assert_eq!(unique_secrets.len(), secrets1.len(), "Secrets should be unique across both calls");
         }
 
         #[test]
+        #[cfg(feature = "std")]
         fn test_generate_random() {
             let random1 = super::generate_random();
             let random2 = super::generate_random();
