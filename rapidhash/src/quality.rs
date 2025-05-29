@@ -62,3 +62,23 @@ pub type RapidHashMap<K, V> = inner::RapidHashMap<K, V, AVALANCHE, FNV, COMPACT,
 /// Use [crate::fast::RapidHashSet] where lower hash collision resistance is acceptable.
 #[cfg(any(feature = "std", docsrs))]
 pub type RapidHashSet<K> = inner::RapidHashSet<K, AVALANCHE, FNV, COMPACT, PROTECTED>;
+
+pub use inner::HashMapExt;
+pub use inner::HashSetExt;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_hashmap_new() {
+        let mut map = RapidHashMap::new();
+        map.insert("key", "value");
+    }
+
+    #[test]
+    fn test_hashset_new() {
+        let mut set = RapidHashSet::new();
+        set.insert("value");
+    }
+}

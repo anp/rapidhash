@@ -220,6 +220,8 @@ pub(super) mod secrets {
 
     #[cfg(test)]
     mod tests {
+        extern crate std;
+
         use std::collections::BTreeSet;
         use super::get_secrets;
 
