@@ -2,23 +2,24 @@
 
 ## 2.0.0 (20250514)
 
-**Rapidhash algorithm changes**. Rapidhash released V2.0, V2.1, V2.2, and V3 in quick succession. We have decided to support all versions of rapidhash under `rapidhash::v3` etc modules. These expose `rapidhash_v3` and similar methods to avoid confusion.
+**Rapidhash algorithm changes** have pushed us towards a refactor of this crate. Rapidhash V2.0, V2.1, V2.2, and V3 are now all supported under `rapidhash::v3` etc modules. These expose `rapidhash_v3` and similar methods to avoid version confusion.
 
 - **Breaking:** `RapidHasher` overhaul:
-  - `RapidHasher` deviates from the main rapidhash algorithm to improve performance hashing rust objects while maintaining similar hash quality.
+  - `RapidHasher` deviates from the main rapidhash algorithm to improve performance hashing rust objects while maintaining similar hash quality. Performance should be significantly improved over the v1 crate.
   - `RapidHasher` may change the underlying hash between minor versions. The rust `Hasher` trait is not to be used for persistent hashing, and we will follow this mantra to allow easily improving hashing performance. Persistent hashing should be done though the `rapidhash::v3::rapidhash_v3(bytes: &[u8])` functions.
   - `RapidHasher`, `RandomState`, `RapidHashMap`, and `RapidHashSet` now move behind the following three modules:
     - `rapidhash::fast` when hashing speed is the priority. This sacrifices some hash quality for speed, and uses FNV when hashing integer types.
     - `rapidhash::quality` when hash quality is the ultimate priority. This closely resembles the rapidhash algorithm and hash quality.
     - `rapidhash::inner` when you want to configure the settings for `AVALANCHE`, `FNV`, `COMPACT`, and `PROTECTED` modes as necessary.
-- **Breaking:** `rapidhash` function moved and renamed:
-  - Fixed the rapidhash V1 algorithm for 48 and 144 length inputs, where it would mismatch with the C implementation.
-  - Moved and renamed `rapidhash::rapidhash()` to `rapidhash::v1::rapidhash_v1()` to allow us to include other rapidhash versions.
-- **Breaking:** Removed the deprecated `RapidHashBuilder` type, it has been replaced with `RapidBuildHasher` to match the rust naming convention.
-- **Breaking:** Removed `rapid_mix` and `rapid_mum` from the public API for cleanliness. These are now internal functions.
+- **Breaking:** `rapidhash` function moved and renamed, with different hash output:
+  - Fixed the rapidhash V1 algorithm for 48 and 144 length inputs, where it would previously mismatch with the C implementation.
+    - If you need the old broken rapidhash V1 hash output, please raise an issue on GitHub and we'll see what we can do.
+  - Moved and renamed `rapidhash::rapidhash()` to `rapidhash::v1::rapidhash_v1()` to allow us to include other rapidhash versions in the same naming convention.
 - **Breaking:** Random number generation has been moved behind the `rng` module, but otherwise works the same.
-- **Breaking:** Removed the `RapidInline*` variants in favour of making the default `Rapid` types inline by default. If this is a problem for your use case, please raise a github issue, thanks!
-- **Breaking:** `RapidRandomState` has been renamed to `RandomState`.
+- **Breaking:** `RapidRandomState` has been renamed to `RandomState`, and moved into `fast`, `quality`, and `inner` modules.
+- **Breaking:** Removed `rapid_mix` and `rapid_mum` from the public API for cleanliness. These are now internal functions.
+- **Breaking:** Removed the `RapidInline*` variants in favour of making the default `Rapid` types inline by default. If this is a problem for your use case, please raise a GitHub issue, thanks!
+- **Breaking:** Removed the deprecated `RapidHashBuilder` type, it has been replaced with `RapidBuildHasher` to match the rust naming convention.
 - New: Added support for rapidhash V2.0, V2.1, V2.2, and V3 algorithms.
 - New: rapidhash CLI now supports a proper streaming V3 version.
 - Fix: Full tests and verification against the C implementations for both versions.

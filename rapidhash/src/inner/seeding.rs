@@ -14,7 +14,7 @@ pub(super) mod seed {
         // with std we avoid using global atomics
         #[cfg(feature = "std")] {
             use core::cell::Cell;
-            
+
             thread_local! {
                 static RANDOM_SEED: Cell<u64> = const {
                     Cell::new(0)
@@ -41,6 +41,18 @@ pub(super) mod seed {
         }
 
         rapidhash_seed(seed)
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::get_seed;
+
+        #[test]
+        fn test_get_seed() {
+            let seed1 = get_seed();
+            let seed2 = get_seed();
+            assert_ne!(seed1, seed2, "get_seed should return different values on subsequent calls");
+        }
     }
 }
 
@@ -118,8 +130,9 @@ pub(super) mod secrets {
                     return;
                 }
 
-                // We are spinning here until the other thread is done initializing. This is a
-                // one-time thing and creating secrets _shouldn't_ take long...
+                // We are spinning here until the other thread is done initializing. This should
+                // be very fast, as the initializing thread should only be copying the already
+                // generated secrets for a few instructions.
                 _ => core::hint::spin_loop(),
             }
         }
@@ -127,11 +140,30 @@ pub(super) mod secrets {
 
     fn create_secrets() -> [u64; 7] {
         let mut secrets = [0u64; 7];
-        let seed = generate_random();
+        let mut seed = generate_random();
 
         // TODO: check quality of the generated secrets
         for i in 0..secrets.len() {
-            secrets[i] = rapid_mix::<true>(seed, RAPID_SECRET[i]);
+            const HI: u64 = 0xFFFF << 48;
+            const MI: u64 = 0xFFFF << 24;
+            const LO: u64 = 0xFFFF;
+
+            seed = rapid_mix::<true>(seed ^ RAPID_SECRET[0], RAPID_SECRET[i]);
+
+            // ensure at least one high, middle, and low bit is set for a semi-decent secret
+            if (seed & HI) == 0 {
+                seed |= 1u64 << 63;
+            }
+
+            if (seed & MI) == 0 {
+                seed |= 1u64 << 32;
+            }
+
+            if (seed & LO) == 0 {
+                seed |= 1u64;
+            }
+
+            secrets[i] = seed;
         }
 
         secrets
@@ -183,6 +215,52 @@ pub(super) mod secrets {
             // final avalanche step
             seed = rapid_mix::<true>(seed ^ RAPID_CONST, RAPID_SECRET[0]);
             seed
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use std::collections::BTreeSet;
+        use super::get_secrets;
+
+        #[test]
+        fn test_get_secrets() {
+            let secrets1 = get_secrets();
+            let secrets2 = get_secrets();
+            assert_eq!(secrets1, secrets2, "get_secrets should return the same value on subsequent calls");
+        }
+
+        #[test]
+        fn test_create_secrets() {
+            let secrets1 = super::create_secrets();
+            let secrets2 = super::create_secrets();
+            assert_ne!(secrets1, secrets2, "create_secrets should not return the same value on subsequent calls");
+
+            // Check that the secrets are well-formed
+            for secret in secrets1.iter() {
+                const HI: u64 = 0xFFFF << 48;
+                const MI: u64 = 0xFFFF << 24;
+                const LO: u64 = 0xFFFF;
+
+                assert_ne!(*secret & HI, 0, "Secret should have a high bit set");
+                assert_ne!(*secret & MI, 0, "Secret should have a middle bit set");
+                assert_ne!(*secret & LO, 0, "Secret should have a low bit set");
+            }
+
+            // Check that the secrets are unique
+            let mut unique_secrets = BTreeSet::new();
+            for secret in secrets1.iter().chain(secrets2.iter()) {
+                unique_secrets.insert(*secret);
+            }
+
+            assert_eq!(unique_secrets.len(), secrets1.len() * 2, "Secrets should be unique across both calls");
+        }
+
+        #[test]
+        fn test_generate_random() {
+            let random1 = super::generate_random();
+            let random2 = super::generate_random();
+            assert_ne!(random1, random2, "generate_random should return different values on subsequent calls");
         }
     }
 }
