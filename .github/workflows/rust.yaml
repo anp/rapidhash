@@ -19,7 +19,7 @@ jobs:
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
-        run: cargo test --no-fail-fast --all-features
+        run: cargo test --no-fail-fast
 
   test-no-std:
     name: "Test (no_std)"
@@ -41,7 +41,18 @@ jobs:
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
-        run: cargo test -p rapidhash --no-fail-fast --lib --features=rand,rng,unsafe
+        run: cargo test -p rapidhash --no-fail-fast --lib --features=unsafe
+
+  test-all-features:
+    name: "Test (all features)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Rust dependency cache
+        uses: Swatinem/rust-cache@v2
+      - name: Compile and run tests
+        run: cargo test --no-fail-fast --lib --all-features
 
   test-msrv:
     name: "Test (MSRV)"

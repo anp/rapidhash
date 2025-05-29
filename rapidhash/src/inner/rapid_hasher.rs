@@ -153,7 +153,6 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
             "usize is wider than u64. Please raise a github issue to support this."
         );
 
-        // self.seed = self.seed.wrapping_add(bytes.len() as u64);
         let (a, b, seed) = rapidhash_core::<COMPACT, PROTECTED>(self.a, self.b, self.seed, self.secrets, bytes);
         self.a = a;
         self.b = b;
@@ -173,7 +172,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
             if N <= 32 {
                 self.seed ^= bytes;
                 // if N > 32 {
-                //     // TODO: replace with wrapping add?
+                //     // TODO: benchmark
                 //     // what bytes are we making equivalent here?
                 //     self.seed ^= bytes >> 32;
                 // }

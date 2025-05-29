@@ -52,7 +52,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
 
     /// Create a state with a specific seed and secrets.
     #[inline]
-    pub fn with_seed_and_static_secrets(seed: u64, secrets: &'static [u64; 7]) -> Self {
+    pub const fn with_seed_and_static_secrets(seed: u64, secrets: &'static [u64; 7]) -> Self {
         Self {
             seed: rapidhash_seed(seed),
             secrets,
@@ -112,6 +112,5 @@ mod tests {
 
         assert_eq!(finish1a, finish1b);
         assert_ne!(finish1a, finish2a);
-
     }
 }
