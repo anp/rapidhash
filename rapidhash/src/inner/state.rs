@@ -1,5 +1,4 @@
-use core::hash::BuildHasher;
-use std::hash::{Hash, Hasher};
+use core::hash::{BuildHasher, Hash, Hasher};
 use crate::inner::rapid_const::rapidhash_seed;
 use crate::inner::RapidHasher;
 
