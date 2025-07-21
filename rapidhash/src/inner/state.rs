@@ -1,4 +1,5 @@
 use core::hash::BuildHasher;
+use std::hash::{Hash, Hasher};
 use crate::inner::rapid_const::rapidhash_seed;
 use crate::inner::RapidHasher;
 
@@ -74,6 +75,17 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     #[inline(always)]
     fn build_hasher(&self) -> Self::Hasher {
         RapidHasher::new_precomputed_seed(self.seed, self.secrets)
+    }
+
+    #[inline]  // TODO: revisit this inlining level
+    fn hash_one<T: Hash>(&self, x: T) -> u64
+    where
+        Self: Sized,
+        Self::Hasher: Hasher,
+    {
+        let mut hasher = self.build_hasher();
+        x.hash(&mut hasher);  // <-- trying hard to inline this
+        hasher.finish()
     }
 }
 

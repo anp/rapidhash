@@ -47,6 +47,8 @@ pub const fn rapidhash_v3_inline<const COMPACT: bool, const PROTECTED: bool>(dat
 
 /// Rapidhash V3 Micro, a very compact version of the rapidhash algorithm.
 ///
+/// WARNING: This produces a different output from `rapidhash_v3`.
+///
 /// Designed for HPC and server applications, where cache misses make a noticeable performance
 /// detriment. Compiles it to ~140 instructions without stack usage, both on x86-64 and aarch64.
 /// Faster for sizes up to 512 bytes, just 15%-20% slower for inputs above 1kb.
@@ -61,6 +63,8 @@ pub const fn rapidhash_v3_micro_inline<const PROTECTED: bool>(data: &[u8], mut s
 
 /// Rapidhash V3 Nano, a very compact version of the rapidhash algorithm.
 ///
+/// WARNING: This produces a different output from `rapidhash_v3`.
+/// 
 /// Designed for Mobile and embedded applications, where keeping a small code size is a top priority.
 /// This should compile it to less than 100 instructions with minimal stack usage, both on x86-64
 /// and aarch64. The fastest for sizes up to 48 bytes, but may be considerably slower for larger

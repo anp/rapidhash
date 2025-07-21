@@ -14,39 +14,35 @@ A rust implementation of the [rapidhash](https://github.com/Nicoshev/rapidhash) 
 - **Non-cryptographic** hash function that's "minimally DoS resistant" in the same manner as foldhash.
 
 ## Usage
-### Hashing
+### Persistent Hashing
+Full compatibility with C++ rapidhash algorithms, methods are provided for all rapidhash V1, V2, and V3 (with micro/nano) variants. These are stable functions whose output will not change between crate versions.
+
 ```rust
-use std::hash::Hasher;
-use rapidhash::fast::RapidHasher;
+use std::hash::{BuildHasher, Hasher};
+
+// rapidhash V3 algorithm, for fest, high-quality, persistent hashing
 use rapidhash::v3::rapidhash_v3;
-
-// direct const usage
-assert_eq!(rapidhash_v3(b"hello world"), 1722744455612372674);
-
-// a std::hash::Hasher compatible hasher
-let mut hasher = RapidHasher::default();
-hasher.write(b"hello world");
-assert_eq!(hasher.finish(), 1722744455612372674);
-
-// a const API similar to std::hash::Hasher
-const HASH: u64 = RapidHasher::default_const()
-    .write_const(b"hello world")
-    .finish_const();
-assert_eq!(HASH, 1722744455612372674);
+assert_eq!(rapidhash_v3(b"hello world"), 3397907815814400320);
 ```
 
-### Helper Types
+### In-Memory Hashing
+Following rust's `std::hash` traits, the underlying hash function may change between minor versions, and is only suitable for in-memory hashing. These types are optimised for speed and minimal DoS resistance.
+
+- `RapidHasher`: A `std::hash::Hasher` compatible hasher that uses the rapidhash algorithm.
+- `RapidHashBuilder`: A `std::hash::BuildHasher` for initialising the hasher with the default seed and secrets.
+- `RandomState`: A `std::hash::BuildHasher` for initialising the hasher with a random seed and secrets.
+- `RapidHashMap` and `RapidHashSet`: Helper types for using `RapidHasher` with `HashMap` and `HashSet`.
+
 ```rust
-// also includes HashSet equivalents
 use rapidhash::fast::RapidHashMap;
 
 // std HashMap with the RapidHashBuilder hasher.
 let mut map = RapidHashMap::default();
-map.insert("hello", "world");
+map.insert("key", "value");
 ```
 
 ### CLI
-Rapidhash can also be installed as a CLI tool to streaming hash files or stdin. This is not a cryptographic hash, but should be much faster than cryptographic hashes. This is fully compatible with C++ rapidhash V1, V2, and V3 algorithms.
+Rapidhash can also be installed as a CLI tool to hash files or stdin. This is not a cryptographic hash, but should be much faster than cryptographic hashes. This is fully compatible with the C++ rapidhash V1, V2, and V3 algorithms.
 
 Output is the decimal string of the `u64` hash value.
 
@@ -65,15 +61,17 @@ echo "example" | rapidhash --v3
 
 Rapidhash has multiple versions of the algorithm.
 
-Fixed versioning with C++ compatibility is presented in `rapidhash::v1`, `rapidhash::v2`, and `rapidhash::v3` modules.
+### Persistent Hashing
+Fixed versioning with C++ compatibility is presented in `rapidhash::v1`, `rapidhash::v2`, and `rapidhash::v3` modules. Rapidhash V3 is the recommended fastest and most recent version of the hash. Others are provided for backwards compatibility.
 
+### In-Memory Hashing
 Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in `rapidhash::fast`, `rapidhash::quality`, and `rapidhash::inner` modules. These are not guaranteed to give a consistent hash output between crate versions as the rust `Hasher` trait is not designed for this.
 
 - Use `rapidhash::fast` for optimal hashing speed with a slightly lower hash quality. Best for most datastructures such as HashMap and HashSet usage.
 - Use `rapidhash::quality` where statistical hash quality is the priority, such as HyperLogLog or MinHash algorithms.
 - Use `rapidhash::inner` to configure advanced parameters to configure the hash function specifically to your use case. This allows tweaking the following compile time parameters:
   - `AVALANCHE`: Enables the final avalanche mixing step to improve hash quality. Enabled on quality, disabled on fast.
-  - `FNV`: Hash integer types using FNV instead of the rapidhash algorithm. Reduces DoS resistance on integer types. Enabled on fast, disabled on quality.
+  - `FNV`: Hash integer types using FNV instead of the rapidhash algorithm. Reduces DoS resistance on integer types. Disabled on quality, enabled on fast.
   - `COMPACT`: Generates fewer instructions at compile time, but may be slower on some platforms. Disabled by default.
   - `PROTECTED`: Slightly stronger hash quality and DoS resistance by performing two extra XOR instructions on every mix step. Disabled by default.
 
@@ -84,16 +82,6 @@ Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in 
 - `rand`: Enables using the `rand` library to more securely initialise `RandomState`. Includes the `rand` crate dependency.
 - `rng`: Enables `RapidRng`, a fast, non-cryptographic PRNG based on rapidrng. Includes the `rand_core` crate dependency.
 - `unsafe`: Uses unsafe pointer arithmetic to skip some unnecessary bounds checks for a small 3-4% performance improvement.
-
-## How to choose your hash function
-
-Hash functions are not a one-size fits all. Benchmark your use case to find the best hash function for your needs, but here are some general guidelines on choosing a hash function:
-
-- `default`: Use the std lib hasher when hashing is not in the critical path, or if you need strong DoS resistance.
-- `rapidhash::fast`: You don't require any DoS resistance, and you want the fastest portable hash function available.
-- `rapidhash::quality`: You require minimal DoS resistance, and you want a fast, general purpose, portable hash function.
-- `foldhash`: You are hashing many tuples of small integers, whcih will be slightly faster with the foldhash sponge construction.
-- `gxhash`: You are hashing long byte streams on platforms with the necessary instruction sets and only care about throughput. You don't need memory safety, HashDoS resistance, or platform independence.
 
 ## Benchmarks
 
@@ -118,13 +106,15 @@ Hash speed and throughput can be a poor measure in isolation, as it doesn't take
 The minimum supported Rust version (MSRV) is 1.77.0.
 
 The rapidhash crate follows the following versioning scheme:
-- Major for breaking changes, such as hash output changes, breaking API changes, MSRV version bumps. When the RNG code is stabilised, major version bumps to `rand_core` will also trigger a major version bump of rapidhash due to the re-exported trait implementations.
-- Minor for significant API additions/deprecations.
+- Major for breaking API changes and MSRV version bumps.
+- Minor for significant API additions/deprecations or any changes to `RapidHasher` output.
 - Patch for bug fixes and performance improvements.
+
+Persistent hash output (eg. `rapidhash_v3`) are guaranteed to be stable. In-memory hash output (eg. `RapidHasher`) may change between minor versions to allow us to freely improve performance.
 
 ## License and Acknowledgements
 This project is licensed under both the MIT and Apache-2.0 licenses. You are free to choose either license.
 
-With thanks to [Nicolas De Carli](https://github.com/Nicoshev) for the original [rapidhash](https://github.com/Nicoshev/rapidhash) C++ implementation, which is licensed under the [BSD 2-Clause license](https://github.com/Nicoshev/rapidhash/blob/master/LICENSE).
+With thanks to [Nicolas De Carli](https://github.com/Nicoshev) for the original [rapidhash](https://github.com/Nicoshev/rapidhash) C++ implementation, which is licensed under the [MIT License](https://github.com/Nicoshev/rapidhash/blob/master/LICENSE).
 
 With thanks to [Justin Bradford](https://github.com/jabr) for letting us use the rapidhash crate name 🍻

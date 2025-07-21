@@ -58,7 +58,7 @@ jobs:
     name: "Test (MSRV)"
     runs-on: ubuntu-latest
     env:
-      RUST_VERSION: 1.83.0
+      RUST_VERSION: 1.77.0
     steps:
       - uses: actions/checkout@v4
       - name: Rust dependency cache
@@ -81,3 +81,14 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
         run: cargo test -p rapidhash-c --no-fail-fast
+
+  test-docs:
+    name: "Test (docs)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Rust dependency cache
+        uses: Swatinem/rust-cache@v2
+      - name: Compile and run tests
+        run: RUSTDOCFLAGS="--cfg docsrs" cargo +nightly test -p rapidhash --all-features --doc --no-fail-fast

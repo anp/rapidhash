@@ -23,10 +23,8 @@ use super::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, RAPID
 /// hasher.write(b"hello world");
 /// let hash = hasher.finish();
 /// ```
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 #[repr(C)]
-// TODO: FNV, COMPACT, and PROTECTED params?
-// TODO: minimal DOS resistance with random RAPID_SECRET vec
 pub struct RapidHasher<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool = false, const PROTECTED: bool = false> {
     a: u64,
     b: u64,
@@ -114,6 +112,9 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     pub const DEFAULT_SEED: u64 = RAPID_SEED;
 
     /// Create a new [RapidHasher] with a custom seed.
+    ///
+    /// See instead [src::quality::RandomState::new] or [src::fast::RandomState::new] for a random
+    /// seed and random secret initialisation, for minimal DoS resistance.
     #[inline(always)]
     #[must_use]
     pub const fn new(mut seed: u64) -> Self {
@@ -133,7 +134,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
         }
     }
 
-    /// Create a new [RapidHasher] using the default seed.
+    /// Create a new [RapidHasher] using the default seed and secrets.
     #[inline(always)]
     #[must_use]
     pub const fn default_const() -> Self {
@@ -145,7 +146,8 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     /// This can deliver a large performance improvement when the `bytes` length is known at compile
     /// time.
     #[inline(always)]
-    pub const fn write_const(&mut self, bytes: &[u8]) {
+    #[must_use]
+    pub const fn write_const(&self, bytes: &[u8]) -> Self {
         // FUTURE: wyhash processes the bytes as u64::MAX chunks in case chunk.len() > usize.
         // we use this static assert to ensure that usize is not larger than u64 for now.
         const _: () = assert!(
@@ -153,16 +155,21 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
             "usize is wider than u64. Please raise a github issue to support this."
         );
 
+        let mut this = *self;
         let (a, b, seed) = rapidhash_core::<COMPACT, PROTECTED>(self.a, self.b, self.seed, self.secrets, bytes);
-        self.a = a;
-        self.b = b;
-        self.seed = seed;
+        this.a = a;
+        this.b = b;
+        this.seed = seed;
+        this
     }
 
     /// This function needs to be as small as possible to have as high a chance of being inlined as
     /// possible. So we use good-old FNV where the entropy won't be lost, and fold for 64bit inputs.
     #[inline(always)]
-    const fn write_num<const N: u8>(&mut self, bytes: u64) {
+    #[must_use]
+    const fn write_num<const N: u8>(&self, bytes: u64) -> Self {
+        let mut this = *self;
+
         if FNV {
             // FNV for small inputs, with extra care for bad cases on 64bit inputs.
             // With 64 bit numbers we "fold" the high bits into the seed and rotate by 31 to ensure
@@ -170,36 +177,36 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
 
             const FNV_SEED: u64 = 0x51_7c_c1_b7_27_22_0a_95;
             if N <= 32 {
-                self.seed ^= bytes;
-                // if N > 32 {
-                //     // TODO: benchmark
-                //     // what bytes are we making equivalent here?
-                //     self.seed ^= bytes >> 32;
-                // }
-                self.seed = self.seed.wrapping_mul(FNV_SEED);
-                self.seed = self.seed.rotate_left(31);
+                this.seed ^= bytes;
+                this.seed = this.seed.wrapping_mul(FNV_SEED);
+                this.seed = this.seed.rotate_left(31);
             } else {
-                self.a ^= (bytes ^ self.seed).wrapping_mul(FNV_SEED).rotate_left(31);
-                self.seed ^= (bytes >> 32).wrapping_mul(FNV_SEED).rotate_left(31);
+                this.a ^= (bytes ^ this.seed).wrapping_mul(FNV_SEED).rotate_left(31);
+                this.seed ^= (bytes >> 32).wrapping_mul(FNV_SEED).rotate_left(31);
             }
         } else {
             // slower but high-quality rapidhash
-            self.a ^= bytes ^ RAPID_SECRET[1];
-            self.b ^= bytes ^ self.seed;
-            let (a, b) = rapid_mum::<PROTECTED>(self.a, self.b);
-            self.a = a;
-            self.b = b;
+            this.a ^= bytes ^ RAPID_SECRET[1];
+            this.b ^= bytes ^ this.seed;
+            let (a, b) = rapid_mum::<PROTECTED>(this.a, this.b);
+            this.a = a;
+            this.b = b;
         }
+
+        this
     }
 
     /// Straightforward fold for 128bit aligned inputs.
     #[inline(always)]
-    const fn write_128(&mut self, bytes: u128) {
-        self.a ^= bytes as u64 ^ RAPID_SECRET[1];
-        self.b ^= (bytes >> 64) as u64 ^ self.seed;
-        let (a, b) = rapid_mum::<PROTECTED>(self.a, self.b);
-        self.a = a;
-        self.b = b;
+    #[must_use]
+    const fn write_128(&self, bytes: u128) -> Self {
+        let mut this = *self;
+        this.a ^= bytes as u64 ^ RAPID_SECRET[1];
+        this.b ^= (bytes >> 64) as u64 ^ self.seed;
+        let (a, b) = rapid_mum::<PROTECTED>(this.a, this.b);
+        this.a = a;
+        this.b = b;
+        this
     }
 
     /// Const equivalent to [Hasher::finish], and marked as `#[inline(always)]`.
@@ -237,81 +244,87 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     /// Write a byte slice to the hasher, marked as `#[inline(always)]`.
     #[inline(always)]
     fn write(&mut self, bytes: &[u8]) {
-        self.write_const(bytes);
+        *self = self.write_const(bytes);
     }
 
     #[inline(always)]
     fn write_u8(&mut self, i: u8) {
-        self.write_num::<8>(i.into());
+        *self = self.write_num::<8>(i.into());
     }
 
     #[inline(always)]
     fn write_u16(&mut self, i: u16) {
-        self.write_num::<16>(i.into());
+        *self = self.write_num::<16>(i.into());
     }
 
     #[inline(always)]
     fn write_u32(&mut self, i: u32) {
-        self.write_num::<32>(i.into());
+        *self = self.write_num::<32>(i.into());
     }
 
     #[inline(always)]
     fn write_u64(&mut self, i: u64) {
-        self.write_num::<64>(i);
+        *self = self.write_num::<64>(i);
     }
 
     #[inline(always)]
     fn write_u128(&mut self, i: u128) {
-        #[cfg(target_pointer_width = "16")]
-        self.write_num::<64>(i as u16);
+        #[cfg(target_pointer_width = "16")] {
+            *self = self.write_num::<64>(i as u16);
+        }
 
-        #[cfg(target_pointer_width = "32")]
-        self.write_num::<64>(i as u32);
+        #[cfg(target_pointer_width = "32")] {
+            *self = self.write_num::<64>(i as u32);
+        }
 
-        #[cfg(target_pointer_width = "64")]
-        self.write_num::<64>(i as u64);
+        #[cfg(target_pointer_width = "64")] {
+            *self = self.write_num::<64>(i as u64);
+        }
     }
 
     #[inline(always)]
     fn write_usize(&mut self, i: usize) {
-        self.write_num::<64>(i as u64);
+        *self = self.write_num::<64>(i as u64);
     }
 
     #[inline(always)]
     fn write_i8(&mut self, i: i8) {
-        self.write_num::<8>(i as u64);
+        *self = self.write_num::<8>(i as u64);
     }
 
     #[inline(always)]
     fn write_i16(&mut self, i: i16) {
-        self.write_num::<16>(i as u64);
+        *self = self.write_num::<16>(i as u64);
     }
 
     #[inline(always)]
     fn write_i32(&mut self, i: i32) {
-        self.write_num::<32>(i as u64);
+        *self = self.write_num::<32>(i as u64);
     }
 
     #[inline(always)]
     fn write_i64(&mut self, i: i64) {
-        self.write_num::<64>(i as u64);
+        *self = self.write_num::<64>(i as u64);
     }
 
     #[inline(always)]
     fn write_i128(&mut self, i: i128) {
-        self.write_128(i as u128);
+        *self = self.write_128(i as u128);
     }
 
     #[inline(always)]
     fn write_isize(&mut self, i: isize) {
-        #[cfg(target_pointer_width = "16")]
-        self.write_num::<64>(i as u16);
+        #[cfg(target_pointer_width = "16")] {
+            *self = self.write_num::<64>(i as u16);
+        }
 
-        #[cfg(target_pointer_width = "32")]
-        self.write_num::<64>(i as u32);
+        #[cfg(target_pointer_width = "32")] {
+            *self = self.write_num::<64>(i as u32);
+        }
 
-        #[cfg(target_pointer_width = "64")]
-        self.write_num::<64>(i as u64);
+        #[cfg(target_pointer_width = "64")] {
+            *self = self.write_num::<64>(i as u64);
+        }
     }
 
     // #[cfg(feature = "nightly")]
