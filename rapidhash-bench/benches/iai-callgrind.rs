@@ -6,7 +6,6 @@ use iai_callgrind::{library_benchmark, library_benchmark_group};
 macro_rules! hash_benchmark {
     ($name:ident, $input:expr) => {
         #[library_benchmark]
-        #[bench::rapidhash_v1(&rapidhash::v1::RapidBuildHasher::default(), $input)]
         #[bench::rapidhash_f(&rapidhash::fast::RapidBuildHasher::default(), $input)]
         #[bench::rapidhash_q(&rapidhash::quality::RapidBuildHasher::default(), $input)]
         #[bench::foldhash_quality(&foldhash::quality::FixedState::default(), $input)]
@@ -20,7 +19,6 @@ macro_rules! hash_benchmark {
 macro_rules! hash_bytes {
     ($name:ident, $input:expr) => {
         #[library_benchmark]
-        #[bench::rapidhash_v1(&rapidhash::v1::RapidBuildHasher::default(), $input)]
         #[bench::rapidhash_f(&rapidhash::fast::RapidBuildHasher::default(), $input)]
         #[bench::rapidhash_q(&rapidhash::quality::RapidBuildHasher::default(), $input)]
         #[bench::foldhash_quality(&foldhash::quality::FixedState::default(), $input)]

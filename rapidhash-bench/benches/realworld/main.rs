@@ -122,7 +122,7 @@ fn profile_set_build<S: BuildHasher + Default, D: Distribution>(
     let mut rng = StdRng::seed_from_u64(RNG_SEED);
 
     c.bench_function(&name, |b| {
-        b.iter_custom(|iters| { 
+        b.iter_custom(|iters| {
             // Repeat each key 10 times.
             let keys: Vec<_> = (0..map_size).map(|_| distr.sample(&mut rng)).collect();
             let mut keys: Vec<_> = keys.iter().cycle().take(10 * map_size).cloned().collect();
@@ -150,11 +150,9 @@ fn profile_distr<D: Distribution>(distr: D, map_size: usize, c: &mut Criterion) 
     let c = &mut c.benchmark_group(name);
     c.sampling_mode(criterion::SamplingMode::Flat);
 
-    type RapidhashV1 = rapidhash::v1::RapidBuildHasher;
     type RapidhashQuality = rapidhash::quality::RandomState;
     type RapidhashFast = rapidhash::fast::RandomState;
 
-    profile_hashonly::<RapidhashV1, _>("rapidhash-v1", distr.clone(), c);
     profile_hashonly::<RapidhashQuality, _>("rapidhash-q", distr.clone(), c);
     profile_hashonly::<RapidhashFast, _>("rapidhash-f", distr.clone(), c);
     profile_hashonly::<foldhash::fast::RandomState, _>("foldhash-fast", distr.clone(), c);
@@ -164,7 +162,6 @@ fn profile_distr<D: Distribution>(distr: D, map_size: usize, c: &mut Criterion) 
     profile_hashonly::<gxhash::GxBuildHasher, _>("gxhash", distr.clone(), c);
     profile_hashonly::<std::hash::RandomState, _>("siphash", distr.clone(), c);
 
-    profile_lookup_miss::<RapidhashV1, _>("rapidhash-v1", distr.clone(), map_size, c);
     profile_lookup_miss::<RapidhashQuality, _>("rapidhash-q", distr.clone(), map_size, c);
     profile_lookup_miss::<RapidhashFast, _>("rapidhash-f", distr.clone(), map_size, c);
     profile_lookup_miss::<foldhash::fast::RandomState, _>("foldhash-fast", distr.clone(), map_size, c);
@@ -174,7 +171,6 @@ fn profile_distr<D: Distribution>(distr: D, map_size: usize, c: &mut Criterion) 
     profile_lookup_miss::<gxhash::GxBuildHasher, _>("gxhash", distr.clone(), map_size, c);
     profile_lookup_miss::<std::hash::RandomState, _>("siphash", distr.clone(), map_size, c);
 
-    profile_lookup_hit::<RapidhashV1, _>("rapidhash-v1", distr.clone(), map_size, c);
     profile_lookup_hit::<RapidhashQuality, _>("rapidhash-q", distr.clone(), map_size, c);
     profile_lookup_hit::<RapidhashFast, _>("rapidhash-f", distr.clone(), map_size, c);
     profile_lookup_hit::<foldhash::fast::RandomState, _>("foldhash-fast", distr.clone(), map_size, c);
@@ -184,7 +180,6 @@ fn profile_distr<D: Distribution>(distr: D, map_size: usize, c: &mut Criterion) 
     profile_lookup_hit::<gxhash::GxBuildHasher, _>("gxhash", distr.clone(), map_size, c);
     profile_lookup_hit::<std::hash::RandomState, _>("siphash", distr.clone(), map_size, c);
 
-    profile_set_build::<RapidhashV1, _>("rapidhash-v1", distr.clone(), map_size, c);
     profile_set_build::<RapidhashQuality, _>("rapidhash-q", distr.clone(), map_size, c);
     profile_set_build::<RapidhashFast, _>("rapidhash-f", distr.clone(), map_size, c);
     profile_set_build::<foldhash::fast::RandomState, _>("foldhash-fast", distr.clone(), map_size, c);
