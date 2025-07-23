@@ -101,7 +101,7 @@ Initial benchmarks on M1 Max (aarch64) for various input sizes.
 
 </details>
 
-```
+```txt
              ┌────────────────┬─────────────┬────────────┐
              │         metric ┆ rapidhash-f ┆ foldhash-f │
              │            --- ┆         --- ┆        --- │

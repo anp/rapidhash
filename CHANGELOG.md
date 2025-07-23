@@ -1,8 +1,8 @@
 # Changelog
 
-## 2.0.0 (20250725)
+## 2.0.0 (20250723)
 
-**Rapidhash algorithm changes** have pushed us towards a refactor of this crate. Rapidhash V2.0, V2.1, V2.2, and V3 are now all supported under `rapidhash::v3` etc modules. These expose `rapidhash_v3` and similar methods to avoid version confusion.
+**Rapidhash algorithm changes** have pushed us towards a refactor of this crate. Compatibility with rapidhash V2.0, V2.1, V2.2, and V3 are now all supported under `rapidhash::v3` and `rapidhash::v2` modules. These expose `rapidhash_v3` and similar methods to avoid version confusion. Each version produces different hash outputs.
 
 - **Breaking:** `RapidHasher` in-memory hasher overhaul:
   - `RapidHasher` deviates from the main rapidhash algorithm to improve performance hashing rust objects while maintaining similar hash quality. Performance should be significantly improved over the v1 crate.
@@ -21,8 +21,8 @@
 - **Breaking:** Removed the `RapidInline*` variants in favour of making the default `Rapid` types inline by default. If this is a problem for your use case, please raise a GitHub issue, thanks!
 - **Breaking:** Removed the deprecated `RapidHashBuilder` type, it has been replaced with `RapidBuildHasher` to match the rust naming convention.
 - New: Added support for rapidhash V2.0, V2.1, V2.2, and V3 algorithms.
-- New: rapidhash CLI now supports a proper streaming V3 version.
-- Fix: Full tests and verification against the C implementations for both versions.
+- New: rapidhash CLI now supports streaming properly with the V3 algorithm.
+- Fix: Full tests and verification against the C implementations for all versions.
 - Perf: Extensive benchmarking and optimisation, see more: https://github.com/hoxxep/rapidhash/issues/20
 
 ## 1.4.0 (20250219)

@@ -16,13 +16,13 @@ jobs:
         working-directory: rapidhash
         run: |
           PKG_VERSION=cargo get package.version --pretty
-          TAG_VERSION=${{  github.ref_name }}
+          TAG_VERSION=${{ github.ref_name }}
           if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
               echo "Version mismatch: $PKG_VERSION != $TAG_VERSION"
               exit 1
           fi
-#      - name: Publish to crates.io
-#        working-directory: rapidhash
-#        env:
-#          CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
-#        run: cargo publish --token ${CRATES_TOKEN}
+      - name: Publish to crates.io
+        working-directory: rapidhash
+        env:
+          CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
+        run: cargo publish --token ${CRATES_TOKEN}
