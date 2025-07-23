@@ -1,6 +1,6 @@
 [package]
 name = "rapidhash"
-version = "2.0.1"
+version = "2.0.2"
 edition = "2021"
 publish = true
 rust-version = "1.77.0"  # &mut const would bump us to 1.83.0
@@ -9,10 +9,10 @@ description = "A rust port of rapidhash: an extremely fast, high quality, platfo
 repository = "https://github.com/hoxxep/rapidhash"
 documentation = "https://docs.rs/rapidhash"
 license = "MIT OR Apache-2.0"
-readme = "../README.md"
+readme = "README.md"
 keywords = ["hash", "hasher", "no-std", "rapidhash"]
 categories = ["algorithms", "no-std"]
-exclude = ["Cargo.lock", ".github", "fuzz", "docs", "rapidhash-c", "rapidhash-bench"]
+exclude = ["Cargo.lock", "fuzz"]
 
 [lib]
 
