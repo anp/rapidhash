@@ -122,7 +122,7 @@ fn profile_set_build<S: BuildHasher + Default, D: Distribution>(
     let mut rng = StdRng::seed_from_u64(RNG_SEED);
 
     c.bench_function(&name, |b| {
-        b.iter_custom(|iters| {
+        b.iter_custom(|iters| { 
             // Repeat each key 10 times.
             let keys: Vec<_> = (0..map_size).map(|_| distr.sample(&mut rng)).collect();
             let mut keys: Vec<_> = keys.iter().cycle().take(10 * map_size).cloned().collect();

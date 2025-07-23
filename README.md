@@ -3,7 +3,7 @@
 A rust implementation of the [rapidhash](https://github.com/Nicoshev/rapidhash) function, the official successor to [wyhash](https://github.com/wangyi-fudan/wyhash).
 
 - **High quality**, the fastest hash passing all tests in the SMHasher and SMHasher3 benchmark. Collision-based study showed a collision probability lower than wyhash, foldhash, and close to ideal.
-- **Very fast**, the fastest passing hash in SMHasher3. Significant throughput improvement over wyhash and foldhash. Fastest memory-safe hash. Fastest platform-independent hash. Fastest const hash.
+- **Very fast**, the fastest passing hash in SMHasher3. Significant peak throughput improvement over wyhash and foldhash. Fastest memory-safe hash. Fastest platform-independent hash. Fastest const hash.
 - **Platform independent**, works on all platforms, no dependency on machine-specific vectorized or cryptographic hardware instructions. Optimised for both AMD64 and AArch64.
 - **Memory safe**, when the `unsafe` feature is disabled (default). This implementation has also been fuzz-tested with `cargo fuzz`.
 - **No dependencies and no-std compatible** when disabling default features.
@@ -20,7 +20,7 @@ Full compatibility with C++ rapidhash algorithms, methods are provided for all r
 ```rust
 use std::hash::{BuildHasher, Hasher};
 
-// rapidhash V3 algorithm, for fest, high-quality, persistent hashing
+// rapidhash V3 algorithm, for fast, high-quality, persistent hashing
 use rapidhash::v3::rapidhash_v3;
 assert_eq!(rapidhash_v3(b"hello world"), 3397907815814400320);
 ```
@@ -62,17 +62,19 @@ echo "example" | rapidhash --v3
 Rapidhash has multiple versions of the algorithm.
 
 ### Persistent Hashing
-Fixed versioning with C++ compatibility is presented in `rapidhash::v1`, `rapidhash::v2`, and `rapidhash::v3` modules. Rapidhash V3 is the recommended fastest and most recent version of the hash. Others are provided for backwards compatibility.
+Fixed versioning with C++ compatibility is presented in `rapidhash::v1`, `rapidhash::v2`, and `rapidhash::v3` modules.
+
+Rapidhash V3 is the recommended, fastest, and most recent version of the hash. Others are provided for backwards compatibility.
 
 ### In-Memory Hashing
 Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in `rapidhash::fast`, `rapidhash::quality`, and `rapidhash::inner` modules. These are not guaranteed to give a consistent hash output between crate versions as the rust `Hasher` trait is not designed for this.
 
 - Use `rapidhash::fast` for optimal hashing speed with a slightly lower hash quality. Best for most datastructures such as HashMap and HashSet usage.
 - Use `rapidhash::quality` where statistical hash quality is the priority, such as HyperLogLog or MinHash algorithms.
-- Use `rapidhash::inner` to configure advanced parameters to configure the hash function specifically to your use case. This allows tweaking the following compile time parameters:
+- Use `rapidhash::inner` to configure advanced parameters to configure the hash function specifically to your use case. This allows tweaking the following compile time parameters, which all change the hash output:
   - `AVALANCHE`: Enables the final avalanche mixing step to improve hash quality. Enabled on quality, disabled on fast.
   - `FNV`: Hash integer types using FNV instead of the rapidhash algorithm. Reduces DoS resistance on integer types. Disabled on quality, enabled on fast.
-  - `COMPACT`: Generates fewer instructions at compile time, but may be slower on some platforms. Disabled by default.
+  - `COMPACT`: Generates fewer instructions at compile time with less manual loop unrolling, but may be slower on some platforms. Disabled by default.
   - `PROTECTED`: Slightly stronger hash quality and DoS resistance by performing two extra XOR instructions on every mix step. Disabled by default.
 
 ## Features
@@ -110,7 +112,7 @@ The rapidhash crate follows the following versioning scheme:
 - Minor for significant API additions/deprecations or any changes to `RapidHasher` output.
 - Patch for bug fixes and performance improvements.
 
-Persistent hash output (eg. `rapidhash_v3`) are guaranteed to be stable. In-memory hash output (eg. `RapidHasher`) may change between minor versions to allow us to freely improve performance.
+Persistent hash outputs (eg. `rapidhash_v3`) are guaranteed to be stable. In-memory hash outputs (eg. `RapidHasher`) may change between minor versions to allow us to freely improve performance.
 
 ## License and Acknowledgements
 This project is licensed under both the MIT and Apache-2.0 licenses. You are free to choose either license.

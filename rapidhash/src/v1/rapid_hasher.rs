@@ -23,7 +23,6 @@ use crate::v1::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, R
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq)]
 #[repr(align(32))]
-#[deprecated]
 pub struct RapidHasher {
     // NOTE: field order is important for performance and inlining, benchmark changes!
     size: u64,

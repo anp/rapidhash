@@ -3,21 +3,25 @@
 //!
 //! Repo: https://github.com/ogxd/gxhash/tree/main
 
-use std::{hash::{Hash, Hasher, BuildHasher}, collections::HashSet, slice};
-use std::hash::BuildHasherDefault;
-use criterion::black_box;
 use rand::Rng;
+use std::hash::{BuildHasher, BuildHasherDefault, Hash, Hasher};
+use std::hint::black_box;
+use std::collections::HashSet;
 
-/// cargo bench --bench quality --all-features
+
+/// Usage: `cargo bench --bench quality --all-features`
 fn main() {
-    bench_hasher_quality::<rapidhash::quality::RandomState>("RapidHash");
+    bench_hasher_quality::<rapidhash::fast::RandomState>("RapidHash-F");
+    bench_hasher_quality::<rapidhash::quality::RandomState>("RapidHash-Q");
     bench_hasher_quality::<std::collections::hash_map::RandomState>("Default");
     bench_hasher_quality::<BuildHasherDefault<wyhash::WyHash>>("WyHash");
     bench_hasher_quality::<gxhash::GxBuildHasher>("GxHash");
     bench_hasher_quality::<fxhash::FxBuildHasher>("FxHash");
-    bench_hasher_quality::<twox_hash::RandomXxHashBuilder>("XxHash (XXH3)");
+    bench_hasher_quality::<BuildHasherDefault<twox_hash::XxHash3_64>>("XxHash (XXH3_64)");
     bench_hasher_quality::<ahash::RandomState>("AHash");
     bench_hasher_quality::<t1ha::T1haBuildHasher>("T1ha");
+    bench_hasher_quality::<foldhash::fast::RandomState>("FoldHash-F");
+    bench_hasher_quality::<foldhash::quality::RandomState>("FoldHash-Q");
 }
 
 macro_rules! check {
@@ -34,7 +38,8 @@ macro_rules! check {
 }
 
 fn bench_hasher_quality<B>(name: &str)
-where B : BuildHasher + Default
+where
+    B: BuildHasher + Default,
 {
     println!("Bench {}", name);
 
@@ -76,19 +81,34 @@ where B : BuildHasher + Default
     check!(collisions_permute::<B, u128>(4, &Vec::from_iter(0..16))); // 256 bytes
     check!(collisions_permute::<B, u128>(42, &Vec::from_iter(0..64))); // 1024 bytes
 
-    check!(collisions_powerset_bytes::<B>(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
-    check!(collisions_powerset_bytes::<B>(&[0, 1, 2, 4, 8, 16, 32, 64, 128]));
+    check!(collisions_powerset_bytes::<B>(&[
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+    ]));
+    check!(collisions_powerset_bytes::<B>(&[
+        0, 1, 2, 4, 8, 16, 32, 64, 128
+    ]));
 
-    check!(hasher_collisions_permute::<B, u8>(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
-    check!(hasher_collisions_permute::<B, u32>(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
-    check!(hasher_collisions_permute::<B, u32>(&[0, 1, 2, 4, 8, 16, 32, 64, 128, 256]));
+    check!(hasher_collisions_permute::<B, u8>(&[
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+    ]));
+    check!(hasher_collisions_permute::<B, u32>(&[
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+    ]));
+    check!(hasher_collisions_permute::<B, u32>(&[
+        0, 1, 2, 4, 8, 16, 32, 64, 128, 256
+    ]));
 
-    check!(hasher_collisions_powerset::<B, u32>(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]));
-    check!(hasher_collisions_powerset::<B, u32>(&[0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384]));
+    check!(hasher_collisions_powerset::<B, u32>(&[
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+    ]));
+    check!(hasher_collisions_powerset::<B, u32>(&[
+        0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384
+    ]));
 }
 
 fn hasher_collisions_permute<B, D>(data: &[impl Hash]) -> f64
-where B : BuildHasher + Default
+where
+    B: BuildHasher + Default,
 {
     use itertools::Itertools;
 
@@ -111,8 +131,9 @@ where B : BuildHasher + Default
 }
 
 fn collisions_permute<B, D>(step: usize, data: &[D]) -> f64
-where B : BuildHasher + Default,
-      D : Clone
+where
+    B: BuildHasher + Default,
+    D: Clone,
 {
     let build_hasher = B::default();
 
@@ -122,9 +143,7 @@ where B : BuildHasher + Default,
     let mut x = data.to_vec();
     permute(&mut x, 0, step, &mut |d| {
         let len = data.len() * std::mem::size_of::<D>();
-        let perm_u8 = unsafe {
-            slice::from_raw_parts(d.as_ptr() as *const u8, len)
-        };
+        let perm_u8 = unsafe { std::slice::from_raw_parts(d.as_ptr() as *const u8, len) };
         let mut hasher = build_hasher.build_hasher();
         hasher.write(&perm_u8);
         set.insert(hasher.finish());
@@ -138,7 +157,8 @@ where B : BuildHasher + Default,
 }
 
 fn permute<T, F>(arr: &mut [T], start: usize, step: usize, f: &mut F)
-where F: FnMut(&[T])
+where
+    F: FnMut(&[T]),
 {
     if start >= arr.len() - 1 {
         f(arr);
@@ -152,7 +172,8 @@ where F: FnMut(&[T])
 }
 
 fn hasher_collisions_powerset<B, D>(data: &[impl Hash]) -> f64
-where B : BuildHasher + Default
+where
+    B: BuildHasher + Default,
 {
     use itertools::Itertools;
 
@@ -175,7 +196,8 @@ where B : BuildHasher + Default
 }
 
 fn collisions_powerset_bytes<B>(data: &[u8]) -> f64
-where B : BuildHasher + Default
+where
+    B: BuildHasher + Default,
 {
     use itertools::Itertools;
 
@@ -199,7 +221,8 @@ where B : BuildHasher + Default
 }
 
 fn collisions_padded_zeroes<B>(max_size: usize) -> f64
-where B : BuildHasher + Default
+where
+    B: BuildHasher + Default,
 {
     let build_hasher = B::default();
     let bytes = vec![0u8; max_size];
@@ -223,7 +246,8 @@ where B : BuildHasher + Default
 }
 
 fn collisions_flipped_bits<B, const N: usize>(bits_to_set: usize) -> f64
-where B : BuildHasher + Default
+where
+    B: BuildHasher + Default,
 {
     let build_hasher = B::default();
     let mut input = [0u8; N];
@@ -245,8 +269,13 @@ where B : BuildHasher + Default
 }
 
 fn flip_n_bits_recurse<B, const N: usize>(
-    build_hasher: &B, start: usize, bits_left: usize, input: &mut [u8], hashes: &mut Vec<u64>)
-where B : BuildHasher + Default
+    build_hasher: &B,
+    start: usize,
+    bits_left: usize,
+    input: &mut [u8],
+    hashes: &mut Vec<u64>,
+) where
+    B: BuildHasher + Default,
 {
     let nbits: usize = N * 8;
 
@@ -270,7 +299,8 @@ where B : BuildHasher + Default
 }
 
 fn avalanche<B, const N: usize>() -> f64
-where B : BuildHasher + Default
+where
+    B: BuildHasher + Default,
 {
     const AVALANCHE_ITERATIONS: usize = 1000;
     const AVG_ITERATIONS: usize = 10;
@@ -295,19 +325,19 @@ where B : BuildHasher + Default
 // Precision is up to log10(iterations) decimals.
 // For very small score, results can be rounded up to the precision level.
 fn avalanche_iterations<B, const N: usize>(iterations: usize) -> f64
-where B : BuildHasher + Default
+where
+    B: BuildHasher + Default,
 {
     let build_hasher = B::default();
 
     const SIZE_R: usize = std::mem::size_of::<u64>();
     let mut scores_sum = 0f64;
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let input: &mut [u8] = &mut [0u8; N];
 
     for _ in 0..iterations {
-
         // Random input on each iteration
         rng.fill(input);
 
@@ -319,7 +349,6 @@ where B : BuildHasher + Default
 
         // Flip every bit
         for i in 0..(N * 8) {
-
             // Flip bit at position i
             bytes_bit_changed[i / 8] = input[i / 8] ^ (1 << (i % 8));
 
@@ -346,7 +375,8 @@ where B : BuildHasher + Default
 }
 
 fn distribution_bits<B, const N: usize>() -> f64
-where B : BuildHasher + Default
+where
+    B: BuildHasher + Default,
 {
     const DISTRIBUTION_ITERATIONS: usize = 10000;
     const AVG_ITERATIONS: usize = 100;
@@ -367,7 +397,8 @@ where B : BuildHasher + Default
 }
 
 fn distribution_bits_iterations<B, const N: usize>(iterations: usize) -> f64
-where B : BuildHasher + Default
+where
+    B: BuildHasher + Default,
 {
     let build_hasher = B::default();
 
@@ -375,12 +406,11 @@ where B : BuildHasher + Default
 
     let mut bit_buckets = vec![0f64; SIZE_R * 8];
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let input: &mut [u8] = &mut [0u8; N];
 
     for _ in 0..iterations {
-
         // Random input on each iteration
         rng.fill(input);
 
@@ -415,10 +445,14 @@ fn variance(data: &[f64]) -> f64 {
 
     let mean = data.iter().sum::<f64>() / data.len() as f64;
 
-    let variance = data.iter().map(|value| {
-        let diff = mean - value;
-        diff * diff
-    }).sum::<f64>() / data.len() as f64;
+    let variance = data
+        .iter()
+        .map(|value| {
+            let diff = mean - value;
+            diff * diff
+        })
+        .sum::<f64>()
+        / data.len() as f64;
 
     variance
 }
@@ -428,16 +462,21 @@ fn variance_to_mean(data: &[f64], mean: f64) -> f64 {
         return 0.0;
     }
 
-    let variance = data.iter().map(|value| {
-        let diff = mean - value;
-        diff * diff
-    }).sum::<f64>() / data.len() as f64;
+    let variance = data
+        .iter()
+        .map(|value| {
+            let diff = mean - value;
+            diff * diff
+        })
+        .sum::<f64>()
+        / data.len() as f64;
 
     variance
 }
 
 fn distribution_values<B, const N: usize>(buckets_count: usize) -> f64
-where B : BuildHasher + Default
+where
+    B: BuildHasher + Default,
 {
     const DISTRIBUTION_ITERATIONS: usize = 100000;
     const AVG_ITERATIONS: usize = 100;
@@ -458,7 +497,8 @@ where B : BuildHasher + Default
 }
 
 fn distribution_values_iterations<B, const N: usize>(iterations: usize, buckets_count: usize) -> f64
-where B : BuildHasher + Default
+where
+    B: BuildHasher + Default,
 {
     let build_hasher = B::default();
 
@@ -466,12 +506,11 @@ where B : BuildHasher + Default
 
     let mut buckets = vec![0f64; buckets_count];
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let input: &mut [u8] = &mut [0u8; N];
 
     for _ in 0..iterations {
-
         // Random input on each iteration
         rng.fill(input);
 
@@ -494,14 +533,13 @@ where B : BuildHasher + Default
     // The worst possible variance for these buckets is 1 / buckets_count
     let worst_variance = 1f64 / buckets_count as f64;
 
-    // Divide by the theoritical worst variance to normalize result from 0 to 1
+    // Divide by the theoretical worst variance to normalize result from 0 to 1
     let score = std / worst_variance;
 
     score
 }
 
-fn round_to_decimal(value: f64, decimals: usize) -> f64
-{
+fn round_to_decimal(value: f64, decimals: usize) -> f64 {
     let factor = 10f64.powi(decimals as i32 - 1);
     (value * factor).round() / factor
 }
