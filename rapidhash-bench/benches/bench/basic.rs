@@ -1,6 +1,6 @@
 //! Benchmarking hashers against integers and byte slices of various lengths.
 
-use std::hash::{BuildHasher, BuildHasherDefault, Hash};
+use std::hash::{BuildHasher, BuildHasherDefault, Hash, Hasher};
 use std::hint::black_box;
 use criterion::{BenchmarkGroup, Criterion, Throughput};
 use criterion::measurement::WallTime;
@@ -26,7 +26,13 @@ fn profile_bytes<H: BuildHasher + Default>(
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            black_box(build_hasher.hash_one(black_box(bytes)))
+            // hash_one seems to cause significant overhead for some hashers, likely related to
+            // inlining because of the amount of indirection it does.
+            // black_box(build_hasher.hash_one(black_box(bytes)))
+
+            let mut hasher = build_hasher.build_hasher();
+            hasher.write(black_box(bytes));
+            black_box(hasher.finish())
         }, criterion::BatchSize::SmallInput);
     });
 }
@@ -106,6 +112,7 @@ pub fn bench(c: &mut Criterion) {
     bench_group::<foldhash::quality::RandomState>(c, "hash/foldhash-q");
 
     bench_group::<std::hash::RandomState>(c, "hash/default");
+    bench_group::<fxhash::FxBuildHasher>(c, "hash/fxhash");
     bench_group::<gxhash::GxBuildHasher>(c, "hash/gxhash");
     bench_group::<ahash::RandomState>(c, "hash/ahash");
     bench_group::<t1ha::T1haBuildHasher>(c, "hash/t1ha");

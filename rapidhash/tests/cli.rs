@@ -13,8 +13,9 @@ use rapidhash::v3::rapidhash_v3;
 
 /// Test: `echo "test input" | rapidhash --v3`
 ///
-/// Note echo appends a newline character at the end of the input.
+/// Note `echo` appends a newline character at the end of the input.
 #[test]
+#[cfg(feature = "std")]
 fn cli_stdin() {
     let input = "test input\n";
     let expected = rapidhash_v3("test input\n".as_bytes()).to_string();
@@ -29,6 +30,7 @@ fn cli_stdin() {
 
 /// Test: `rapidhash --v3 file.txt`
 #[test]
+#[cfg(feature = "std")]
 fn cli_file() {
     let input = "test input\n";
     let expected = rapidhash_v3(input.as_bytes()).to_string();
@@ -48,6 +50,7 @@ fn cli_file() {
 
 /// Test all rapidhash versions.
 #[test]
+#[cfg(feature = "std")]
 fn cli_versions() {
     let input = "test input\n".as_bytes();
 

@@ -61,24 +61,22 @@ def table():
     ]
 
     name_repl = {
-        "rapidhash-v3na": "rapidhash-f",
-        "rapidhash-v3": "rapidhash-q",
+        "rapidhash-f": "rapidhash-f",
+        "rapidhash-q": "rapidhash-q",
         "foldhash-fast": "foldhash-f",
         "foldhash-quality": "foldhash-q",
     }
 
     bench_order = ["hashonly", "lookupmiss", "lookuphit", "setbuild"]
     hash_order = [
-#         "rapidhash-v1",
-#         "rapidhash-v2",
         "rapidhash-f",
-        "rapidhash-q",
+#         "rapidhash-q",
         "foldhash-f",
-        "foldhash-q",
+#         "foldhash-q",
 #         "gxhash",
-        "fxhash",
-        "ahash",
-        "siphash"
+#         "fxhash",
+#         "ahash",
+#         "siphash"
     ]
 
     distr_order_df = pl.DataFrame({"distr": distr_order, "distr_order_idx": range(len(distr_order))})
