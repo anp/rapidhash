@@ -57,26 +57,6 @@ rapidhash --v3 example.txt
 echo "example" | rapidhash --v3
 ```
 
-## Rapidhash Versions
-
-Rapidhash has multiple versions of the algorithm.
-
-### Persistent Hashing
-Fixed versioning with C++ compatibility is presented in `rapidhash::v1`, `rapidhash::v2`, and `rapidhash::v3` modules.
-
-Rapidhash V3 is the recommended, fastest, and most recent version of the hash. Others are provided for backwards compatibility.
-
-### In-Memory Hashing
-Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in `rapidhash::fast`, `rapidhash::quality`, and `rapidhash::inner` modules. These are not guaranteed to give a consistent hash output between crate versions as the rust `Hasher` trait is not designed for this.
-
-- Use `rapidhash::fast` for optimal hashing speed with a slightly lower hash quality. Best for most datastructures such as HashMap and HashSet usage.
-- Use `rapidhash::quality` where statistical hash quality is the priority, such as HyperLogLog or MinHash algorithms.
-- Use `rapidhash::inner` to configure advanced parameters to configure the hash function specifically to your use case. This allows tweaking the following compile time parameters, which all change the hash output:
-  - `AVALANCHE`: Enables the final avalanche mixing step to improve hash quality. Enabled on quality, disabled on fast.
-  - `FNV`: Hash integer types using FNV instead of the rapidhash algorithm. Reduces DoS resistance on integer types. Disabled on quality, enabled on fast.
-  - `COMPACT`: Generates fewer instructions at compile time with less manual loop unrolling, but may be slower on some platforms. Disabled by default.
-  - `PROTECTED`: Slightly stronger hash quality and DoS resistance by performing two extra XOR instructions on every mix step. Disabled by default.
-
 ## Features
 
 - `default`: `std`
@@ -94,12 +74,10 @@ Initial benchmarks on M1 Max (aarch64) for various input sizes.
 ![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash.svg)
 
 <details>
-<summary>Comparison to foldhash</summary>
+<summary><strong>Comparison to foldhash</strong></summary>
 
 - Rapidhash is generally faster with string and byte inputs.
 - Foldhash is generally faster with integer tuples by using a 128bit buffer for integer inputs.
-
-</details>
 
 ```txt
              ┌────────────────┬─────────────┬────────────┐
@@ -182,18 +160,43 @@ Initial benchmarks on M1 Max (aarch64) for various input sizes.
 └────────────────┴────────────┴─────────────┴────────────┘
 ```
 
-#### Benchmark notes
+</details>
+
+<details>
+<summary><strong>Benchmark notes</strong></summary>
 
 - Hash throughput/latency does not measure hash "quality", and many of the benchmarked functions fail SMHasher3 quality tests. Hash quality affects hashmap performance, as well as algorithms that benefit from high quality hash functions such as HyperLogLog and MinHash.
 - Most hash functions will be affected heavily by whether the compiler has inlined them. Rapidhash tries very hard to always be inlined by the compiler, but the larger a program or benchmark gets, the less likely it is to be inlined due to Rust's `BuildHasher::hash_one` method not being `#[inline(always)]`.
 - `gxhash` has high throughput by using AES instructions. It's a great hash function, but is not a portable hash function (often requires `target-cpu=native` to compile), uses unsafe code, and is not minimally DoS resistant.
 - Benchmark your own use case, with your real world dataset! We suggest experimenting with rapidhash, foldhash, and gxhash to see what works for you. Different inputs will benefit from different hash functions.
 
+</details>
+
+## Rapidhash Versions
+
+Rapidhash has multiple versions of the algorithm.
+
+### Persistent Hashing
+Fixed versioning with C++ compatibility is presented in `rapidhash::v1`, `rapidhash::v2`, and `rapidhash::v3` modules.
+
+Rapidhash V3 is the recommended, fastest, and most recent version of the hash. Others are provided for backwards compatibility.
+
+### In-Memory Hashing
+Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in `rapidhash::fast`, `rapidhash::quality`, and `rapidhash::inner` modules. These are not guaranteed to give a consistent hash output between crate versions as the rust `Hasher` trait is not designed for this.
+
+- Use `rapidhash::fast` for optimal hashing speed with a slightly lower hash quality. Best for most datastructures such as HashMap and HashSet usage.
+- Use `rapidhash::quality` where statistical hash quality is the priority, such as HyperLogLog or MinHash algorithms.
+- Use `rapidhash::inner` to configure advanced parameters to configure the hash function specifically to your use case. This allows tweaking the following compile time parameters, which all change the hash output:
+    - `AVALANCHE`: Enables the final avalanche mixing step to improve hash quality. Enabled on quality, disabled on fast.
+    - `FNV`: Hash integer types using FNV instead of the rapidhash algorithm. Reduces DoS resistance on integer types. Disabled on quality, enabled on fast.
+    - `COMPACT`: Generates fewer instructions at compile time with less manual loop unrolling, but may be slower on some platforms. Disabled by default.
+    - `PROTECTED`: Slightly stronger hash quality and DoS resistance by performing two extra XOR instructions on every mix step. Disabled by default.
+
 ## Versioning
 The minimum supported Rust version (MSRV) is 1.77.0.
 
 The rapidhash crate follows the following versioning scheme:
-- Major for breaking API changes and MSRV version bumps.
+- Major for breaking API changes and MSRV version bumps or any changes to `rapidhash_v*` method output.
 - Minor for significant API additions/deprecations or any changes to `RapidHasher` output.
 - Patch for bug fixes and performance improvements.
 
