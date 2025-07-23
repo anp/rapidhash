@@ -51,7 +51,7 @@ pub fn main() {
             println!("Usage: rapidhash <version> [opts] [filename]");
             println!("<version>");
             println!("  --v1    Use v1 hashing algorithm (no streaming)");
-            println!("  --v2    Use v2 hashing algorithm (no streaming)");
+            println!("  --v2.0  Use v2.0 hashing algorithm (no streaming)");
             println!("  --v2.1  Use v2.1 hashing algorithm (no streaming)");
             println!("  --v2.2  Use v2.2 hashing algorithm (no streaming)");
             println!("  --v3    Use v3 hashing algorithm (default)");
@@ -104,13 +104,13 @@ enum RapidhashVersion {
 impl RapidhashVersion {
     pub fn new(args: &[String]) -> Option<Self> {
         let v1 = args.iter().any(|a| a == "--v1");
-        let v2 = args.iter().any(|a| a == "--v2");
+        let v2_0 = args.iter().any(|a| a == "--v2.0");
         let v2_1 = args.iter().any(|a| a == "--v2.1");
         let v2_2 = args.iter().any(|a| a == "--v2.2");
         let mut v3 = args.iter().any(|a| a == "--v3");
         let protected = args.iter().any(|a| a == "--protected");
 
-        let sum = (v1 as u8) + (v2 as u8) + (v2_1 as u8) + (v2_2 as u8) + (v3 as u8);
+        let sum = (v1 as u8) + (v2_0 as u8) + (v2_1 as u8) + (v2_2 as u8) + (v3 as u8);
         match sum {
             0 => {
                 v3 = true; // Default to v3 if no version is specified
@@ -121,7 +121,7 @@ impl RapidhashVersion {
 
         if v1 {
             Some(RapidhashVersion::V1 { protected })
-        } else if v2 {
+        } else if v2_0 {
             Some(RapidhashVersion::V2 { protected, version: 0 })
         } else if v2_1 {
             Some(RapidhashVersion::V2 { protected, version: 1 })

@@ -181,6 +181,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
                 this.seed = this.seed.wrapping_mul(FNV_SEED);
                 this.seed = this.seed.rotate_left(31);
             } else {
+                // TODO: revisit this
                 this.a ^= (bytes ^ this.seed).wrapping_mul(FNV_SEED).rotate_left(31);
                 this.seed ^= (bytes >> 32).wrapping_mul(FNV_SEED).rotate_left(31);
             }
