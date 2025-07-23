@@ -8,31 +8,48 @@ from matplotlib import pyplot as plt
 
 def main():
     draw_hash()
-    draw_map()
+#     draw_map()
 
 
 def draw_hash():
     hash_settings = [
-        ("rapidhash", "b"),
-        ("default", "k"),
-        ("fxhash", "r"),
+#         ("rapidhash", "b"),
+#         ("rapidhash_cc_rs", "orange"),
+#         ("rapidhash_cc_v3", "b"),
+#         ("rapidhash_cc_v2_1", "y"),
+#         ("rapidhash_cc_v2", "g"),
+#         ("rapidhash_cc_v1", "r"),
+#         ("rapidhash_cc_v3na", "y"),
         ("gxhash", "m"),
+        ("rapidhash-f", "b"),
+        ("rapidhash-q", "b"),
+        ("xxhash3_64", "0.8"),
+        ("foldhash-f", "y"),
+        ("foldhash-q", "y"),
         ("wyhash", "c"),
-        ("ahash", "0.8"),
-        ("t1ha", "0.8"),
         ("metrohash", "0.8"),
+        ("rustc-hash", "0.8"),
+        ("ahash", "0.8"),
+        ("xxhash64", "0.8"),
+        ("t1ha", "0.8"),
+        ("farmhash", "0.8"),
         ("seahash", "0.8"),
-        ("xxhash", "0.8"),
+        ("highwayhash", "0.8"),
+        ("fxhash", "r"),
+        ("default", "k"),
     ]
 
     hash_names = [hash_function for hash_function, _ in hash_settings]
 
-    sizes = [2, 8, 16, 64, 256, 1024, 4096]
+    # also available: 65536, 524288000
+    sizes = [2, 8, 16, 25, 50, 64, 80, 160, 256, 350, 1024, 4096, ]
 
     latency_data = []
     throughput_data = []
     latency_data_u64 = []
     throughput_data_u64 = []
+    latency_data_64k = []
+    throughput_data_64k = []
     for (hash_function, _) in hash_settings:
         latency_row = []
         throughput_row = []
@@ -49,11 +66,17 @@ def draw_hash():
         latency_data_u64.append(latency)
         throughput_data_u64.append(throughput)
 
+        latency, throughput = load_latest_measurement_file("hash", hash_function, "str_65536")
+        latency_data_64k.append(latency)
+        throughput_data_64k.append(throughput)
+
     fig, axs = plt.subplots(2, 2, figsize=(12, 8), dpi=300)
 
     for i, (hash_function, color) in reversed(list(enumerate(hash_settings))):
-        axs[0, 0].plot(sizes, latency_data[i], label=hash_function, color=color)
-        axs[0, 1].plot(sizes, throughput_data[i], label=hash_function, color=color)
+        linestyle = "--" if hash_function.endswith("-f") else "-"
+
+        axs[0, 0].plot(sizes, latency_data[i], label=hash_function, color=color, linestyle=linestyle)
+        axs[0, 1].plot(sizes, throughput_data[i], label=hash_function, color=color, linestyle=linestyle)
 
         # Annotate the end of each line
         axs[0, 0].annotate(hash_function, (sizes[-1], latency_data[i][-1]), color=color,
@@ -62,34 +85,37 @@ def draw_hash():
                            xytext=(25, 0), textcoords='offset points', ha='left', va='center')
 
     for i, (hash_function, color) in enumerate(hash_settings):
+        hatchstyle = "//" if hash_function.endswith("-f") else None
+        edgecolor = "white" if hash_function.endswith("-f") else None
         print(hash_function, i, latency_data_u64[i], throughput_data_u64[i])
-        axs[1, 0].bar(hash_function, latency_data_u64[i], color=color, zorder=3)
-        axs[1, 1].bar(hash_function, throughput_data_u64[i], color=color, zorder=3)
+        # axs[1, 0].bar(hash_function, latency_data_u64[i], color=color, edgecolor=edgecolor, hatch=hatchstyle, zorder=3)
+        axs[1, 0].bar(hash_function, throughput_data_u64[i], color=color, edgecolor=edgecolor, hatch=hatchstyle, zorder=3)
+        axs[1, 1].bar(hash_function, throughput_data_64k[i], color=color, edgecolor=edgecolor, hatch=hatchstyle, zorder=3)
 
     axs[0, 0].set_title("Latency (byte stream)")
     axs[0, 0].set_xlabel("Input size (bytes)")
     axs[0, 0].set_ylabel("Latency (ns)")
-    axs[0, 0].set_xscale("log")
-    axs[0, 0].set_yscale("log")
+    axs[0, 0].set_xscale("log", base=2)
+    axs[0, 0].set_yscale("log", base=10)
     axs[0, 0].set_xticks(sizes)
-    axs[0, 0].set_xticklabels(sizes)
+    axs[0, 0].set_xticklabels(sizes, rotation=90, ha="right")
 
     axs[0, 1].set_title("Throughput (byte stream)")
     axs[0, 1].set_xlabel("Input size (bytes)")
     axs[0, 1].set_ylabel("Throughput (GB/s)")
-    axs[0, 1].set_xscale("log")
-    axs[0, 1].set_yscale("log")
+    axs[0, 1].set_xscale("log", base=2)
+    axs[0, 1].set_yscale("log", base=10)
     axs[0, 1].set_xticks(sizes)
-    axs[0, 1].set_xticklabels(sizes)
+    axs[0, 1].set_xticklabels(sizes, rotation=90, ha="right")
 
-    axs[1, 0].set_title("Latency (u64 optimised)")
-    axs[1, 0].set_ylabel("Latency (ns)")
+    axs[1, 0].set_title("Throughput (u64)")
+    axs[1, 0].set_ylabel("Throughput (M Items/s)")
     axs[1, 0].set_xticks(range(len(hash_names)))
     axs[1, 0].set_xticklabels(hash_names, rotation=45, ha="right")
     axs[1, 0].grid(True, zorder=0, color="gainsboro")
 
-    axs[1, 1].set_title("Throughput (u64 optimised)")
-    axs[1, 1].set_ylabel("Throughput (M Items/s)")
+    axs[1, 1].set_title("Throughput (bytes, 64kB)")
+    axs[1, 1].set_ylabel("Throughput (GB/s)")
     axs[1, 1].set_xticks(range(len(hash_names)))
     axs[1, 1].set_xticklabels(hash_names, rotation=45, ha="right")
     axs[1, 1].grid(True, zorder=0, color="gainsboro")
@@ -99,11 +125,12 @@ def draw_hash():
 
 def draw_map():
     hash_settings = [
-        ("rapidhash_inline", "b"),
+        ("rapidhash", "b"),
         ("default", "k"),
         ("fxhash", "r"),
         ("gxhash", "m"),
         ("wyhash", "c"),
+        ("foldhash", "y"),
     ]
 
     hash_names = [hash_function.replace("_inline", "") for hash_function, _ in hash_settings]

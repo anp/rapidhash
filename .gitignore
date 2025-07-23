@@ -1,5 +1,9 @@
 /target
+/rapidhash-bench/target
+/rapidhash-c/target
 Cargo.lock
 .idea/
 .DS_Store
 .venv/
+__pycache__/
+docs/*.csv

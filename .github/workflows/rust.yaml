@@ -14,31 +14,45 @@ jobs:
     name: "Test (std)"
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Rust dependency cache
-      uses: Swatinem/rust-cache@v2
-    - name: Compile and run tests
-      run: cargo test --no-fail-fast --all-features
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Rust dependency cache
+        uses: Swatinem/rust-cache@v2
+      - name: Compile and run tests
+        run: cargo test --no-fail-fast
 
   test-no-std:
     name: "Test (no_std)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
-        run: cargo test --no-fail-fast --lib --no-default-features
+        run: cargo test -p rapidhash --no-fail-fast --lib --tests --no-default-features
 
   test-unsafe:
     name: "Test (unsafe)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
       - name: Rust dependency cache
         uses: Swatinem/rust-cache@v2
       - name: Compile and run tests
-        run: cargo test --no-fail-fast --lib --no-default-features --features unsafe
+        run: cargo test -p rapidhash --no-fail-fast --lib --tests --features=unsafe
+
+  test-all-features:
+    name: "Test (all features)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Rust dependency cache
+        uses: Swatinem/rust-cache@v2
+      - name: Compile and run tests
+        run: cargo test -p rapidhash --no-fail-fast --lib --tests --all-features
 
   test-msrv:
     name: "Test (MSRV)"
@@ -53,6 +67,28 @@ jobs:
         run: rustup update ${{ env.RUST_VERSION }} --no-self-update && rustup default ${{ env.RUST_VERSION }} && cargo -V && rustc -V
         shell: bash
       - name: Compile and run tests (std)
-        run: cargo test --no-fail-fast --all-features
+        run: cargo test -p rapidhash --no-fail-fast --all-features
       - name: Compile and run tests (no_std)
-        run: cargo test --no-fail-fast --lib --no-default-features
+        run: cargo test -p rapidhash --no-fail-fast --lib --tests --no-default-features
+
+  test-c:
+    name: "Test (C implementations)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Rust dependency cache
+        uses: Swatinem/rust-cache@v2
+      - name: Compile and run tests
+        run: cargo test -p rapidhash-c --no-fail-fast
+
+  test-docs:
+    name: "Test (docs)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Rust dependency cache
+        uses: Swatinem/rust-cache@v2
+      - name: Compile and run tests
+        run: RUSTDOCFLAGS="--cfg docsrs" cargo +nightly test -p rapidhash --all-features --doc --no-fail-fast
