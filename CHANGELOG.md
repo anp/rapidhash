@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.1 (20250723)
+
+- Minor documentation improvements.
+
 ## 2.0.0 (20250723)
 
 **Rapidhash algorithm changes** have pushed us towards a refactor of this crate. Compatibility with rapidhash V2.0, V2.1, V2.2, and V3 are now all supported under `rapidhash::v3` and `rapidhash::v2` modules. These expose `rapidhash_v3` and similar methods to avoid version confusion. Each version produces different hash outputs.
