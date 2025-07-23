@@ -74,7 +74,11 @@ Initial benchmarks on M1 Max (aarch64) for various input sizes.
 ![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash.svg)
 
 <details>
-<summary><strong>Comparison to foldhash</strong></summary>
+<summary>
+
+**Comparison to foldhash**
+
+</summary>
 
 - Rapidhash is generally faster with string and byte inputs.
 - Foldhash is generally faster with integer tuples by using a 128bit buffer for integer inputs.
@@ -163,7 +167,11 @@ Initial benchmarks on M1 Max (aarch64) for various input sizes.
 </details>
 
 <details>
-<summary><strong>Benchmark notes</strong></summary>
+<summary>
+
+**Benchmark notes**
+
+</summary>
 
 - Hash throughput/latency does not measure hash "quality", and many of the benchmarked functions fail SMHasher3 quality tests. Hash quality affects hashmap performance, as well as algorithms that benefit from high quality hash functions such as HyperLogLog and MinHash.
 - Most hash functions will be affected heavily by whether the compiler has inlined them. Rapidhash tries very hard to always be inlined by the compiler, but the larger a program or benchmark gets, the less likely it is to be inlined due to Rust's `BuildHasher::hash_one` method not being `#[inline(always)]`.

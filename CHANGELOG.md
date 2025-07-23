@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.2 (20250723)
+
+- Fix docs.rs crashing with a broken README link.
+
 ## 2.0.1 (20250723)
 
 - Minor documentation improvements.

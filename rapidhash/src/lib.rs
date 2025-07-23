@@ -1,4 +1,4 @@
-#![cfg_attr(docsrs, doc = include_str!("../../README.md"))]
+#![cfg_attr(docsrs, doc = include_str!("../README.md"))]
 #![cfg_attr(not(docsrs), doc = "# Rapidhash")]
 #![cfg_attr(not(feature = "std"), no_std)]
 
