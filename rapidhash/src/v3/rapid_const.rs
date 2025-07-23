@@ -37,7 +37,11 @@ pub const fn rapidhash_v3_seeded(data: &[u8], seed: u64) -> u64 {
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
 /// Can provide large performance uplifts for fixed-length inputs at compile time.
 ///
-/// Exposes `COMPACT` and `PROTECTED` consts to allow for different hashing modes.
+/// Compile time arguments:
+/// - `COMPACT`: Generates fewer instructions at compile time with less manual loop unrolling, but
+///     may be slower on some platforms. Disabled by default.
+/// - `PROTECTED`: Slightly stronger hash quality and DoS resistance by performing two extra XOR
+///     instructions on every mix step. Disabled by default.
 #[inline(always)]
 pub const fn rapidhash_v3_inline<const COMPACT: bool, const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
     seed = rapidhash_seed(seed);
@@ -53,7 +57,9 @@ pub const fn rapidhash_v3_inline<const COMPACT: bool, const PROTECTED: bool>(dat
 /// detriment. Compiles it to ~140 instructions without stack usage, both on x86-64 and aarch64.
 /// Faster for sizes up to 512 bytes, just 15%-20% slower for inputs above 1kb.
 ///
-/// Exposes `PROTECTED` const to allow for different hashing modes.
+/// Compile time arguments:
+/// - `PROTECTED`: Slightly stronger hash quality and DoS resistance by performing two extra XOR
+///     instructions on every mix step. Disabled by default.
 #[inline(always)]
 pub const fn rapidhash_v3_micro_inline<const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
     seed = rapidhash_seed(seed);
@@ -64,13 +70,15 @@ pub const fn rapidhash_v3_micro_inline<const PROTECTED: bool>(data: &[u8], mut s
 /// Rapidhash V3 Nano, a very compact version of the rapidhash algorithm.
 ///
 /// WARNING: This produces a different output from `rapidhash_v3`.
-/// 
+///
 /// Designed for Mobile and embedded applications, where keeping a small code size is a top priority.
 /// This should compile it to less than 100 instructions with minimal stack usage, both on x86-64
 /// and aarch64. The fastest for sizes up to 48 bytes, but may be considerably slower for larger
 /// inputs.
 ///
-/// Exposes `PROTECTED` const to allow for different hashing modes.
+/// Compile time arguments:
+/// - `PROTECTED`: Slightly stronger hash quality and DoS resistance by performing two extra XOR
+///     instructions on every mix step. Disabled by default.
 #[inline(always)]
 pub const fn rapidhash_v3_nano_inline<const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
     seed = rapidhash_seed(seed);

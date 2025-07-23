@@ -143,9 +143,9 @@ impl RapidhashVersion {
                 std::io::stdin().read_to_end(&mut buffer).expect("Could not read from stdin.");
 
                 if *protected {
-                    rapidhash::v1::rapidhash_v1_inline::<false, true>(&buffer, rapidhash::v1::RAPID_SEED)
+                    rapidhash::v1::rapidhash_v1_inline::<false, true, false>(&buffer, rapidhash::v1::RAPID_SEED)
                 } else {
-                    rapidhash::v1::rapidhash_v1_inline::<false, false>(&buffer, rapidhash::v1::RAPID_SEED)
+                    rapidhash::v1::rapidhash_v1_inline::<false, false, false>(&buffer, rapidhash::v1::RAPID_SEED)
                 }
             },
             RapidhashVersion::V2 { protected, version } => {

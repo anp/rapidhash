@@ -172,7 +172,7 @@ impl RapidHasher {
 
         self.size += bytes.len() as u64;
         self.seed ^= self.size;
-        let (a, b, seed) = rapidhash_core::<false, false>(self.a, self.b, self.seed, bytes);
+        let (a, b, seed) = rapidhash_core::<false, false, true>(self.a, self.b, self.seed, bytes);
         self.a = a;
         self.b = b;
         self.seed = seed;

@@ -41,10 +41,15 @@ pub const fn rapidhash_v2_2_seeded(data: &[u8], seed: u64) -> u64 {
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
 /// Can provide large performance uplifts for fixed-length inputs at compile time.
 ///
-/// `MINOR` is the minor version of the rapidhash algorithm:
-/// - 0: v2.0
-/// - 1: v2.1
-/// - 2: v2.2
+/// Compile time arguments:
+/// - `COMPACT`: Generates fewer instructions at compile time with less manual loop unrolling, but
+///     may be slower on some platforms. Disabled by default.
+/// - `PROTECTED`: Slightly stronger hash quality and DoS resistance by performing two extra XOR
+///     instructions on every mix step. Disabled by default.
+/// - `MINOR`: the minor version of the rapidhash algorithm:
+///     - 0: v2.0
+///     - 1: v2.1
+///     - 2: v2.2
 #[inline(always)]
 pub const fn rapidhash_v2_inline<const MINOR: u8, const COMPACT: bool, const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
     seed = rapidhash_seed(seed) ^ data.len() as u64;

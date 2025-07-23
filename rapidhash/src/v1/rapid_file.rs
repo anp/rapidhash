@@ -141,6 +141,6 @@ mod tests {
     use crate::util::macros::compare_rapidhash_file;
     use crate::v1::rapidhash_v1_inline;
     use super::*;
-    
-    compare_rapidhash_file!(compare_rapidhash_v1_file, rapidhash_v1_inline::<false, false>, rapidhash_v1_file_inline::<false>);
+
+    compare_rapidhash_file!(compare_rapidhash_v1_file, rapidhash_v1_inline::<false, false, false>, rapidhash_v1_file_inline::<false>);
 }

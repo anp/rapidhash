@@ -20,6 +20,6 @@ mod tests {
     use crate::util::macros::{compare_to_c, flip_bit_trial};
     use super::*;
 
-    flip_bit_trial!(flip_bit_trial_v1, rapidhash_v1_inline::<false, false>);
-    compare_to_c!(compare_to_c_v1, rapidhash_v1_inline::<false, false>, rapidhash_v1_inline::<true, false>, rapidhashcc_v1);
+    flip_bit_trial!(flip_bit_trial_v1, rapidhash_v1_inline::<false, false, false>);
+    compare_to_c!(compare_to_c_v1, rapidhash_v1_inline::<false, false, false>, rapidhash_v1_inline::<true, false, false>, rapidhashcc_v1);
 }
