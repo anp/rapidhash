@@ -108,7 +108,7 @@ pub fn bench(c: &mut Criterion) {
     bench_group::<std::hash::RandomState>(c, "hash/default");
     bench_group::<gxhash::GxBuildHasher>(c, "hash/gxhash");
     bench_group::<ahash::RandomState>(c, "hash/ahash");
-    bench_group::<t1ha::T1haBuildHasher>(c, "hash/ahash");
+    bench_group::<t1ha::T1haBuildHasher>(c, "hash/t1ha");
     bench_group::<wyhash::WyHasherBuilder>(c, "hash/wyhash");
     bench_group::<BuildHasherDefault<twox_hash::XxHash64>>(c, "hash/xxhash64");
     bench_group::<BuildHasherDefault<twox_hash::XxHash3_64>>(c, "hash/xxhash3_64");
