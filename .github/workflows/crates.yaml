@@ -15,7 +15,7 @@ jobs:
       - name: Check git tag and crate version match
         working-directory: rapidhash
         run: |
-          PKG_VERSION=cargo get package.version --pretty
+          PKG_VERSION=$(cargo get package.version --pretty)
           TAG_VERSION=${{ github.ref_name }}
           if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
               echo "Version mismatch: $PKG_VERSION != $TAG_VERSION"
