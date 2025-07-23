@@ -57,22 +57,6 @@
  # define RAPIDHASH_ALWAYS_INLINE inline
  #endif
 
- #ifdef __cplusplus
- # define RAPIDHASH_NOEXCEPT noexcept
- # define RAPIDHASH_CONSTEXPR constexpr
- # ifndef RAPIDHASH_INLINE
- #   define RAPIDHASH_INLINE RAPIDHASH_ALWAYS_INLINE
- # endif
- # define RAPIDHASH_INLINE_CONSTEXPR RAPIDHASH_ALWAYS_INLINE constexpr
- #else
- # define RAPIDHASH_NOEXCEPT
- # define RAPIDHASH_CONSTEXPR static const
- # ifndef RAPIDHASH_INLINE
- #   define RAPIDHASH_INLINE static RAPIDHASH_ALWAYS_INLINE
- # endif
- # define RAPIDHASH_INLINE_CONSTEXPR RAPIDHASH_INLINE
- #endif
-
  #if defined(_MSC_VER)
  # define RAPIDHASH_NO_INLINE __declspec(noinline)
  #elif defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER)
@@ -81,6 +65,24 @@
  # define RAPIDHASH_NO_INLINE __attribute__((noinline))
  #else
  # define RAPIDHASH_NO_INLINE
+ #endif
+
+ #ifdef __cplusplus
+ # define RAPIDHASH_NOEXCEPT noexcept
+ # define RAPIDHASH_CONSTEXPR constexpr
+ # ifndef RAPIDHASH_INLINE
+ #   define RAPIDHASH_INLINE RAPIDHASH_ALWAYS_INLINE
+ # endif
+ # define RAPIDHASH_INLINE_CONSTEXPR RAPIDHASH_ALWAYS_INLINE constexpr
+ # define RAPIDHASH_NO_INLINE_CONSTEXPR RAPIDHASH_NO_INLINE constexpr
+ #else
+ # define RAPIDHASH_NOEXCEPT
+ # define RAPIDHASH_CONSTEXPR static const
+ # ifndef RAPIDHASH_INLINE
+ #   define RAPIDHASH_INLINE static RAPIDHASH_ALWAYS_INLINE
+ # endif
+ # define RAPIDHASH_INLINE_CONSTEXPR RAPIDHASH_INLINE
+ # define RAPIDHASH_NO_INLINE_CONSTEXPR RAPIDHASH_NO_INLINE
  #endif
 
  /*
@@ -282,7 +284,7 @@ RAPIDHASH_INLINE_CONSTEXPR uint64_t rapid_preseed(const uint64_t seed) RAPIDHASH
  * Force no inlining to avoid the hot path on small inputs having clobbered registers that need restoring. Also makes
  * the hot path easier to inline.
  */
-RAPIDHASH_CONSTEXPR RAPIDHASH_NO_INLINE uint64_t rapidhash_internal_cold(const uint8_t *p, size_t len, uint64_t seed, const uint64_t* secret) RAPIDHASH_NOEXCEPT {
+RAPIDHASH_NO_INLINE_CONSTEXPR uint64_t rapidhash_internal_cold(const uint8_t *p, size_t len, uint64_t seed, const uint64_t* secret) RAPIDHASH_NOEXCEPT {
   size_t i = len;
   uint64_t see1 = seed, see2 = seed;
   uint64_t see3 = seed, see4 = seed;
