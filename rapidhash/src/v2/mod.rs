@@ -1,4 +1,4 @@
-//! The rapidhash V2.2 algorithm.
+//! Persistent hashing: rapidhash V2.2 algorithm.
 
 mod rapid_const;
 #[cfg(any(feature = "std", docsrs))]
@@ -16,7 +16,7 @@ mod tests {
 
     use crate::util::macros::{compare_to_c, flip_bit_trial};
     use super::*;
-    
+
     flip_bit_trial!(flip_bit_trial_v2_0, rapidhash_v2_inline::<0, false, false>);
     flip_bit_trial!(flip_bit_trial_v2_1, rapidhash_v2_inline::<1, false, false>);
     flip_bit_trial!(flip_bit_trial_v2_2, rapidhash_v2_inline::<2, false, false>);

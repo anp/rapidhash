@@ -1,4 +1,4 @@
-//! The rapidhash V1 algorithm.
+//! Persistent hashing: rapidhash V1 algorithm.
 
 mod rapid_const;
 #[cfg(any(feature = "std", docsrs))]

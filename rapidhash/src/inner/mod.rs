@@ -1,4 +1,4 @@
-//! The rapidhash-inspired rust structs, traits, and datastructures.
+//! In-memory hashing: RapidHasher with full configurability via compile-time arguments.
 //!
 //! This module contains the Hasher, BuildHasher, HashMap, HashSet, and RandomState
 //! implementations. It is recomended to use [rapidhash::fast] or [rapidhash::quality], but for the
@@ -9,8 +9,9 @@
 //! - `AVALANCHE`: Whether to use a final avalanche mix step, required to pass SMHasher3. This
 //!   option changes the hash output. Enabled on [rapidhash::quality], disabled on [rapidhash::fast].
 //! - `FNV`: Allow RapidHasher to use FNV when hashing integer types: hashing ints will be twice as
-//!   fast but the hash quality will be lower. This changes the hash output when hashing integers.
-//!   Disabled on [rapidhash::quality], enabled on [rapidhash::fast].
+//!   fast but the hash quality will be reduced. This also removes the minimal DoS resistance on
+//!   integer types. This changes the hash output when hashing integers. Disabled on
+//!   [rapidhash::quality], enabled on [rapidhash::fast].
 //! - `COMPACT`: Reduce the code size of the hasher by preventing manually unrolled loops. This does
 //!   _not_ affect the hash output. Disabled on both [rapidhash::quality] and [rapidhash::fast].
 //! - `PROTECTED`: When performing the folded multiply mix step, XOR the a and b back into their

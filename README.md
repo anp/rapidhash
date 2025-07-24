@@ -8,7 +8,6 @@ A rust implementation of the [rapidhash](https://github.com/Nicoshev/rapidhash) 
 - **Memory safe**, when the `unsafe` feature is disabled (default). This implementation has also been fuzz-tested with `cargo fuzz`.
 - **No dependencies and no-std compatible** when disabling default features.
 - **Official successor to wyhash** with improved speed, quality, and compatibility.
-- **Inline variants** that use `#[inline(always)]` on `RapidInlineHash` and `RapidInlineHashBuilder` to force compiler optimisations on specific input types (can double the hash performance depending on the hashed type).
 - **Run-time and compile-time hashing** as the hash implementation is fully `const`.
 - **Idiomatic** `std::hash::Hasher` compatible hasher for `HashMap` and `HashSet` usage.
 - **Non-cryptographic** hash function that's "minimally DoS resistant" in the same manner as foldhash.
@@ -26,7 +25,7 @@ assert_eq!(rapidhash_v3(b"hello world"), 3397907815814400320);
 ```
 
 ### In-Memory Hashing
-Following rust's `std::hash` traits, the underlying hash function may change between minor versions, and is only suitable for in-memory hashing. These types are optimised for speed and minimal DoS resistance.
+Following rust's `std::hash` traits, the underlying hash function may change between minor versions, and is only suitable for in-memory hashing. These types are optimised for speed and minimal DoS resistance, available in the `rapidhash::fast` and `rapidhash::quality` flavours.
 
 - `RapidHasher`: A `std::hash::Hasher` compatible hasher that uses the rapidhash algorithm.
 - `RapidHashBuilder`: A `std::hash::BuildHasher` for initialising the hasher with the default seed and secrets.
@@ -36,9 +35,18 @@ Following rust's `std::hash` traits, the underlying hash function may change bet
 ```rust
 use rapidhash::fast::RapidHashMap;
 
-// std HashMap with the RapidHashBuilder hasher.
+// A HashMap using RapidHasher for fast in-memory hashing.
 let mut map = RapidHashMap::default();
 map.insert("key", "value");
+```
+
+```rust
+use std::hash::BuildHasher;
+use rapidhash::quality::RapidBuildHasher;
+
+// Using the RapidHasher directly for in-memory hashing.
+let hasher = RapidBuildHasher::default();
+assert_eq!(hasher.hash_one(b"hello world"), 16959177219018390528);
 ```
 
 ### CLI
@@ -74,11 +82,7 @@ Initial benchmarks on M1 Max (aarch64) for various input sizes.
 ![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash.svg)
 
 <details>
-<summary>
-
-**Comparison to foldhash**
-
-</summary>
+<summary><strong>Comparison to foldhash</strong></summary>
 
 - Rapidhash is generally faster with string and byte inputs.
 - Foldhash is generally faster with integer tuples by using a 128bit buffer for integer inputs.
@@ -167,11 +171,7 @@ Initial benchmarks on M1 Max (aarch64) for various input sizes.
 </details>
 
 <details>
-<summary>
-
-**Benchmark notes**
-
-</summary>
+<summary><strong>Benchmark notes</summary>
 
 - Hash throughput/latency does not measure hash "quality", and many of the benchmarked functions fail SMHasher3 quality tests. Hash quality affects hashmap performance, as well as algorithms that benefit from high quality hash functions such as HyperLogLog and MinHash.
 - Most hash functions will be affected heavily by whether the compiler has inlined them. Rapidhash tries very hard to always be inlined by the compiler, but the larger a program or benchmark gets, the less likely it is to be inlined due to Rust's `BuildHasher::hash_one` method not being `#[inline(always)]`.
@@ -181,8 +181,6 @@ Initial benchmarks on M1 Max (aarch64) for various input sizes.
 </details>
 
 ## Rapidhash Versions
-
-Rapidhash has multiple versions of the algorithm.
 
 ### Persistent Hashing
 Fixed versioning with C++ compatibility is presented in `rapidhash::v1`, `rapidhash::v2`, and `rapidhash::v3` modules.
@@ -197,7 +195,7 @@ Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in 
 - Use `rapidhash::inner` to configure advanced parameters to configure the hash function specifically to your use case. This allows tweaking the following compile time parameters, which all change the hash output:
     - `AVALANCHE`: Enables the final avalanche mixing step to improve hash quality. Enabled on quality, disabled on fast.
     - `FNV`: Hash integer types using FNV instead of the rapidhash algorithm. Reduces DoS resistance on integer types. Disabled on quality, enabled on fast.
-    - `COMPACT`: Generates fewer instructions at compile time with less manual loop unrolling, but may be slower on some platforms. Disabled by default.
+    - `COMPACT`: Generates fewer instructions at compile time by reducing the manual loop unrolling. This might improve the probability of rapidhash being inlined, but may be slower on some platforms. Disabled by default.
     - `PROTECTED`: Slightly stronger hash quality and DoS resistance by performing two extra XOR instructions on every mix step. Disabled by default.
 
 ## Versioning
