@@ -171,7 +171,7 @@ Initial benchmarks on M1 Max (aarch64) for various input sizes.
 </details>
 
 <details>
-<summary><strong>Benchmark notes</summary>
+<summary><strong>Benchmark notes</strong></summary>
 
 - Hash throughput/latency does not measure hash "quality", and many of the benchmarked functions fail SMHasher3 quality tests. Hash quality affects hashmap performance, as well as algorithms that benefit from high quality hash functions such as HyperLogLog and MinHash.
 - Most hash functions will be affected heavily by whether the compiler has inlined them. Rapidhash tries very hard to always be inlined by the compiler, but the larger a program or benchmark gets, the less likely it is to be inlined due to Rust's `BuildHasher::hash_one` method not being `#[inline(always)]`.
