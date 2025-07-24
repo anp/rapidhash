@@ -1,5 +1,5 @@
 use core::hash::{BuildHasher, Hash, Hasher};
-use crate::util::mix::rapid_mum;
+use crate::util::mix::{rapid_mix, rapid_mum};
 use super::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, RAPID_SECRET, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
@@ -26,10 +26,10 @@ use super::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, RAPID
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct RapidHasher<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool = false, const PROTECTED: bool = false> {
-    a: u64,
-    b: u64,
     seed: u64,
     secrets: &'static [u64; 7],  // FUTURE: non-static secrets?
+    sponge: u128,
+    sponge_len: u8,
 }
 
 /// A [std::hash::BuildHasher] trait compatible hasher that uses the [RapidHasher] algorithm.
@@ -127,10 +127,10 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     #[must_use]
     pub(super) const fn new_precomputed_seed(seed: u64, secrets: &'static [u64; 7]) -> Self {
         Self {
-            a: 0,
-            b: 0,
             seed,
             secrets,
+            sponge: 0,
+            sponge_len: 0,
         }
     }
 
@@ -156,43 +156,70 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
         );
 
         let mut this = *self;
-        let (a, b, seed) = rapidhash_core::<COMPACT, PROTECTED>(self.a, self.b, self.seed, self.secrets, bytes);
-        this.a = a;
-        this.b = b;
-        this.seed = seed;
+        let (a, b, seed) = rapidhash_core::<COMPACT, PROTECTED>(0, 0, self.seed, self.secrets, bytes);
+
+        this.seed = if AVALANCHE {
+            rapidhash_finish::<PROTECTED>(a, b, seed, self.secrets)
+        } else {
+            a ^ b
+        };
+
         this
     }
 
     /// This function needs to be as small as possible to have as high a chance of being inlined as
     /// possible. So we use good-old FNV where the entropy won't be lost, and fold for 64bit inputs.
+    ///
+    /// N = number of _bits_ in the integer type.
     #[inline(always)]
     #[must_use]
     const fn write_num<const N: u8>(&self, bytes: u64) -> Self {
         let mut this = *self;
 
         if FNV {
-            // FNV for small inputs, with extra care for bad cases on 64bit inputs.
-            // With 64 bit numbers we "fold" the high bits into the seed and rotate by 31 to ensure
-            // the entropy is in the low bits
-
-            const FNV_SEED: u64 = 0x51_7c_c1_b7_27_22_0a_95;
-            if N <= 32 {
-                this.seed ^= bytes;
-                this.seed = this.seed.wrapping_mul(FNV_SEED);
-                this.seed = this.seed.rotate_left(31);
+            if this.sponge_len + N > 128 {
+                // sponge is full, so we need to flush it
+                let a = this.sponge as u64;
+                let b = (this.sponge >> 64) as u64;
+                this.seed = rapid_mix::<PROTECTED>(a ^ this.secrets[1], b ^ this.seed);
+                this.sponge = bytes as u128;
+                this.sponge_len = N;
             } else {
-                // TODO: revisit this
-                this.a ^= (bytes ^ this.seed).wrapping_mul(FNV_SEED).rotate_left(31);
-                this.seed ^= (bytes >> 32).wrapping_mul(FNV_SEED).rotate_left(31);
+                // OR the bytes into the sponge
+                this.sponge |= (bytes as u128) << this.sponge_len;
+                this.sponge_len += N;
             }
         } else {
+            // TODO: downgrade to u64 mix if N <= 32?
+
             // slower but high-quality rapidhash
-            this.a ^= bytes ^ RAPID_SECRET[1];
-            this.b ^= bytes ^ this.seed;
-            let (a, b) = rapid_mum::<PROTECTED>(this.a, this.b);
-            this.a = a;
-            this.b = b;
+            this.seed = rapid_mix::<PROTECTED>(bytes ^ this.secrets[1], bytes ^ this.seed);
         }
+
+        // TODO: rename FNV to sponge
+        // if FNV {
+        //     // FNV for small inputs, with extra care for bad cases on 64bit inputs.
+        //     // With 64 bit numbers we "fold" the high bits into the seed and rotate by 31 to ensure
+        //     // the entropy is in the low bits
+        //
+        //     const FNV_SEED: u64 = 0x51_7c_c1_b7_27_22_0a_95;
+        //     if N <= 32 {
+        //         this.seed ^= bytes;
+        //         this.seed = this.seed.wrapping_mul(FNV_SEED);
+        //         this.seed = this.seed.rotate_left(31);
+        //     } else {
+        //         // TODO: revisit this
+        //         this.a ^= (bytes ^ this.seed).wrapping_mul(FNV_SEED).rotate_left(31);
+        //         this.seed ^= (bytes >> 32).wrapping_mul(FNV_SEED).rotate_left(31);
+        //     }
+        // } else {
+        //     // slower but high-quality rapidhash
+        //     this.a ^= bytes ^ RAPID_SECRET[1];
+        //     this.b ^= bytes ^ this.seed;
+        //     let (a, b) = rapid_mum::<PROTECTED>(this.a, this.b);
+        //     this.a = a;
+        //     this.b = b;
+        // }
 
         this
     }
@@ -202,11 +229,9 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     #[must_use]
     const fn write_128(&self, bytes: u128) -> Self {
         let mut this = *self;
-        this.a ^= bytes as u64 ^ RAPID_SECRET[1];
-        this.b ^= (bytes >> 64) as u64 ^ self.seed;
-        let (a, b) = rapid_mum::<PROTECTED>(this.a, this.b);
-        this.a = a;
-        this.b = b;
+        let a = bytes as u64;
+        let b = (bytes >> 64) as u64;
+        this.seed = rapid_mix::<PROTECTED>(a ^ this.secrets[1], b ^ this.seed);
         this
     }
 
@@ -214,11 +239,19 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     #[inline(always)]
     #[must_use]
     pub const fn finish_const(&self) -> u64 {
-        if AVALANCHE {
-            rapidhash_finish::<PROTECTED>(self.a, self.b, self.seed, self.secrets)
-        } else {
-            self.a ^ self.b ^ self.seed
+        let mut seed = self.seed;
+
+        if FNV && self.sponge_len > 0 {
+            let a = self.sponge as u64;
+            let b = (self.sponge >> 64) as u64;
+            seed = rapid_mix::<PROTECTED>(a ^ seed, b ^ self.secrets[1]);
         }
+
+        if AVALANCHE {
+            seed = rapid_mix::<PROTECTED>(seed, self.secrets[0]);
+        }
+
+        seed
     }
 }
 

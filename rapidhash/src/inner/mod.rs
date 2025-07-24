@@ -52,8 +52,8 @@ mod tests {
     use rand::Rng;
     use super::{rapidhash_rs, rapidhash_rs_seeded, RAPID_SEED};
 
-    type RapidHasher = super::RapidHasher<true, false>;
-    type RapidBuildHasher = super::RapidBuildHasher<true, false>;
+    type RapidHasher = super::RapidHasher<false, false>;
+    type RapidBuildHasher = super::RapidBuildHasher<false, false>;
 
     #[derive(Hash)]
     struct Object {
