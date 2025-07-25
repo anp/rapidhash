@@ -46,7 +46,7 @@ use rapidhash::quality::RapidBuildHasher;
 
 // Using the RapidHasher directly for in-memory hashing.
 let hasher = RapidBuildHasher::default();
-assert_eq!(hasher.hash_one(b"hello world"), 16959177219018390528);
+assert_eq!(hasher.hash_one(b"hello world"), 1790036888308448300);
 ```
 
 ### CLI
