@@ -46,8 +46,7 @@ pub(crate) const fn rapidhash_rs_seeded(data: &[u8], seed: u64) -> u64 {
 pub(crate) const fn rapidhash_rs_inline<const COMPACT: bool, const PROTECTED: bool>(data: &[u8], mut seed: u64) -> u64 {
     seed = rapidhash_seed(seed);
     let secrets = &RAPID_SECRET;
-    let (a, b, seed) = rapidhash_core::<COMPACT, PROTECTED>(0, 0, seed, secrets, data);
-    rapidhash_finish::<PROTECTED>(a, b, seed, secrets)
+    rapidhash_core::<true, COMPACT, PROTECTED>(seed, secrets, data)
 }
 
 #[inline(always)]
@@ -58,9 +57,11 @@ pub(super) const fn rapidhash_seed(seed: u64) -> u64 {
 
 #[inline(always)]
 #[must_use]
-pub(super) const fn rapidhash_core<const COMPACT: bool, const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> (u64, u64, u64) {
+pub(super) const fn rapidhash_core<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> u64 {
     // TODO: benchmark without the a,b XOR -- eg. a oneshot
     if data.len() <= 16 {
+        let mut a = 0;
+        let mut b = 0;
         if data.len() >= 4 {
             if data.len() >= 8 {
                 a ^= read_u64(data, 0);
@@ -73,24 +74,29 @@ pub(super) const fn rapidhash_core<const COMPACT: bool, const PROTECTED: bool>(m
             a ^= ((data[0] as u64) << 45) | data[data.len() - 1] as u64;
             b ^= data[data.len() >> 1] as u64;
         }
-    } else if data.len() <= 288 {
-        // len is 16..=288
-        (a, b, seed) = rapidhash_core_16_288::<COMPACT, PROTECTED>(a, b, seed, secrets, data);
+
+        seed = seed.wrapping_add(data.len() as u64);
+        rapidhash_finish::<AVALANCHE, PROTECTED>(a, b , seed, secrets)
     } else {
-        // len is >288
-        return rapidhash_core_cold::<COMPACT, PROTECTED>(a, b, seed, secrets, data);
+        if data.len() <= 288 {
+            // This can cause other code to not be inlined, and slow everything down. So at the cost of
+            // marginally slower (-10%) 16..288 hashing,
+            // NOT COMPACT: len is 16..=288
+            rapidhash_core_16_288::<AVALANCHE, COMPACT, PROTECTED>(seed, secrets, data)
+        } else {
+            // len is >288, on a cold path to avoid inlining as this doesn't impact large strings, but
+            // can otherwise prevent
+            rapidhash_core_cold::<AVALANCHE, COMPACT, PROTECTED>(seed, secrets, data)
+        }
     }
-
-    seed = seed.wrapping_add(data.len() as u64);
-    a ^= RAPID_SECRET[1];
-    b ^= seed;
-
-    (a, b) = rapid_mum::<PROTECTED>(a, b);
-    (a, b, seed)
 }
 
+#[cold]
 #[must_use]
-const fn rapidhash_core_16_288<const COMPACT: bool, const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> (u64, u64, u64) {
+#[inline(never)]
+const fn rapidhash_core_16_288<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> u64 {
+    let mut a = 0;
+    let mut b = 0;
     let mut slice = data;
 
     if slice.len() > 48 {
@@ -138,7 +144,8 @@ const fn rapidhash_core_16_288<const COMPACT: bool, const PROTECTED: bool>(mut a
     a ^= read_u64(data, data.len() - 16);
     b ^= read_u64(data, data.len() - 8);
 
-    (a, b, seed)
+    seed = seed.wrapping_add(data.len() as u64);
+    rapidhash_finish::<AVALANCHE, PROTECTED>(a, b , seed, secrets)
 }
 
 /// The long path, intentionally kept cold because at this length of data the function call is
@@ -147,7 +154,9 @@ const fn rapidhash_core_16_288<const COMPACT: bool, const PROTECTED: bool>(mut a
 #[cold]
 #[inline(never)]
 #[must_use]
-const fn rapidhash_core_cold<const COMPACT: bool, const PROTECTED: bool>(mut a: u64, mut b: u64, mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> (u64, u64, u64) {
+const fn rapidhash_core_cold<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> u64 {
+    let mut a = 0;
+    let mut b = 0;
     let mut slice = data;
 
     // most CPUs appear to benefit from this unrolled loop
@@ -249,18 +258,22 @@ const fn rapidhash_core_cold<const COMPACT: bool, const PROTECTED: bool>(mut a: 
     b ^= read_u64(data, data.len() - 8);
 
     seed = seed.wrapping_add(data.len() as u64);
-
-    a ^= secrets[1];
-    b ^= seed;
-
-    (a, b) = rapid_mum::<PROTECTED>(a, b);
-    (a, b, seed)
+    rapidhash_finish::<AVALANCHE, PROTECTED>(a, b , seed, secrets)
 }
 
 #[inline(always)]
 #[must_use]
-pub(super) const fn rapidhash_finish<const PROTECTED: bool>(a: u64, b: u64, seed: u64, secrets: &[u64; 7]) -> u64 {
-    // we keep RAPID_SECRET[7] constant as the XOR 0xaa can be done in a single instruction on some
-    // platforms, whereas it would require an additional load for a random secret.
-    rapid_mix::<PROTECTED>(a ^ RAPID_CONST ^ seed, b ^ secrets[1])
+pub(super) const fn rapidhash_finish<const AVALANCHE: bool, const PROTECTED: bool>(mut a: u64, mut b: u64, seed: u64, secrets: &[u64; 7]) -> u64 {
+    a ^= secrets[1];
+    b ^= seed;
+
+    (a, b) = rapid_mum::<PROTECTED>(a, b);
+
+    if AVALANCHE {
+        // we keep RAPID_CONST constant as the XOR 0xaa can be done in a single instruction on some
+        // platforms, whereas it would require an additional load for a random secret.
+        rapid_mix::<PROTECTED>(a ^ RAPID_CONST ^ seed, b ^ secrets[1])
+    } else {
+        a ^ b
+    }
 }

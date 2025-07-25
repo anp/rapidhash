@@ -69,10 +69,10 @@ def table():
 
     bench_order = ["hashonly", "lookupmiss", "lookuphit", "setbuild"]
     hash_order = [
-        "rapidhash-f",
-#         "rapidhash-q",
-        "foldhash-f",
-#         "foldhash-q",
+#         "rapidhash-f",
+        "rapidhash-q",
+#         "foldhash-f",
+        "foldhash-q",
 #         "gxhash",
 #         "fxhash",
 #         "ahash",

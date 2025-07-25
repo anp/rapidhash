@@ -1,6 +1,6 @@
 use core::hash::{BuildHasher, Hash, Hasher};
-use crate::util::mix::{rapid_mix, rapid_mum};
-use super::rapid_const::{rapidhash_core, rapidhash_finish, rapidhash_seed, RAPID_SECRET, RAPID_SEED};
+use crate::util::mix::rapid_mix;
+use super::rapid_const::{rapidhash_core, rapidhash_seed, RAPID_SECRET, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
 /// algorithm, and uses `#[inline(always)]` for all methods.
@@ -156,13 +156,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
         );
 
         let mut this = *self;
-        let (a, b, seed) = rapidhash_core::<COMPACT, PROTECTED>(0, 0, self.seed, self.secrets, bytes);
-
-        this.seed = if AVALANCHE {
-            rapidhash_finish::<PROTECTED>(a, b, seed, self.secrets)
-        } else {
-            a ^ b
-        };
+        this.seed = rapidhash_core::<AVALANCHE, COMPACT, PROTECTED>(self.seed, self.secrets, bytes);
 
         this
     }

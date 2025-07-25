@@ -7,8 +7,8 @@
 //! - `PROTECTED` is disabled.
 
 const AVALANCHE: bool = true;
-const FNV: bool = false;
-const COMPACT: bool = false;
+const FNV: bool = true;
+const COMPACT: bool = true;
 const PROTECTED: bool = false;
 
 use crate::inner;
