@@ -25,7 +25,7 @@ use super::rapid_const::{rapidhash_core, rapidhash_seed, RAPID_SECRET, RAPID_SEE
 /// ```
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct RapidHasher<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool = false, const PROTECTED: bool = false> {
+pub struct RapidHasher<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool = false, const PROTECTED: bool = false> {
     seed: u64,
     secrets: &'static [u64; 7],  // FUTURE: non-static secrets?
     sponge: u128,
@@ -50,12 +50,12 @@ pub struct RapidHasher<const AVALANCHE: bool, const FNV: bool, const COMPACT: bo
 /// map.insert(42, "the answer");
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq)]
-pub struct RapidBuildHasher<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool = false, const PROTECTED: bool = false> {
+pub struct RapidBuildHasher<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool = false, const PROTECTED: bool = false> {
     seed: u64,
     secrets: &'static [u64; 7],
 }
 
-impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTED: bool> RapidBuildHasher<AVALANCHE, FNV, COMPACT, PROTECTED> {
+impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> RapidBuildHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     /// New rapid inline build hasher, and pre-compute the seed.
     #[inline]
     pub const fn new(mut seed: u64) -> Self {
@@ -65,8 +65,8 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
 }
 
 // Explicitly implement to inline always the hasher.
-impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTED: bool> BuildHasher for RapidBuildHasher<AVALANCHE, FNV, COMPACT, PROTECTED> {
-    type Hasher = RapidHasher<AVALANCHE, FNV, COMPACT, PROTECTED>;
+impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> BuildHasher for RapidBuildHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
+    type Hasher = RapidHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED>;
 
     #[inline(always)]
     fn build_hasher(&self) -> Self::Hasher {
@@ -100,14 +100,14 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     }
 }
 
-impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTED: bool> Default for RapidBuildHasher<AVALANCHE, FNV, COMPACT, PROTECTED> {
+impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Default for RapidBuildHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     #[inline]
     fn default() -> Self {
-        Self::new(RapidHasher::<AVALANCHE, FNV, COMPACT, PROTECTED>::DEFAULT_SEED)
+        Self::new(RapidHasher::<AVALANCHE, SPONGE, COMPACT, PROTECTED>::DEFAULT_SEED)
     }
 }
 
-impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTED: bool> RapidHasher<AVALANCHE, FNV, COMPACT, PROTECTED> {
+impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> RapidHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     /// Default `RapidHasher` seed.
     pub const DEFAULT_SEED: u64 = RAPID_SEED;
 
@@ -156,13 +156,12 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
         );
 
         let mut this = *self;
-        this.seed = rapidhash_core::<AVALANCHE, COMPACT, PROTECTED>(self.seed, self.secrets, bytes);
-
+        this.seed = rapidhash_core::<AVALANCHE, COMPACT, PROTECTED>(this.seed, this.secrets, bytes);
         this
     }
 
     /// This function needs to be as small as possible to have as high a chance of being inlined as
-    /// possible. So we use good-old FNV where the entropy won't be lost, and fold for 64bit inputs.
+    /// possible. So we use good-old SPONGE where the entropy won't be lost, and fold for 64bit inputs.
     ///
     /// N = number of _bits_ in the integer type.
     #[inline(always)]
@@ -170,7 +169,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     const fn write_num<const N: u8>(&self, bytes: u64) -> Self {
         let mut this = *self;
 
-        if FNV {
+        if SPONGE {
             if this.sponge_len + N > 128 {
                 // sponge is full, so we need to flush it
                 let a = this.sponge as u64;
@@ -184,36 +183,9 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
                 this.sponge_len += N;
             }
         } else {
-            // TODO: downgrade to u64 mix if N <= 32?
-
             // slower but high-quality rapidhash
             this.seed = rapid_mix::<PROTECTED>(bytes ^ this.secrets[1], bytes ^ this.seed);
         }
-
-        // TODO: rename FNV to sponge
-        // if FNV {
-        //     // FNV for small inputs, with extra care for bad cases on 64bit inputs.
-        //     // With 64 bit numbers we "fold" the high bits into the seed and rotate by 31 to ensure
-        //     // the entropy is in the low bits
-        //
-        //     const FNV_SEED: u64 = 0x51_7c_c1_b7_27_22_0a_95;
-        //     if N <= 32 {
-        //         this.seed ^= bytes;
-        //         this.seed = this.seed.wrapping_mul(FNV_SEED);
-        //         this.seed = this.seed.rotate_left(31);
-        //     } else {
-        //         // TODO: revisit this
-        //         this.a ^= (bytes ^ this.seed).wrapping_mul(FNV_SEED).rotate_left(31);
-        //         this.seed ^= (bytes >> 32).wrapping_mul(FNV_SEED).rotate_left(31);
-        //     }
-        // } else {
-        //     // slower but high-quality rapidhash
-        //     this.a ^= bytes ^ RAPID_SECRET[1];
-        //     this.b ^= bytes ^ this.seed;
-        //     let (a, b) = rapid_mum::<PROTECTED>(this.a, this.b);
-        //     this.a = a;
-        //     this.b = b;
-        // }
 
         this
     }
@@ -226,6 +198,12 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
         let a = bytes as u64;
         let b = (bytes >> 64) as u64;
         this.seed = rapid_mix::<PROTECTED>(a ^ this.secrets[1], b ^ this.seed);
+
+        if SPONGE && AVALANCHE {
+            // if the sponge is being used, u128's won't otherwise be avalanched
+            this.seed = rapid_mix::<PROTECTED>(this.seed, this.secrets[0]);
+        }
+
         this
     }
 
@@ -235,13 +213,20 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     pub const fn finish_const(&self) -> u64 {
         let mut seed = self.seed;
 
-        if FNV && self.sponge_len > 0 {
+        if SPONGE && self.sponge_len > 0 {
             let a = self.sponge as u64;
             let b = (self.sponge >> 64) as u64;
             seed = rapid_mix::<PROTECTED>(a ^ seed, b ^ self.secrets[1]);
+
+            if AVALANCHE {
+                // any integer that's added to the sponge will cause the sponge_len to never be 0,
+                // so avalanching inside this if is sufficient to avalanche all sponged inputs.
+                seed = rapid_mix::<PROTECTED>(seed, self.secrets[0]);
+            }
         }
 
-        if AVALANCHE {
+        if !SPONGE && AVALANCHE {
+            // if not using a sponge, we only avalanche integers at the very end
             seed = rapid_mix::<PROTECTED>(seed, self.secrets[0]);
         }
 
@@ -249,7 +234,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
     }
 }
 
-impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTED: bool> Default for RapidHasher<AVALANCHE, FNV, COMPACT, PROTECTED> {
+impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Default for RapidHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     /// Create a new [RapidHasher] with the default seed.
     ///
     /// See [crate::RapidRandomState] for a [std::hash::BuildHasher] that initialises with a random
@@ -263,7 +248,7 @@ impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTE
 /// This implementation implements methods for all integer types as the compiler will (hopefully...)
 /// inline and heavily optimize the rapidhash_core for each. Where the bytes length is known the
 /// compiler can make significant optimisations and saves us writing them out by hand.
-impl<const AVALANCHE: bool, const FNV: bool, const COMPACT: bool, const PROTECTED: bool> Hasher for RapidHasher<AVALANCHE, FNV, COMPACT, PROTECTED> {
+impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Hasher for RapidHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     #[inline(always)]
     fn finish(&self) -> u64 {
         self.finish_const()

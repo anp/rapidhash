@@ -196,7 +196,7 @@ Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in 
 - Use `rapidhash::quality` where statistical hash quality is the priority, such as HyperLogLog or MinHash algorithms.
 - Use `rapidhash::inner` to configure advanced parameters to configure the hash function specifically to your use case. This allows tweaking the following compile time parameters, which all change the hash output:
     - `AVALANCHE`: Enables the final avalanche mixing step to improve hash quality. Enabled on quality, disabled on fast.
-    - `FNV`: Hash integer types using FNV instead of the rapidhash algorithm. Reduces DoS resistance on integer types. Disabled on quality, enabled on fast.
+    - `SPONGE`: Hash integer types by collecting them into a 128-bit buffer and mixing them together, rather than hashing each integer individually. If this is disabled, it will perform a folded multiply for each integer. Enabled by default.
     - `COMPACT`: Generates fewer instructions at compile time with less manual loop unrolling, but may be slower on some platforms. Disabled by default.
     - `PROTECTED`: Slightly stronger hash quality and DoS resistance by performing two extra XOR instructions on every mix step. Disabled by default.
 

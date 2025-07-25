@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.0 (20250725)
+
+- **Breaking:** Replaced `FNV` with a `SPONGE` configuration with `RapidHasher` to improve integer and tuple hashing performance.
+- Perf: `RapidHasher` significantly improved performance hashing integers, tuples, and integer types.
+
 ## 2.0.2 (20250723)
 
 - Fix docs.rs crashing with a broken README link.

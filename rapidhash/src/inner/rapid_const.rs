@@ -104,33 +104,14 @@ const fn rapidhash_core_16_288<const AVALANCHE: bool, const COMPACT: bool, const
         let mut see1 = seed;
         let mut see2 = seed;
 
-        if !COMPACT {
-            while slice.len() >= 96 {
-                seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ secrets[0], read_u64(slice, 8) ^ seed);
-                see1 = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ secrets[1], read_u64(slice, 24) ^ see1);
-                see2 = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ secrets[2], read_u64(slice, 40) ^ see2);
-                seed = rapid_mix::<PROTECTED>(read_u64(slice, 48) ^ secrets[0], read_u64(slice, 56) ^ seed);
-                see1 = rapid_mix::<PROTECTED>(read_u64(slice, 64) ^ secrets[1], read_u64(slice, 72) ^ see1);
-                see2 = rapid_mix::<PROTECTED>(read_u64(slice, 80) ^ secrets[2], read_u64(slice, 88) ^ see2);
-                let (_, split) = slice.split_at(96);
-                slice = split;
-            }
-            if slice.len() >= 48 {
-                seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ secrets[0], read_u64(slice, 8) ^ seed);
-                see1 = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ secrets[1], read_u64(slice, 24) ^ see1);
-                see2 = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ secrets[2], read_u64(slice, 40) ^ see2);
-                let (_, split) = slice.split_at(48);
-                slice = split;
-            }
-        } else {
-            while slice.len() >= 48 {
-                seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ secrets[0], read_u64(slice, 8) ^ seed);
-                see1 = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ secrets[1], read_u64(slice, 24) ^ see1);
-                see2 = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ secrets[2], read_u64(slice, 40) ^ see2);
-                let (_, split) = slice.split_at(48);
-                slice = split;
-            }
+        while slice.len() >= 48 {
+            seed = rapid_mix::<PROTECTED>(read_u64(slice, 0) ^ secrets[0], read_u64(slice, 8) ^ seed);
+            see1 = rapid_mix::<PROTECTED>(read_u64(slice, 16) ^ secrets[1], read_u64(slice, 24) ^ see1);
+            see2 = rapid_mix::<PROTECTED>(read_u64(slice, 32) ^ secrets[2], read_u64(slice, 40) ^ see2);
+            let (_, split) = slice.split_at(48);
+            slice = split;
         }
+
         seed ^= see1 ^ see2;
     }
 
@@ -263,7 +244,7 @@ const fn rapidhash_core_cold<const AVALANCHE: bool, const COMPACT: bool, const P
 
 #[inline(always)]
 #[must_use]
-pub(super) const fn rapidhash_finish<const AVALANCHE: bool, const PROTECTED: bool>(mut a: u64, mut b: u64, seed: u64, secrets: &[u64; 7]) -> u64 {
+const fn rapidhash_finish<const AVALANCHE: bool, const PROTECTED: bool>(mut a: u64, mut b: u64, seed: u64, secrets: &[u64; 7]) -> u64 {
     a ^= secrets[1];
     b ^= seed;
 

@@ -444,7 +444,7 @@ RAPIDHASH_INLINE_CONSTEXPR uint64_t rapidhash_internal(const void *key, size_t l
   #ifdef RAPIDHASH_AVALANCHE
     return rapid_mix(a ^ secret[7] ^ seed, b ^ secret[1]);
   #else
-    return a ^ b ^ seed;
+    return a ^ b;
   #endif
 }
 
