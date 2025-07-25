@@ -1,4 +1,6 @@
-//! RapidHasher with a focus on hashing and data structure speed.
+//! In-memory hashing: RapidHasher with a focus on speed.
+//!
+//! Designed to maximise hashmap fetch and insert performance on most datasets.
 //!
 //! This is a specific instantiation of the [rapidhash::inner] module with the following settings:
 //! - `AVALANCHE` is disabled.

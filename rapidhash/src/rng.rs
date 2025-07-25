@@ -1,4 +1,4 @@
-//! Fast random number generator using rapidhash mixing.
+//! Fast random number generation using rapidhash mixing.
 
 #[cfg(feature = "rng")]
 use rand_core::{RngCore, SeedableRng, impls};

@@ -13,9 +13,9 @@ use crate::inner::RapidHasher;
 /// use std::collections::HashMap;
 /// use std::hash::Hasher;
 ///
-/// use rapidhash::inner::RandomState;
+/// use rapidhash::quality::RandomState;
 ///
-/// let mut map = HashMap::with_hasher(RandomState::<false, true, false, false>::default());
+/// let mut map = HashMap::with_hasher(RandomState::default());
 /// map.insert(42, "the answer");
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq)]

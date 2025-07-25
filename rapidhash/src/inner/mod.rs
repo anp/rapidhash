@@ -1,4 +1,4 @@
-//! The rapidhash-inspired rust structs, traits, and datastructures.
+//! In-memory hashing: RapidHasher with full configurability via compile-time arguments.
 //!
 //! This module contains the Hasher, BuildHasher, HashMap, HashSet, and RandomState
 //! implementations. It is recomended to use [rapidhash::fast] or [rapidhash::quality], but for the

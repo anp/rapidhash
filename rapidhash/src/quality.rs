@@ -1,4 +1,4 @@
-//! RapidHasher with a focus on hash quality.
+//! In-memory hashing: RapidHasher with a focus on hash quality.
 //!
 //! This is a specific instantiation of the [rapidhash::inner] module with the following settings:
 //! - `AVALANCHE` is enabled.
