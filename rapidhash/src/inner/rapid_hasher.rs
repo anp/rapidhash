@@ -283,11 +283,11 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
     #[inline(always)]
     fn write_u128(&mut self, i: u128) {
         #[cfg(target_pointer_width = "16")] {
-            *self = self.write_num::<64>(i as u16);
+            *self = self.write_num::<16>(i as u64);
         }
 
         #[cfg(target_pointer_width = "32")] {
-            *self = self.write_num::<64>(i as u32);
+            *self = self.write_num::<32>(i as u64);
         }
 
         #[cfg(target_pointer_width = "64")] {
@@ -328,11 +328,11 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
     #[inline(always)]
     fn write_isize(&mut self, i: isize) {
         #[cfg(target_pointer_width = "16")] {
-            *self = self.write_num::<64>(i as u16);
+            *self = self.write_num::<16>(i as u64);
         }
 
         #[cfg(target_pointer_width = "32")] {
-            *self = self.write_num::<64>(i as u32);
+            *self = self.write_num::<32>(i as u64);
         }
 
         #[cfg(target_pointer_width = "64")] {

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["rapidhash", "rapidhash-bench", "rapidhash-c"]
+members = [ "rapidhash", "rapidhash-bench", "rapidhash-bench-wasm", "rapidhash-c"]
 
 [workspace.dependencies]
 rapidhash = { path = "rapidhash", default-features = false }

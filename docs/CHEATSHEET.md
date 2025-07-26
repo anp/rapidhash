@@ -45,6 +45,10 @@ RUSTFLAGS="-C target-cpu=native" cargo bench --bench iai-callgrind --all-feature
 # Use cargo-instruments to diagnose performance
 # Requires: cargo-instruments and MacOS
 RUSTFLAGS="-C target-cpu=native" cargo instruments -t time --profile=bench --bench realworld --features bench,unsafe -- --bench hashonly-struuid-rapidhash-v2
+
+# Benchmark WASM targets (build the WASM target first)
+cargo build -p rapidhash-bench-wasm --release --target wasm32-unknown-unknown
+RUSTFLAGS="-C target-cpu=native" cargo criterion --bench wasm --all-features
 ```
 
 ## Fuzzing
