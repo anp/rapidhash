@@ -92,7 +92,17 @@ pub struct RapidRng {
     seed: u64,
 }
 
-#[cfg(feature = "std")]
+#[cfg(any(
+    all(
+        feature = "std",
+        not(any(
+            miri,
+            all(target_family = "wasm", target_os = "unknown"),
+            target_os = "zkvm"
+        ))
+    ),
+    docsrs
+))]
 impl Default for RapidRng {
     /// Create a new random number generator.
     ///
@@ -108,7 +118,17 @@ impl Default for RapidRng {
     }
 }
 
-#[cfg(not(feature = "std"))]
+#[cfg(not(any(
+    all(
+        feature = "std",
+        not(any(
+            miri,
+            all(target_family = "wasm", target_os = "unknown"),
+            target_os = "zkvm"
+        ))
+    ),
+    docsrs
+)))]
 impl Default for RapidRng {
     /// Create a new random number generator.
     ///
