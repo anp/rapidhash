@@ -1,5 +1,5 @@
 use core::hash::{BuildHasher, Hash, Hasher};
-use crate::util::mix::rapid_mix;
+use super::mix::rapid_mix_np;
 use super::rapid_const::{rapidhash_core, rapidhash_seed, RAPID_SECRET, RAPID_SEED};
 
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
@@ -174,7 +174,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
                 // sponge is full, so we need to flush it
                 let a = this.sponge as u64;
                 let b = (this.sponge >> 64) as u64;
-                this.seed = rapid_mix::<PROTECTED>(a ^ this.secrets[1], b ^ this.seed);
+                this.seed = rapid_mix_np::<PROTECTED>(a ^ this.secrets[1], b ^ this.seed);
                 this.sponge = bytes as u128;
                 this.sponge_len = N;
             } else {
@@ -184,7 +184,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
             }
         } else {
             // slower but high-quality rapidhash
-            this.seed = rapid_mix::<PROTECTED>(bytes ^ this.secrets[1], bytes ^ this.seed);
+            this.seed = rapid_mix_np::<PROTECTED>(bytes ^ this.secrets[1], bytes ^ this.seed);
         }
 
         this
@@ -197,11 +197,11 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
         let mut this = *self;
         let a = bytes as u64;
         let b = (bytes >> 64) as u64;
-        this.seed = rapid_mix::<PROTECTED>(a ^ this.secrets[1], b ^ this.seed);
+        this.seed = rapid_mix_np::<PROTECTED>(a ^ this.secrets[1], b ^ this.seed);
 
         if SPONGE && AVALANCHE {
             // if the sponge is being used, u128's won't otherwise be avalanched
-            this.seed = rapid_mix::<PROTECTED>(this.seed, this.secrets[0]);
+            this.seed = rapid_mix_np::<PROTECTED>(this.seed, this.secrets[0]);
         }
 
         this
@@ -216,18 +216,18 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
         if SPONGE && self.sponge_len > 0 {
             let a = self.sponge as u64;
             let b = (self.sponge >> 64) as u64;
-            seed = rapid_mix::<PROTECTED>(a ^ seed, b ^ self.secrets[1]);
+            seed = rapid_mix_np::<PROTECTED>(a ^ seed, b ^ self.secrets[1]);
 
             if AVALANCHE {
                 // any integer that's added to the sponge will cause the sponge_len to never be 0,
                 // so avalanching inside this if is sufficient to avalanche all sponged inputs.
-                seed = rapid_mix::<PROTECTED>(seed, self.secrets[0]);
+                seed = rapid_mix_np::<PROTECTED>(seed, self.secrets[0]);
             }
         }
 
         if !SPONGE && AVALANCHE {
             // if not using a sponge, we only avalanche integers at the very end
-            seed = rapid_mix::<PROTECTED>(seed, self.secrets[0]);
+            seed = rapid_mix_np::<PROTECTED>(seed, self.secrets[0]);
         }
 
         seed

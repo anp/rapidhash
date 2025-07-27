@@ -17,55 +17,12 @@
 #[inline(always)]
 #[must_use]
 pub(crate) const fn rapid_mum<const PROTECTED: bool>(a: u64, b: u64) -> (u64, u64) {
-    #[cfg(any(
-        all(
-            target_pointer_width = "64",
-            not(any(target_arch = "sparc64", target_arch = "wasm64")),
-        ),
-        target_arch = "aarch64",
-        target_arch = "x86_64",
-        all(target_family = "wasm", target_feature = "wide-arithmetic"),
-    ))]
-    {
-        let r = (a as u128).wrapping_mul(b as u128);
+    let r = (a as u128).wrapping_mul(b as u128);
 
-        if !PROTECTED {
-            (r as u64, (r >> 64) as u64)
-        } else {
-            (a ^ r as u64, b ^ (r >> 64) as u64)
-        }
-    }
-
-    #[cfg(not(any(
-        all(
-            target_pointer_width = "64",
-            not(any(target_arch = "sparc64", target_arch = "wasm64")),
-        ),
-        target_arch = "aarch64",
-        target_arch = "x86_64",
-        all(target_family = "wasm", target_feature = "wide-arithmetic"),
-    )))]
-    {
-        // u64 x u64 -> u128 product is quite expensive on 32-bit.
-        // We approximate it by expanding the multiplication and eliminating
-        // carries by replacing additions with XORs:
-        //    (2^32 hx + lx)*(2^32 hy + ly) =
-        //    2^64 hx*hy + 2^32 (hx*ly + lx*hy) + lx*ly ~=
-        //    2^64 hx*hy ^ 2^32 (hx*ly ^ lx*hy) ^ lx*ly
-        // Which when folded becomes:
-        //    (hx*hy ^ lx*ly) ^ (hx*ly ^ lx*hy).rotate_right(32)
-
-        let lx = a as u32;
-        let ly = b as u32;
-        let hx = (a >> 32) as u32;
-        let hy = (b >> 32) as u32;
-
-        let ll = (lx as u64).wrapping_mul(ly as u64);
-        let lh = (lx as u64).wrapping_mul(hy as u64);
-        let hl = (hx as u64).wrapping_mul(ly as u64);
-        let hh = (hx as u64).wrapping_mul(hy as u64);
-
-        ((hh ^ ll), (hl ^ lh).rotate_right(32))
+    if !PROTECTED {
+        (r as u64, (r >> 64) as u64)
+    } else {
+        (a ^ r as u64, b ^ (r >> 64) as u64)
     }
 }
 

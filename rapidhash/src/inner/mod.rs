@@ -33,6 +33,7 @@ mod rapid_const;
 mod rapid_hasher;
 mod state;
 mod seeding;
+mod mix;
 
 #[doc(inline)]
 pub use rapid_const::*;
