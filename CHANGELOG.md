@@ -19,12 +19,12 @@
 
 - **Breaking:** `RapidHasher` in-memory hasher overhaul:
   - `RapidHasher` deviates from the main rapidhash algorithm to improve performance hashing rust objects while maintaining similar hash quality. Performance should be significantly improved over the v1 crate.
-  - `RapidHasher` may change the underlying hash between minor versions. The rust `Hasher` trait is not to be used for persistent hashing, and we will follow this mantra to allow easily improving hashing performance. Persistent hashing should be done though the `rapidhash::v3::rapidhash_v3(bytes: &[u8])` and equivalent functions.
+  - `RapidHasher` may change the underlying hash between minor versions. The rust `Hasher` trait is not to be used for portable hashing, and we will follow this mantra to allow easily improving hashing performance. Portable hashing should be done though the `rapidhash::v3::rapidhash_v3(bytes: &[u8])` and equivalent functions.
   - `RapidHasher`, `RandomState`, `RapidHashMap`, and `RapidHashSet` now move behind the following three modules:
     - `rapidhash::fast` when hashing speed is the priority. This sacrifices some hash quality for speed, uses FNV when hashing integer types, and skips the final avalanche mixing step.
     - `rapidhash::quality` when hash quality is the ultimate priority. This closely resembles the rapidhash algorithm and hash quality.
     - `rapidhash::inner` when you want to configure the settings for `AVALANCHE`, `FNV`, `COMPACT`, and `PROTECTED` modes as necessary.
-- **Breaking:** `rapidhash` persistent hashing function moved and renamed, with different hash output:
+- **Breaking:** `rapidhash` portable hashing function moved and renamed, with different hash output:
   - Fixed the rapidhash V1 algorithm for 48 and 144 length inputs, where it would previously mismatch with the C implementation.
     - If you need the old broken rapidhash V1 hash output, `rapidhash::v1::rapidhash_v1_inline` can accept a compile time argument `V1_BUG=true`, which will reproduce the old hash output from the 1.x crate versions.
   - Moved and renamed `rapidhash::rapidhash()` to `rapidhash::v1::rapidhash_v1()` to allow us to include other rapidhash versions in the same naming convention.

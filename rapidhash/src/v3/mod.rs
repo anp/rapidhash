@@ -1,4 +1,4 @@
-//! Persistent hashing: rapidhash V3 algorithm.
+//! Portable hashing: rapidhash V3 algorithm.
 
 mod rapid_const;
 #[cfg(any(feature = "std", docsrs))]

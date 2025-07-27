@@ -13,13 +13,13 @@ A rust implementation of the [rapidhash](https://github.com/Nicoshev/rapidhash) 
 - **Non-cryptographic** hash function that's "minimally DoS resistant" in the same manner as foldhash.
 
 ## Usage
-### Persistent Hashing
+### Portable Hashing
 Full compatibility with C++ rapidhash algorithms, methods are provided for all rapidhash V1, V2, and V3 (with micro/nano) variants. These are stable functions whose output will not change between crate versions.
 
 ```rust
 use std::hash::{BuildHasher, Hasher};
 
-// rapidhash V3 algorithm, for fast, high-quality, persistent hashing
+// rapidhash V3 algorithm, for fast, high-quality, portable hashing
 use rapidhash::v3::rapidhash_v3;
 assert_eq!(rapidhash_v3(b"hello world"), 3397907815814400320);
 ```
@@ -182,7 +182,7 @@ Initial benchmarks on M1 Max (aarch64) for various input sizes.
 
 ## Rapidhash Versions
 
-### Persistent Hashing
+### Portable Hashing
 Fixed versioning with C++ compatibility is presented in `rapidhash::v1`, `rapidhash::v2`, and `rapidhash::v3` modules.
 
 Rapidhash V3 is the recommended, fastest, and most recent version of the hash. Others are provided for backwards compatibility.
@@ -206,7 +206,7 @@ The rapidhash crate follows the following versioning scheme:
 - Minor for significant API additions/deprecations or any changes to `RapidHasher` output.
 - Patch for bug fixes and performance improvements.
 
-Persistent hash outputs (eg. `rapidhash_v3`) are guaranteed to be stable. In-memory hash outputs (eg. `RapidHasher`) may change between minor versions to allow us to freely improve performance.
+Portable hash outputs (eg. `rapidhash_v3`) are guaranteed to be stable. In-memory hash outputs (eg. `RapidHasher`) may change between minor versions to allow us to freely improve performance.
 
 ## License and Acknowledgements
 This project is licensed under both the MIT and Apache-2.0 licenses. You are free to choose either license.
