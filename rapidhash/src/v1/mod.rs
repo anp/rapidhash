@@ -40,4 +40,14 @@ mod tests {
         assert_eq!(2762901732509801681, rapidhash_bug("abcdefghijklmnopqrstuvwxyz1234567890123456789012\n"));
         assert_eq!( 934306286158757431, rapidhash_bug("abcdefghijklmnopqrstuvwxyz12345678901234567890123\n"));
     }
+
+    #[test]
+    fn test_hardcoded_v1() {
+        assert_eq!(6516417773221693515, rapidhash_v1(&[]));
+        assert_eq!(5006746792674864303, rapidhash_v1("\n".as_bytes()));
+        assert_eq!(15965596575264898037, rapidhash_v1("something\n".as_bytes()));
+        // below is 47 bytes, an extra character would hit the V1 bug
+        assert_eq!(10644405912457645442, rapidhash_v1("abcdefghijklmnopqrstuvwxyz01234567890123456789\n".as_bytes()));
+        assert_eq!(7545813847373533788, rapidhash_v1("abcdefghijklmnopqrstuvwxyz012345678901234567890abcdefghijklmnopqrstuvwxyz012345678901234567890abcdefghijklmnopqrstuvwxyz012345678901234567890\n".as_bytes()));
+    }
 }
