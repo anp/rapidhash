@@ -78,7 +78,7 @@ pub(super) const fn rapidhash_core<const COMPACT: bool, const PROTECTED: bool>(m
     let mut seed = rapid_secrets.seed;
     let secrets = &rapid_secrets.secrets;
 
-    // TODO: benchmark without the a,b XOR -- eg. a oneshot
+    // TODO: benchmark without the a,b args and separating the finalize step
     let remainder;
     if data.len() <= 16 {
         if data.len() >= 4 {

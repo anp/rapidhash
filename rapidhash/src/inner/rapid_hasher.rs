@@ -90,7 +90,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
     /// `write(bytes)` as they can optimise away the sponge flushing/if logic. Write bytes is
     /// simply incurring a single function call, unless the bytes are of compile-time known length,
     /// in which case there are large gains again.
-    #[inline]  // TODO: choose what to set here
+    #[inline]
     fn hash_one<T: Hash>(&self, x: T) -> u64
     where
         Self: Sized,

@@ -155,7 +155,6 @@ pub(crate) mod secrets {
         let mut secrets = [0u64; 7];
         let mut seed = generate_random();
 
-        // TODO: check quality of the generated secrets
         for i in 0..secrets.len() {
             const HI: u64 = 0xFFFF << 48;
             const MI: u64 = 0xFFFF << 24;

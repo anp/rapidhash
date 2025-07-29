@@ -37,7 +37,6 @@ pub(crate) const fn rapidhash_rs_inline<const COMPACT: bool, const PROTECTED: bo
 #[inline(always)]
 #[must_use]
 pub(super) const fn rapidhash_core<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> u64 {
-    // TODO: benchmark without the a,b XOR -- eg. a oneshot
     if data.len() <= 16 {
         let mut a = 0;
         let mut b = 0;

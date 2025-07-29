@@ -15,8 +15,6 @@ const PROTECTED: bool = false;
 
 use crate::inner;
 
-// TODO: random state etc.
-
 /// A [Hasher] inspired by [rapidhash::v3::rapidhash_v3] with a focus on speed and throughput.
 ///
 /// This is an alias for [inner::RapidHasher] with the following settings:

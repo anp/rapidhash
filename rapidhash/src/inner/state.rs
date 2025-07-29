@@ -76,7 +76,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
         RapidHasher::new_precomputed_seed(self.seed, self.secrets)
     }
 
-    #[inline]  // TODO: revisit this inlining level
+    #[inline]
     fn hash_one<T: Hash>(&self, x: T) -> u64
     where
         Self: Sized,

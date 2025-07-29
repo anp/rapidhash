@@ -44,7 +44,6 @@ pub fn main() {
 
     #[cfg(feature = "std")] {
         let args: Vec<String> = std::env::args().collect();
-        // TODO: --version arg
         // TODO: multiple output types (hex, decimal)
         // TODO: --seed arg, with hex input support
         if args.iter().any(|a| a == "--help" || a == "-h") || args.is_empty() {
