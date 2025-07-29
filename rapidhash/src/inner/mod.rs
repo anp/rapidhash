@@ -32,7 +32,7 @@ mod collections;
 mod rapid_const;
 mod rapid_hasher;
 mod state;
-mod seeding;
+pub(crate) mod seeding;
 mod mix;
 
 #[doc(inline)]
