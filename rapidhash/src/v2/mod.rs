@@ -1,14 +1,18 @@
 //! Portable hashing: rapidhash V2.2 algorithm.
+//!
+//! For new code, please use [`rapidhash::v3`] instead, as it is a superior hashing algorithm.
 
 mod rapid_const;
 #[cfg(any(feature = "std", docsrs))]
 mod rapid_file;
+mod seed;
 
 #[doc(inline)]
 pub use rapid_const::*;
 #[doc(inline)]
 #[cfg(any(feature = "std", docsrs))]
 pub use rapid_file::*;
+pub use seed::*;
 
 #[cfg(test)]
 mod tests {

@@ -1,11 +1,11 @@
 //! Internal module for seeding the hash functions.
 
-pub(super) mod seed {
+pub(crate) mod seed {
     use crate::inner::rapid_const::{rapidhash_seed, RAPID_SECRET};
-    use crate::util::mix::rapid_mix;
+    use crate::inner::mix::rapid_mix_np;
 
     #[inline]
-    pub(crate) fn get_seed() -> u64 {
+    pub fn get_seed() -> u64 {
         // this would all be so much easier if the rust std exposed how it does RandomState
         // we take the stack pointer as a rather poor but cheap source of entropy
         let mut seed = 0;
@@ -23,7 +23,7 @@ pub(super) mod seed {
 
             seed = RANDOM_SEED.with(|cell| {
                 let mut seed = cell.get();
-                seed = rapid_mix::<false>(seed ^ RAPID_SECRET[1], arbitrary ^ RAPID_SECRET[0]);
+                seed = rapid_mix_np::<false>(seed ^ RAPID_SECRET[1], arbitrary ^ RAPID_SECRET[0]);
                 cell.set(seed);
                 seed
             });
@@ -36,7 +36,7 @@ pub(super) mod seed {
             static RANDOM_SEED: AtomicUsize = AtomicUsize::new(0);
 
             seed = RANDOM_SEED.load(Ordering::Relaxed) as u64;
-            seed = rapid_mix::<false>(seed ^ RAPID_SECRET[1], arbitrary ^ RAPID_SECRET[0]);
+            seed = rapid_mix_np::<false>(seed ^ RAPID_SECRET[1], arbitrary ^ RAPID_SECRET[0]);
             RANDOM_SEED.store(seed as usize, Ordering::Relaxed);
         }
 
@@ -57,9 +57,9 @@ pub(super) mod seed {
 }
 
 #[cfg(not(target_has_atomic = "ptr"))]
-pub(super) mod secrets {
+pub(crate) mod secrets {
     #[inline(always)]
-    pub(crate) fn get_secrets() -> &'static [u64; 7] {
+    pub fn get_secrets() -> &'static [u64; 7] {
         // This is a no-op for platforms that do not support atomic pointers.
         // The secrets are not used, so we return an empty slice.
         &crate::inner::rapid_const::RAPID_SECRET
@@ -67,7 +67,7 @@ pub(super) mod secrets {
 }
 
 #[cfg(target_has_atomic = "ptr")]
-pub(super) mod secrets {
+pub(crate) mod secrets {
     use core::cell::UnsafeCell;
     use core::sync::atomic::{AtomicUsize, Ordering};
     use crate::inner::rapid_const::RAPID_SECRET;
@@ -94,7 +94,7 @@ pub(super) mod secrets {
     }
 
     #[inline]
-    pub(crate) fn get_secrets() -> &'static [u64; 7] {
+    pub fn get_secrets() -> &'static [u64; 7] {
         if SECRET_STORAGE.state.load(Ordering::Acquire) != SecretStorageStates::Initialized as usize {
             initialize_secrets();
         }
@@ -172,7 +172,7 @@ pub(super) mod secrets {
     /// Generate a random number, trying our best to make this a good random number.
     ///
     /// To only be called sparingly as it's fairly slow.
-    fn generate_random() -> u64 {
+    pub fn generate_random() -> u64 {
         #[cfg(feature = "rand")]
         {
             rand::random()
