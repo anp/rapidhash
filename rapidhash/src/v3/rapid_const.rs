@@ -28,10 +28,6 @@ pub const fn rapidhash_v3_seeded(data: &[u8], secrets: &RapidSecrets) -> u64 {
 ///     may be slower on some platforms. Disabled by default.
 /// - `PROTECTED`: Slightly stronger hash quality and DoS resistance by performing two extra XOR
 ///     instructions on every mix step. Disabled by default.
-///
-/// Future work: replace the default `RAPID_SECRET` with a parameter for randomised or
-/// user-controlled secret values. There is a trivial collision attack at certain input sizes (such
-/// as 32 bytes) that can be exploited when an attacker knows the secret values.
 #[inline(always)]
 pub const fn rapidhash_v3_inline<const COMPACT: bool, const PROTECTED: bool>(data: &[u8], secrets: &RapidSecrets) -> u64 {
     let (a, b, _, remainder) = rapidhash_core::<COMPACT, PROTECTED>(0, 0, secrets, data);

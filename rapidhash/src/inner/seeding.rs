@@ -49,7 +49,7 @@ pub(crate) mod seed {
             static RANDOM_SEED: AtomicUsize = AtomicUsize::new(0);
 
             seed = RANDOM_SEED.load(Ordering::Relaxed) as u64;
-            seed = rapid_mix_np::<false>(seed ^ RAPID_SECRET[1], arbitrary ^ RAPID_SECRET[0]);
+            seed = rapid_mix_np::<false>(seed ^ DEFAULT_SECRETS[1], arbitrary ^ DEFAULT_SECRETS[0]);
             RANDOM_SEED.store(seed as usize, Ordering::Relaxed);
         }
 
@@ -75,7 +75,7 @@ pub(crate) mod secrets {
     pub fn get_secrets() -> &'static [u64; 7] {
         // This is a no-op for platforms that do not support atomic pointers.
         // The secrets are not used, so we return an empty slice.
-        &crate::inner::rapid_const::RAPID_SECRET
+        &crate::inner::seed::DEFAULT_RAPID_SECRETS.secrets
     }
 }
 

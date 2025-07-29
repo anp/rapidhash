@@ -32,7 +32,7 @@ pub fn rapidhash(data: &[u8]) -> u64 {
     rapidhash_v3_seeded(data, &RAPID_SECRETS)
 }
 
-assert_eq!(rapidhash(b"hello world"), 3397907815814400320);
+assert_eq!(rapidhash(b"hello world"), 11653223729569656151);
 ```
 
 Please see the [`portable-hash` crate](https://github.com/hoxxep/portable-hash) using the standard library hashing traits is not recommended for portable hashing. Rapidhash is planning to implement the `PortableHash` and `PortableHasher` traits in a future release.
