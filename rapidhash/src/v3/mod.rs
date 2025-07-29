@@ -12,6 +12,7 @@ pub use rapid_const::*;
 #[cfg(any(feature = "std", docsrs))]
 pub use rapid_file::*;
 
+#[doc(inline)]
 pub use seed::*;
 
 #[cfg(test)]

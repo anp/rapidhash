@@ -1,8 +1,21 @@
 //! Internal module for seeding the hash functions.
+//!
+//! Located here instead of `util` to make use of the non-portable mix functions.
+
+/// Don't want to have a recursive import here, so we copy it...
+const DEFAULT_SECRETS: [u64; 7] = [
+    0x2d358dccaa6c78a5,
+    0x8bb84b93962eacc9,
+    0x4b33a62ed433d4a3,
+    0x4d5a2da51de1aa47,
+    0xa0761d6478bd642f,
+    0xe7037ed1a0b428db,
+    0x90ed1765281c388c,
+];
 
 pub(crate) mod seed {
-    use crate::inner::rapid_const::{rapidhash_seed, RAPID_SECRET};
     use crate::inner::mix::rapid_mix_np;
+    use super::DEFAULT_SECRETS;
 
     #[inline]
     pub fn get_seed() -> u64 {
@@ -23,7 +36,7 @@ pub(crate) mod seed {
 
             seed = RANDOM_SEED.with(|cell| {
                 let mut seed = cell.get();
-                seed = rapid_mix_np::<false>(seed ^ RAPID_SECRET[1], arbitrary ^ RAPID_SECRET[0]);
+                seed = rapid_mix_np::<false>(seed ^ DEFAULT_SECRETS[1], arbitrary ^ DEFAULT_SECRETS[0]);
                 cell.set(seed);
                 seed
             });
@@ -40,7 +53,7 @@ pub(crate) mod seed {
             RANDOM_SEED.store(seed as usize, Ordering::Relaxed);
         }
 
-        rapidhash_seed(seed)
+        seed ^ rapid_mix_np::<false>(seed ^ DEFAULT_SECRETS[2], DEFAULT_SECRETS[1])
     }
 
     #[cfg(test)]
@@ -70,8 +83,8 @@ pub(crate) mod secrets {
 pub(crate) mod secrets {
     use core::cell::UnsafeCell;
     use core::sync::atomic::{AtomicUsize, Ordering};
-    use crate::inner::rapid_const::RAPID_SECRET;
     use crate::util::mix::rapid_mix;
+    use super::DEFAULT_SECRETS;
 
     /// A hacky sync-friendly, std-free, OnceCell that sadly needs unsafe inspired by foldhash's
     /// `seed.rs` which includes some similar bodges.
@@ -148,7 +161,7 @@ pub(crate) mod secrets {
             const MI: u64 = 0xFFFF << 24;
             const LO: u64 = 0xFFFF;
 
-            seed = rapid_mix::<true>(seed ^ RAPID_SECRET[0], RAPID_SECRET[i]);
+            seed = rapid_mix::<true>(seed ^ DEFAULT_SECRETS[0], DEFAULT_SECRETS[i]);
 
             // ensure at least one high, middle, and low bit is set for a semi-decent secret
             if (seed & HI) == 0 {
@@ -180,23 +193,21 @@ pub(crate) mod secrets {
 
         #[cfg(not(feature = "rand"))]
         {
-            use crate::inner::rapid_const::{RAPID_SEED, RAPID_SECRET, RAPID_CONST};
-
             // trying out best to generate a good random number on all platforms
-            let mut seed = RAPID_SEED;
+            let mut seed = DEFAULT_SECRETS[0];
             let stack_ptr = core::ptr::addr_of!(seed) as u64;
-            let static_ptr = &RAPID_SECRET as *const _ as usize as u64;
+            let static_ptr = &DEFAULT_SECRETS as *const _ as usize as u64;
             let function_ptr = generate_random as *const () as usize as u64;
 
-            seed = rapid_mix::<true>(seed ^ RAPID_SECRET[4], stack_ptr ^ RAPID_SECRET[1]);
-            seed = rapid_mix::<true>(seed ^ RAPID_SECRET[5], function_ptr ^ RAPID_SECRET[2]);
-            seed = rapid_mix::<true>(seed ^ RAPID_SECRET[6], static_ptr ^ RAPID_SECRET[3]);
+            seed = rapid_mix::<true>(seed ^ DEFAULT_SECRETS[4], stack_ptr ^ DEFAULT_SECRETS[1]);
+            seed = rapid_mix::<true>(seed ^ DEFAULT_SECRETS[5], function_ptr ^ DEFAULT_SECRETS[2]);
+            seed = rapid_mix::<true>(seed ^ DEFAULT_SECRETS[6], static_ptr ^ DEFAULT_SECRETS[3]);
 
             #[cfg(feature = "std")]
             {
                 // we can allocate to add extra noise
                 let box_ptr = &*Box::new(1u64) as *const _ as usize as u64;
-                seed = rapid_mix::<true>(seed ^ RAPID_SECRET[4], box_ptr ^ RAPID_SECRET[1]);
+                seed = rapid_mix::<true>(seed ^ DEFAULT_SECRETS[4], box_ptr ^ DEFAULT_SECRETS[1]);
             }
 
             #[cfg(all(
@@ -213,7 +224,7 @@ pub(crate) mod secrets {
             }
 
             // final avalanche step
-            seed = rapid_mix::<true>(seed ^ RAPID_CONST, RAPID_SECRET[0]);
+            seed = rapid_mix::<true>(seed ^ DEFAULT_SECRETS[6], DEFAULT_SECRETS[0]);
             seed
         }
     }
