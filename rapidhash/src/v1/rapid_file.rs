@@ -44,7 +44,7 @@ pub fn rapidhash_v1_file_inline<const PROTECTED: bool>(data: &mut File, secrets:
 
 #[inline(always)]
 fn rapidhash_file_core<const PROTECTED: bool>(mut a: u64, mut b: u64, rapid_secrets: &RapidSecrets, len: usize, iter: &mut BufReader<&mut File>) -> std::io::Result<(u64, u64, u64)> {
-    let mut seed = rapid_secrets.seed;
+    let mut seed = rapid_secrets.seed ^ len as u64;
     let secrets = &rapid_secrets.secrets;
 
     if len <= 16 {

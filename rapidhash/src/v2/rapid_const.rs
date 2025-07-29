@@ -52,6 +52,7 @@ pub(super) const fn rapidhash_core<const MINOR: u8, const COMPACT: bool, const P
     let secrets = &rapid_secrets.secrets;
 
     if data.len() <= 16 {
+        seed ^= data.len() as u64;
         if data.len() >= 4 {
             if data.len() >= 8 {
                 let plast = data.len() - 8;
@@ -86,7 +87,7 @@ pub(super) const fn rapidhash_core<const MINOR: u8, const COMPACT: bool, const P
 
 #[inline]  // intentionally not always
 const fn rapidhash_core_17_64<const MINOR: u8, const PROTECTED: bool>(mut a: u64, mut b: u64, rapid_secrets: &RapidSecrets, data: &[u8]) -> (u64, u64, u64) {
-    let mut seed = rapid_secrets.seed;
+    let mut seed = rapid_secrets.seed ^ data.len() as u64;
     let secrets = &rapid_secrets.secrets;
     let slice = data;
 
@@ -111,7 +112,7 @@ const fn rapidhash_core_17_64<const MINOR: u8, const PROTECTED: bool>(mut a: u64
 #[cold]
 #[inline(never)]
 const fn rapidhash_core_cold<const COMPACT: bool, const PROTECTED: bool>(mut a: u64, mut b: u64, rapid_secrets: &RapidSecrets, data: &[u8]) -> (u64, u64, u64) {
-    let mut seed = rapid_secrets.seed;
+    let mut seed = rapid_secrets.seed ^ data.len() as u64;
     let secrets = &rapid_secrets.secrets;
 
     let mut slice = data;

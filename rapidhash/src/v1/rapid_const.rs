@@ -34,7 +34,7 @@ pub const fn rapidhash_v1_inline<const COMPACT: bool, const PROTECTED: bool, con
 
 #[inline(always)]
 pub(super) const fn rapidhash_core<const COMPACT: bool, const PROTECTED: bool, const V1_BUG: bool>(mut a: u64, mut b: u64, rapid_secrets: &RapidSecrets, data: &[u8]) -> (u64, u64, u64) {
-    let mut seed = rapid_secrets.seed;
+    let mut seed = rapid_secrets.seed ^ data.len() as u64;
     let secrets = &rapid_secrets.secrets;
 
     if data.len() <= 16 {

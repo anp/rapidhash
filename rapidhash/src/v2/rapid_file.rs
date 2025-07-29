@@ -57,7 +57,7 @@ fn rapidhash_file_core<const MINOR: u8, const PROTECTED: bool>(mut a: u64, mut b
         panic!("rapidhash_file_core does not support minor version {}. Supported versions are 0, 1, and 2.", MINOR);
     }
 
-    let mut seed = rapid_secrets.seed;
+    let mut seed = rapid_secrets.seed ^ len as u64;
     let secrets = &rapid_secrets.secrets;
 
     if len <= 16 {
