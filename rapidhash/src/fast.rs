@@ -5,12 +5,12 @@
 //! This is a specific instantiation of the [rapidhash::inner] module with the following settings:
 //! - `AVALANCHE` is disabled.
 //! - `SPONGE` is enabled.
-//! - `COMPACT` is disabled.
+//! - `COMPACT` is disabled, unless building for WASM targets.
 //! - `PROTECTED` is disabled.
 
 const AVALANCHE: bool = false;
 const SPONGE: bool = true;
-const COMPACT: bool = false;
+const COMPACT: bool = cfg!(target_family = "wasm");
 const PROTECTED: bool = false;
 
 use crate::inner;
