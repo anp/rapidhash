@@ -12,6 +12,8 @@ A rust implementation of the [rapidhash](https://github.com/Nicoshev/rapidhash) 
 - **Idiomatic** `std::hash::Hasher` compatible hasher for `HashMap` and `HashSet` usage.
 - **Non-cryptographic** hash function that's "minimally DoS resistant" in the same manner as foldhash.
 
+**Sponsored by [Upon](https://uponvault.com?utm_source=github&utm_campaign=rapidhash)**, inheritance vaults for your digital life. Ensure your family can access your devices, accounts, and assets when the unexpected happens.
+
 ## Usage
 ### Portable Hashing
 Full compatibility with C++ rapidhash algorithms, methods are provided for all rapidhash V1, V2, and V3 (with micro/nano) variants. These are stable functions whose output will not change between crate versions.

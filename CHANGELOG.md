@@ -5,6 +5,7 @@
 - **Breaking:** Add a `RapidSecrets` type for all versions to generate seeds and secrets for HashDoS-resistant hashing. This makes generating unique seeds/secrets easier for persistent hashing use cases.
 - **Breaking:** Replaced `FNV` with a `SPONGE` configuration with `RapidHasher` to improve integer and tuple hashing performance.
 - **Breaking:** Fix the `rapidhash::v1` `V1_BUG` argument to actually match the original `v1.x.x` crate behaviour. The if statement was fundamentally wrong in the `v2.x.x` crate.
+- Added: `rapidhash::rng::rapidrng_fast_non_portable`, a slightly faster, lower-quality RNG that also has optimisations for u32 platforms without wide-arithmetic support. Excellent for generating fixtures in our WASM benchmarks.
 - Perf: `RapidHasher` significantly improved performance hashing integers, tuples, and integer types using the new `SPONGE` configuration in both fast and quality modes.
 
 ## 2.0.2 (20250723)
