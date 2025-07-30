@@ -23,8 +23,7 @@ const BENCHMARKS: &[&str] = &[
 
 pub fn wasm_bench(c: &mut Criterion) {
     compile_wasm();
-
-
+    
     for &hash in HASHES.iter() {
         let group_name = format!("wasm/{}", hash);
         let mut group = c.benchmark_group(&group_name);

@@ -17,6 +17,10 @@ name = "realworld"
 harness = false
 
 [[bench]]
+name = "secrets"
+harness = false
+
+[[bench]]
 name = "iai-callgrind"
 harness = false
 
