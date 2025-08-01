@@ -26,7 +26,6 @@ use super::seed::rapidhash_seed;
 /// let hash = hasher.finish();
 /// ```
 #[derive(Copy, Clone)]
-#[repr(C)]
 pub struct RapidHasher<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool = false, const PROTECTED: bool = false> {
     seed: u64,
     secrets: &'static [u64; 7],  // FUTURE: non-static secrets?
@@ -203,7 +202,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
 
         if SPONGE && AVALANCHE {
             // if the sponge is being used, u128's won't otherwise be avalanched
-            this.seed = rapid_mix_np::<PROTECTED>(this.seed, this.secrets[0]);
+            this.seed = rapid_mix_np::<PROTECTED>(this.seed, DEFAULT_RAPID_SECRETS.secrets[0]);
         }
 
         this
@@ -223,13 +222,13 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
             if AVALANCHE {
                 // any integer that's added to the sponge will cause the sponge_len to never be 0,
                 // so avalanching inside this if is sufficient to avalanche all sponged inputs.
-                seed = rapid_mix_np::<PROTECTED>(seed, self.secrets[0]);
+                seed = rapid_mix_np::<PROTECTED>(seed, DEFAULT_RAPID_SECRETS.secrets[0]);
             }
         }
 
         if !SPONGE && AVALANCHE {
             // if not using a sponge, we only avalanche integers at the very end
-            seed = rapid_mix_np::<PROTECTED>(seed, self.secrets[0]);
+            seed = rapid_mix_np::<PROTECTED>(seed, DEFAULT_RAPID_SECRETS.secrets[0]);
         }
 
         seed
