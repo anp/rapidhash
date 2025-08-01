@@ -27,7 +27,7 @@ default = ["std"]
 std = []  # enable std library for RapidHashMap and RapidHashSet helpers
 rand = ["dep:rand", "std"]  # enable the rand library for initialising RandomState
 rng = ["dep:rand_core"]  # enable RapidRng, a rand Rng-compatible fast PRNG using rapidrng
-unsafe = []  # enable unsafe pointer arithmetic to skip unnecessary bounds checks
+unsafe = []  # enable unsafe pointer arithmetic; this is used to check for bounds-check regressions
 
 [dependencies]
 rand = { version = "0.9.0", optional = true }

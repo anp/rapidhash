@@ -47,18 +47,19 @@ pub fn rapidhash_v2_2_file_seeded(data: &mut File, secrets: &RapidSecrets) -> st
 pub fn rapidhash_v2_file_inline<const MINOR: u8, const PROTECTED: bool>(data: &mut File, secrets: &RapidSecrets) -> std::io::Result<u64> {
     let len = data.metadata()?.len();
     let mut reader = BufReader::new(data);
-    let (a, b, _) = rapidhash_file_core::<MINOR, PROTECTED>(0, 0, secrets, len as usize, &mut reader)?;
-    Ok(rapidhash_finish::<PROTECTED>(a, b, len, secrets))
+    let hash = rapidhash_file_core::<MINOR, PROTECTED>(secrets.seed, &secrets.secrets, len as usize, &mut reader)?;
+    Ok(hash)
 }
 
 #[inline(always)]
-fn rapidhash_file_core<const MINOR: u8, const PROTECTED: bool>(mut a: u64, mut b: u64, rapid_secrets: &RapidSecrets, len: usize, iter: &mut BufReader<&mut File>) -> std::io::Result<(u64, u64, u64)> {
+fn rapidhash_file_core<const MINOR: u8, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], len: usize, iter: &mut BufReader<&mut File>) -> std::io::Result<u64> {
     if MINOR > 2 {
         panic!("rapidhash_file_core does not support minor version {}. Supported versions are 0, 1, and 2.", MINOR);
     }
 
-    let mut seed = rapid_secrets.seed ^ len as u64;
-    let secrets = &rapid_secrets.secrets;
+    let mut a = 0;
+    let mut b = 0;
+    seed ^= len as u64;
 
     if len <= 16 {
         let mut buf = [0u8; 16];
@@ -194,7 +195,8 @@ fn rapidhash_file_core<const MINOR: u8, const PROTECTED: bool>(mut a: u64, mut b
     b ^= seed;
 
     (a, b) = rapid_mum::<PROTECTED>(a, b);
-    Ok((a, b, seed))
+    let hash = rapidhash_finish::<PROTECTED>(a, b, len as u64, secrets);
+    Ok(hash)
 }
 
 #[cfg(test)]
@@ -204,7 +206,7 @@ mod tests {
     use crate::v2::rapidhash_v2_inline;
     use super::*;
 
-    compare_rapidhash_file!(compare_rapidhash_v2_0_file, rapidhash_v2_inline::<0, false, false>, rapidhash_v2_file_inline::<0, false>);
-    compare_rapidhash_file!(compare_rapidhash_v2_1_file, rapidhash_v2_inline::<1, false, false>, rapidhash_v2_file_inline::<1, false>);
-    compare_rapidhash_file!(compare_rapidhash_v2_2_file, rapidhash_v2_inline::<2, false, false>, rapidhash_v2_file_inline::<2, false>);
+    compare_rapidhash_file!(compare_rapidhash_v2_0_file, rapidhash_v2_inline::<0, true, false, false>, rapidhash_v2_file_inline::<0, false>);
+    compare_rapidhash_file!(compare_rapidhash_v2_1_file, rapidhash_v2_inline::<1, true, false, false>, rapidhash_v2_file_inline::<1, false>);
+    compare_rapidhash_file!(compare_rapidhash_v2_2_file, rapidhash_v2_inline::<2, true, false, false>, rapidhash_v2_file_inline::<2, false>);
 }

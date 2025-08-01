@@ -142,9 +142,9 @@ impl RapidhashVersion {
                 std::io::stdin().read_to_end(&mut buffer).expect("Could not read from stdin.");
 
                 if *protected {
-                    rapidhash::v1::rapidhash_v1_inline::<false, true, false>(&buffer, &rapidhash::v1::DEFAULT_RAPID_SECRETS)
+                    rapidhash::v1::rapidhash_v1_inline::<true, false, true, false>(&buffer, &rapidhash::v1::DEFAULT_RAPID_SECRETS)
                 } else {
-                    rapidhash::v1::rapidhash_v1_inline::<false, false, false>(&buffer, &rapidhash::v1::DEFAULT_RAPID_SECRETS)
+                    rapidhash::v1::rapidhash_v1_inline::<true, false, false, false>(&buffer, &rapidhash::v1::DEFAULT_RAPID_SECRETS)
                 }
             },
             RapidhashVersion::V2 { protected, version } => {
@@ -154,23 +154,23 @@ impl RapidhashVersion {
                 match version {
                     0 => {
                         if *protected {
-                            rapidhash::v2::rapidhash_v2_inline::<0, false, true>(&buffer, &rapidhash::v2::DEFAULT_RAPID_SECRETS)
+                            rapidhash::v2::rapidhash_v2_inline::<0, true, false, true>(&buffer, &rapidhash::v2::DEFAULT_RAPID_SECRETS)
                         } else {
-                            rapidhash::v2::rapidhash_v2_inline::<0, false, false>(&buffer, &rapidhash::v2::DEFAULT_RAPID_SECRETS)
+                            rapidhash::v2::rapidhash_v2_inline::<0, true, false, false>(&buffer, &rapidhash::v2::DEFAULT_RAPID_SECRETS)
                         }
                     }
                     1 => {
                         if *protected {
-                            rapidhash::v2::rapidhash_v2_inline::<1, false, true>(&buffer, &rapidhash::v2::DEFAULT_RAPID_SECRETS)
+                            rapidhash::v2::rapidhash_v2_inline::<1, true, false, true>(&buffer, &rapidhash::v2::DEFAULT_RAPID_SECRETS)
                         } else {
-                            rapidhash::v2::rapidhash_v2_inline::<1, false, false>(&buffer, &rapidhash::v2::DEFAULT_RAPID_SECRETS)
+                            rapidhash::v2::rapidhash_v2_inline::<1, true, false, false>(&buffer, &rapidhash::v2::DEFAULT_RAPID_SECRETS)
                         }
                     }
                     2 => {
                         if *protected {
-                            rapidhash::v2::rapidhash_v2_inline::<2, false, true>(&buffer, &rapidhash::v2::DEFAULT_RAPID_SECRETS)
+                            rapidhash::v2::rapidhash_v2_inline::<2, true, false, true>(&buffer, &rapidhash::v2::DEFAULT_RAPID_SECRETS)
                         } else {
-                            rapidhash::v2::rapidhash_v2_inline::<2, false, false>(&buffer, &rapidhash::v2::DEFAULT_RAPID_SECRETS)
+                            rapidhash::v2::rapidhash_v2_inline::<2, true, false, false>(&buffer, &rapidhash::v2::DEFAULT_RAPID_SECRETS)
                         }
                     }
                     _ => {

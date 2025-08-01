@@ -1,6 +1,6 @@
 # rapidhash - rust implementation
 
-A rust implementation of the [rapidhash](https://github.com/Nicoshev/rapidhash) function, the official successor to [wyhash](https://github.com/wangyi-fudan/wyhash).
+A rust implementation of [rapidhash](https://github.com/Nicoshev/rapidhash), the official successor to [wyhash](https://github.com/wangyi-fudan/wyhash).
 
 - **High quality**, the fastest hash passing all tests in the SMHasher and SMHasher3 benchmark. Collision-based study showed a collision probability lower than wyhash, foldhash, and close to ideal.
 - **Very fast**, the fastest passing hash in SMHasher3. Significant peak throughput improvement over wyhash and foldhash. Fastest memory-safe hash. Fastest platform-independent hash. Fastest const hash.
@@ -23,9 +23,8 @@ use std::hash::{BuildHasher, Hasher};
 use rapidhash::v3::{rapidhash_v3_seeded, RapidSecrets};
 
 /// Set your global hashing secrets.
-///
 /// - For HashDoS resistance, choose a randomised secret.
-/// - For C++ compatibility, use the `seed_cpp` method or default secrets.
+/// - For C++ compatibility, use the `seed_cpp` method or `DEFAULT_RAPID_SECRETS`.
 const RAPID_SECRETS: RapidSecrets = RapidSecrets::seed(0x123456);
 
 /// Make a helper function that sets your rapidhash version and secrets.
@@ -37,7 +36,7 @@ pub fn rapidhash(data: &[u8]) -> u64 {
 assert_eq!(rapidhash(b"hello world"), 11653223729569656151);
 ```
 
-Please see the [`portable-hash` crate](https://github.com/hoxxep/portable-hash) using the standard library hashing traits is not recommended for portable hashing. Rapidhash is planning to implement the `PortableHash` and `PortableHasher` traits in a future release.
+Please see the [`portable-hash` crate](https://github.com/hoxxep/portable-hash) for why using the standard library hashing traits is not recommended for portable hashing. Rapidhash is planning to implement the `PortableHash` and `PortableHasher` traits in a future release.
 
 ### In-Memory Hashing
 Following rust's `std::hash` traits, the underlying hash function may change between minor versions, and is only suitable for in-memory hashing. These types are optimised for speed and minimal DoS resistance, available in the `rapidhash::fast` and `rapidhash::quality` flavours.

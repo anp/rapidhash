@@ -37,14 +37,14 @@ pub fn rapidhash_v3_file_seeded<R: Read>(data: R, secrets: &RapidSecrets) -> std
 #[inline(always)]
 pub fn rapidhash_v3_file_inline<R: Read, const PROTECTED: bool>(data: R, secrets: &RapidSecrets) -> std::io::Result<u64> {
     let mut reader = ChunkedStreamReader::new(data, 16);
-    let (a, b, _, remainder) = rapidhash_file_core::<R, PROTECTED>(0, 0, secrets, &mut reader)?;
-    Ok(rapidhash_finish::<PROTECTED>(a, b, remainder, secrets))
+    let hash = rapidhash_file_core::<R, PROTECTED>(secrets.seed, &secrets.secrets, &mut reader)?;
+    Ok(hash)
 }
 
 #[inline(always)]
-fn rapidhash_file_core<R: Read, const PROTECTED: bool>(mut a: u64, mut b: u64, rapid_secrets: &RapidSecrets, iter: &mut ChunkedStreamReader<R>) -> std::io::Result<(u64, u64, u64, u64)> {
-    let mut seed = rapid_secrets.seed;
-    let secrets = &rapid_secrets.secrets;
+fn rapidhash_file_core<R: Read, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], iter: &mut ChunkedStreamReader<R>) -> std::io::Result<u64> {
+    let mut a = 0;
+    let mut b = 0;
 
     let mut chunk = iter.read_chunk(225)?;
     let remainder;
@@ -145,7 +145,7 @@ fn rapidhash_file_core<R: Read, const PROTECTED: bool>(mut a: u64, mut b: u64, r
     b ^= seed;
 
     (a, b) = rapid_mum::<PROTECTED>(a, b);
-    Ok((a, b, seed, remainder))
+    Ok(rapidhash_finish::<PROTECTED>(a, b, remainder, secrets))
 }
 
 #[cfg(test)]
@@ -155,5 +155,5 @@ mod tests {
     use crate::v3::rapidhash_v3_inline;
     use super::*;
 
-    compare_rapidhash_file!(compare_rapidhash_v1_file, rapidhash_v3_inline::<false, false>, rapidhash_v3_file_inline::<_, false>);
+    compare_rapidhash_file!(compare_rapidhash_v1_file, rapidhash_v3_inline::<true, false, false>, rapidhash_v3_file_inline::<_, false>);
 }

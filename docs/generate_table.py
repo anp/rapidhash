@@ -69,14 +69,14 @@ def table():
 
     bench_order = ["hashonly", "lookupmiss", "lookuphit", "setbuild"]
     hash_order = [
-#         "rapidhash-f",
+        "rapidhash-f",
         "rapidhash-q",
-#         "foldhash-f",
+        "foldhash-f",
         "foldhash-q",
-#         "gxhash",
-#         "fxhash",
-#         "ahash",
-#         "siphash"
+        "gxhash",
+        "fxhash",
+        "ahash",
+        "siphash"
     ]
 
     distr_order_df = pl.DataFrame({"distr": distr_order, "distr_order_idx": range(len(distr_order))})
@@ -95,7 +95,7 @@ def table():
             .collect()
     )
 
-    with pl.Config(tbl_rows=-1, float_precision=2, tbl_cell_alignment="RIGHT"):
+    with pl.Config(tbl_rows=-1, tbl_cols=-1, float_precision=2, tbl_cell_alignment="RIGHT"):
         print(df.pivot("hash", values="ns"))
         print(
             df

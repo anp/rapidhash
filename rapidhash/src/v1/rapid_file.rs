@@ -38,14 +38,15 @@ pub fn rapidhash_v1_file_seeded(data: &mut File, secrets: &RapidSecrets) -> std:
 pub fn rapidhash_v1_file_inline<const PROTECTED: bool>(data: &mut File, secrets: &RapidSecrets) -> std::io::Result<u64> {
     let len = data.metadata()?.len();
     let mut reader = BufReader::new(data);
-    let (a, b, _) = rapidhash_file_core::<PROTECTED>(0, 0, secrets, len as usize, &mut reader)?;
-    Ok(rapidhash_finish::<PROTECTED>(a, b, len, secrets))
+    let hash = rapidhash_file_core::<PROTECTED>(secrets.seed, &secrets.secrets, len as usize, &mut reader)?;
+    Ok(hash)
 }
 
 #[inline(always)]
-fn rapidhash_file_core<const PROTECTED: bool>(mut a: u64, mut b: u64, rapid_secrets: &RapidSecrets, len: usize, iter: &mut BufReader<&mut File>) -> std::io::Result<(u64, u64, u64)> {
-    let mut seed = rapid_secrets.seed ^ len as u64;
-    let secrets = &rapid_secrets.secrets;
+fn rapidhash_file_core<const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 3], len: usize, iter: &mut BufReader<&mut File>) -> std::io::Result<u64> {
+    let mut a = 0;
+    let mut b = 0;
+    seed ^= len as u64;
 
     if len <= 16 {
         let mut data = [0u8; 16];
@@ -134,7 +135,7 @@ fn rapidhash_file_core<const PROTECTED: bool>(mut a: u64, mut b: u64, rapid_secr
     b ^= seed;
 
     (a, b) = rapid_mum::<PROTECTED>(a, b);
-    Ok((a, b, seed))
+    Ok(rapidhash_finish::<PROTECTED>(a, b, len as u64, secrets))
 }
 
 #[cfg(test)]
@@ -144,5 +145,5 @@ mod tests {
     use crate::v1::rapidhash_v1_inline;
     use super::*;
 
-    compare_rapidhash_file!(compare_rapidhash_v1_file, rapidhash_v1_inline::<false, false, false>, rapidhash_v1_file_inline::<false>);
+    compare_rapidhash_file!(compare_rapidhash_v1_file, rapidhash_v1_inline::<true, false, false, false>, rapidhash_v1_file_inline::<false>);
 }

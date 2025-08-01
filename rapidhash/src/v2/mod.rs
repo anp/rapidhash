@@ -22,10 +22,10 @@ mod tests {
     use crate::util::macros::{compare_to_c, flip_bit_trial};
     use super::*;
 
-    flip_bit_trial!(flip_bit_trial_v2_0, rapidhash_v2_inline::<0, false, false>);
-    flip_bit_trial!(flip_bit_trial_v2_1, rapidhash_v2_inline::<1, false, false>);
-    flip_bit_trial!(flip_bit_trial_v2_2, rapidhash_v2_inline::<2, false, false>);
-    compare_to_c!(compare_to_c_v2_0, rapidhash_v2_inline::<0, false, false>, rapidhash_v2_inline::<0, true, false>, rapidhashcc_v2);
-    compare_to_c!(compare_to_c_v2_1, rapidhash_v2_inline::<1, false, false>, rapidhash_v2_inline::<1, true, false>, rapidhashcc_v2_1);
-    compare_to_c!(compare_to_c_v2_2, rapidhash_v2_inline::<2, false, false>, rapidhash_v2_inline::<2, true, false>, rapidhashcc_v2_2);
+    flip_bit_trial!(flip_bit_trial_v2_0, rapidhash_v2_inline::<0, true, false, false>);
+    flip_bit_trial!(flip_bit_trial_v2_1, rapidhash_v2_inline::<1, true, false, false>);
+    flip_bit_trial!(flip_bit_trial_v2_2, rapidhash_v2_inline::<2, true, false, false>);
+    compare_to_c!(compare_to_c_v2_0, rapidhash_v2_inline::<0, true, false, false>, rapidhash_v2_inline::<0, true, true, false>, rapidhashcc_v2);
+    compare_to_c!(compare_to_c_v2_1, rapidhash_v2_inline::<1, true, false, false>, rapidhash_v2_inline::<1, true, true, false>, rapidhashcc_v2_1);
+    compare_to_c!(compare_to_c_v2_2, rapidhash_v2_inline::<2, true, false, false>, rapidhash_v2_inline::<2, true, true, false>, rapidhashcc_v2_2);
 }

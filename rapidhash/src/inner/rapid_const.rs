@@ -69,8 +69,8 @@ pub(super) const fn rapidhash_core<const AVALANCHE: bool, const COMPACT: bool, c
     }
 }
 
-// TODO: review cold/inline(never)
-// #[cold]
+// allow rustc to inline this, but it should prefer inlining the .hash and .finish
+#[cold]
 #[must_use]
 // #[inline(never)]
 const fn rapidhash_core_16_288<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> u64 {

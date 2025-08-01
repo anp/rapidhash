@@ -22,14 +22,14 @@ mod tests {
     use crate::util::macros::{compare_to_c, flip_bit_trial};
     use super::*;
 
-    flip_bit_trial!(flip_bit_trial_v1, rapidhash_v1_inline::<false, false, false>);
-    flip_bit_trial!(flip_bit_trial_v1_bug, rapidhash_v1_inline::<false, false, true>);
-    compare_to_c!(compare_to_c_v1, rapidhash_v1_inline::<false, false, false>, rapidhash_v1_inline::<true, false, false>, rapidhashcc_v1);
+    flip_bit_trial!(flip_bit_trial_v1, rapidhash_v1_inline::<true, false, false, false>);
+    flip_bit_trial!(flip_bit_trial_v1_bug, rapidhash_v1_inline::<true, false, false, true>);
+    compare_to_c!(compare_to_c_v1, rapidhash_v1_inline::<true, false, false, false>, rapidhash_v1_inline::<true, true, false, false>, rapidhashcc_v1);
 
     #[test]
     fn test_v1_bug() {
         fn rapidhash_bug(data: &str) -> u64 {
-            rapidhash_v1_inline::<false, false, true>(data.as_bytes(), &DEFAULT_RAPID_SECRETS)
+            rapidhash_v1_inline::<true, false, false, true>(data.as_bytes(), &DEFAULT_RAPID_SECRETS)
         }
 
         // The v1.x.x bug was for the 48-byte case
