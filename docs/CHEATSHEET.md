@@ -5,6 +5,19 @@ Repositories are split into multiple crates:
 - `rapidhash-c`: The original rapidhash C code, used for checking correctness.
 - `rapidhash-bench`: A benchmark crate for running benchmarks, separates the benchmarking deps from MSRV tests.
 
+## C++ Dependencies
+We need a C++ compiler so that we can test and benchmark the C implementations of rapidhash at the same time. We do this to verify correctness and performance. Testing without `rapidhash-c` can be done by targeting the `-p rapidhash` crate directly, but the benchmarks currently require the C code to be built.
+
+AWS helper script to set up a fresh Amazon Linux instance for benchmarking.
+```shell
+sudo yum install -y git gcc gcc-c++
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+cargo install criterion
+git clone https://github.com/hoxxep/rapidhash.git
+cd rapidhash
+cargo test --all-features
+```
+
 ## Running Tests
 ```shell
 ## Tests

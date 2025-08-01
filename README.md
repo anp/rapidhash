@@ -2,8 +2,8 @@
 
 A rust implementation of [rapidhash](https://github.com/Nicoshev/rapidhash), the official successor to [wyhash](https://github.com/wangyi-fudan/wyhash).
 
-- **High quality**, the fastest hash passing all tests in the SMHasher and SMHasher3 benchmark. Collision-based study showed a collision probability lower than wyhash, foldhash, and close to ideal.
-- **Very fast**, the fastest passing hash in SMHasher3. Significant peak throughput improvement over wyhash and foldhash. Fastest memory-safe hash. Fastest platform-independent hash. Fastest const hash.
+- **High quality**, the fastest hash passing all tests in the SMHasher and SMHasher3 benchmarks. Collision-based study showed a collision probability that's close to ideal.
+- **Very fast**, the fastest passing hash in SMHasher3. Significant peak throughput improvement over wyhash and foldhash. Fastest platform-independent hash. Fastest const hash.
 - **Platform independent**, works on all platforms, no dependency on machine-specific vectorized or cryptographic hardware instructions. Optimised for both AMD64 and AArch64.
 - **Memory safe**, when the `unsafe` feature is disabled (default). This implementation has also been fuzz-tested with `cargo fuzz`.
 - **No dependencies and no-std compatible** when disabling default features.
@@ -15,29 +15,6 @@ A rust implementation of [rapidhash](https://github.com/Nicoshev/rapidhash), the
 **Sponsored by [Upon](https://uponvault.com?utm_source=github&utm_campaign=rapidhash)**, inheritance vaults for your digital life. Ensure your family can access your devices, accounts, and assets when the unexpected happens.
 
 ## Usage
-### Portable Hashing
-Full compatibility with C++ rapidhash algorithms, methods are provided for all rapidhash V1, V2, and V3 (with micro/nano) variants. These are stable functions whose output will not change between crate versions.
-
-```rust
-use std::hash::{BuildHasher, Hasher};
-use rapidhash::v3::{rapidhash_v3_seeded, RapidSecrets};
-
-/// Set your global hashing secrets.
-/// - For HashDoS resistance, choose a randomised secret.
-/// - For C++ compatibility, use the `seed_cpp` method or `DEFAULT_RAPID_SECRETS`.
-const RAPID_SECRETS: RapidSecrets = RapidSecrets::seed(0x123456);
-
-/// Make a helper function that sets your rapidhash version and secrets.
-#[inline]
-pub fn rapidhash(data: &[u8]) -> u64 {
-    rapidhash_v3_seeded(data, &RAPID_SECRETS)
-}
-
-assert_eq!(rapidhash(b"hello world"), 11653223729569656151);
-```
-
-Please see the [`portable-hash` crate](https://github.com/hoxxep/portable-hash) for why using the standard library hashing traits is not recommended for portable hashing. Rapidhash is planning to implement the `PortableHash` and `PortableHasher` traits in a future release.
-
 ### In-Memory Hashing
 Following rust's `std::hash` traits, the underlying hash function may change between minor versions, and is only suitable for in-memory hashing. These types are optimised for speed and minimal DoS resistance, available in the `rapidhash::fast` and `rapidhash::quality` flavours.
 
@@ -62,6 +39,29 @@ use rapidhash::quality::RapidBuildHasher;
 let hasher = RapidBuildHasher::default();
 assert_eq!(hasher.hash_one(b"hello world"), 1790036888308448300);
 ```
+
+### Portable Hashing
+Full compatibility with C++ rapidhash algorithms, methods are provided for all rapidhash V1, V2, and V3 (with micro/nano) variants. These are stable functions whose output will not change between crate versions.
+
+```rust
+use std::hash::{BuildHasher, Hasher};
+use rapidhash::v3::{rapidhash_v3_seeded, RapidSecrets};
+
+/// Set your global hashing secrets.
+/// - For HashDoS resistance, choose a randomised secret.
+/// - For C++ compatibility, use the `seed_cpp` method or `DEFAULT_RAPID_SECRETS`.
+const RAPID_SECRETS: RapidSecrets = RapidSecrets::seed(0x123456);
+
+/// Make a helper function that sets your rapidhash version and secrets.
+#[inline]
+pub fn rapidhash(data: &[u8]) -> u64 {
+    rapidhash_v3_seeded(data, &RAPID_SECRETS)
+}
+
+assert_eq!(rapidhash(b"hello world"), 11653223729569656151);
+```
+
+Please see the [`portable-hash` crate](https://github.com/hoxxep/portable-hash) for why using the standard library hashing traits is not recommended for portable hashing. Rapidhash is planning to implement the `PortableHash` and `PortableHasher` traits in a future release.
 
 ### CLI
 Rapidhash can also be installed as a CLI tool to hash files or stdin. This is not a cryptographic hash, but should be much faster than cryptographic hashes. This is fully compatible with the C++ rapidhash V1, V2, and V3 algorithms.
