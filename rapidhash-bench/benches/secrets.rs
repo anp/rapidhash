@@ -4,6 +4,7 @@
 //! This makes a strong argument that we should pass `RapidSecrets` by reference,
 //! even if it makes the `RapidHasher` type need an annoying lifetime parameter.
 
+use std::borrow::Cow;
 use std::hint::black_box;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -17,6 +18,7 @@ fn bench_secrets(c: &mut Criterion) {
     group.bench_function("copy/array_ref", profile_copy_array_ref);
     group.bench_function("copy/ref", profile_copy_ref);
     group.bench_function("copy/ref_all", profile_copy_ref_all);
+    group.bench_function("copy/cow", profile_copy_cow);
     group.bench_function("copy/rc", profile_copy_rc);
     group.bench_function("copy/arc", profile_copy_arc);
 }
@@ -31,6 +33,12 @@ struct RapidSecrets {
 struct RapidSecretsRef<'a> {
     seed: u64,
     secret: &'a [u64; 7],
+}
+
+#[derive(Clone)]
+struct RapidSecretsCow<'a> {
+    seed: u64,
+    secret: Cow<'a, [u64; 7]>,
 }
 
 #[derive(Copy, Clone)]
@@ -96,6 +104,18 @@ fn profile_copy_ref_all(b: &mut Bencher) {
     b.iter(|| {
         let secrets: RapidSecretsRefAll = black_box(secrets);  // ref the result
         (secrets.secret[1] ^ secrets.secret[0], secrets)
+    });
+}
+
+fn profile_copy_cow(b: &mut Bencher) {
+    let secrets = RapidSecretsCow {
+        seed: 0x123456789abcdef,
+        secret: Cow::Owned([0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7]),
+    };
+
+    b.iter(|| {
+        let secrets: RapidSecretsCow = black_box(secrets.clone());  // ref the result
+        (secrets.seed ^ secrets.secret[0], secrets)
     });
 }
 
