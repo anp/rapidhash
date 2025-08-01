@@ -3,6 +3,18 @@
 mod tests {
     use std::hash::{BuildHasher, Hasher};
 
+    #[cfg(test)]
+    mod tests {
+        #[cfg(feature = "bench")]
+        #[test]
+        fn test_hashmap_size() {
+            // only enable when std is available
+            assert_eq!(core::mem::size_of::<rapidhash::fast::RapidHashMap<u32, u32>>(), 48);
+            assert_eq!(core::mem::size_of::<foldhash::HashMap<u32, u32>>(), 40);
+        }
+    }
+
+
     /// Helper method for [flip_bit_trial_streaming]. Hashes a byte stream in u8 chunks.
     fn streaming_hash<T: BuildHasher>(hasher: &T, data: &[u8]) -> u64 {
         let mut hasher = hasher.build_hasher();

@@ -2,11 +2,24 @@
 
 ## 3.0.0 (20250730)
 
-- **Breaking:** Add a `RapidSecrets` type for all versions to generate seeds and secrets for HashDoS-resistant hashing. This makes generating unique seeds/secrets easier for persistent hashing use cases.
-- **Breaking:** Replaced `FNV` with a `SPONGE` configuration with `RapidHasher` to improve integer and tuple hashing performance.
-- **Breaking:** Fix the `rapidhash::v1` `V1_BUG` argument to actually match the original `v1.x.x` crate behaviour. The if statement was fundamentally wrong in the `v2.x.x` crate.
-- Added: `rapidhash::rng::rapidrng_fast_non_portable`, a slightly faster, lower-quality RNG that also has optimisations for u32 platforms without wide-arithmetic support. Excellent for generating fixtures in our WASM benchmarks.
-- Perf: `RapidHasher` significantly improved performance hashing integers, tuples, and integer types using the new `SPONGE` configuration in both fast and quality modes.
+Big performance improvements, and potentially rust's fastest general-purpose hasher! Plus it's portable and HashDoS resistant!
+
+### Breaking changes
+- Replaced `FNV` with a `SPONGE` configuration with `RapidHasher` to improve integer and tuple hashing performance.
+- Added a `RapidSecrets` type for all versions to generate seeds and secrets for HashDoS-resistant hashing. This makes generating unique seeds/secrets easier for persistent hashing use cases.
+  - `rapidhash::v*` portable hashing functions now all take a `&RapidSecrets` argument as a seed.
+  - For full compatibility with the old integer seeds, instantiate `RapidSecrets::seed_cpp(u64)` with your integer seed which will continue to use the default secrets.
+  - For minimal DoS resistance, use `RapidSecrets::seed(u64)` to generate a new seed and secrets.
+- `rapidhash_v*_inner` methods have a new `AVALANCHE` const argument to control whether they should avalanche the output. Setting this to `true` will match the old hash output and C++ implementation for the highest quality hashing. Turning off avalanching will reduce the hash quality, but improve performance, especially for small inputs.
+- Fixed the `rapidhash::v1` `V1_BUG` argument to actually match the original `v1.x.x` crate behaviour, which changes the hash output. The if statement was fundamentally wrong in the `v2.x.x` crate and failing to hash some bytes, apologies. This now has a test for further regressions.
+
+### Additions
+- `rapidhash::rng::rapidrng_fast_non_portable`: a slightly faster, lower-quality RNG that also has optimisations for u32 platforms without wide-arithmetic support. Excellent for generating fixtures in our WASM benchmarks.
+
+### Performance improvements
+- `RapidHasher` significantly improved performance hashing integers, tuples, and integer types using the new `SPONGE` configuration in both fast and quality modes.
+- `RapidHasher` now uses a non-portable mixing function for an improvement on platforms with slow wide arithmetic, such as wasm32.
+- `rapidhash::v3` has a healthy performance improvement for mid-size input lengths by skipping the 112+ length setup/teardown.
 
 ## 2.0.2 (20250723)
 

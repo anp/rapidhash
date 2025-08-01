@@ -67,3 +67,13 @@ impl<K, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PR
         RapidHashSet::with_capacity_and_hasher(capacity, RandomState::<AVALANCHE, SPONGE, COMPACT, PROTECTED>::default())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_hashmap_size() {
+        assert_eq!(core::mem::size_of::<RapidHashMap<u32, u32, true, true, false, false>>(), 48);
+    }
+}
