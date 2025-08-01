@@ -176,7 +176,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
                 // sponge is full, so we need to flush it
                 let a = this.sponge as u64;
                 let b = (this.sponge >> 64) as u64;
-                this.seed = rapid_mix_np::<PROTECTED>(a ^ this.secrets[1], b ^ this.seed);
+                this.seed = rapid_mix_np::<PROTECTED>(a ^ this.seed, b ^ this.secrets[1]);
                 this.sponge = bytes as u128;
                 this.sponge_len = N;
             } else {
@@ -264,17 +264,17 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
 
     #[inline(always)]
     fn write_u8(&mut self, i: u8) {
-        *self = self.write_num::<8>(i.into());
+        *self = self.write_num::<8>(i as u64);
     }
 
     #[inline(always)]
     fn write_u16(&mut self, i: u16) {
-        *self = self.write_num::<16>(i.into());
+        *self = self.write_num::<16>(i as u64);
     }
 
     #[inline(always)]
     fn write_u32(&mut self, i: u32) {
-        *self = self.write_num::<32>(i.into());
+        *self = self.write_num::<32>(i as u64);
     }
 
     #[inline(always)]
@@ -359,6 +359,11 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
 mod tests {
     extern crate std;
     use super::*;
+
+    #[test]
+    fn test_hasher_size() {
+        assert_eq!(core::mem::size_of::<RapidHasher::<true, true, false, false>>(), 48);
+    }
 
     /// Test that writing a single u64 outputs the same as writing the equivalent bytes.
     ///
