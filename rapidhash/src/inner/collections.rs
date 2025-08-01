@@ -74,6 +74,6 @@ mod tests {
 
     #[test]
     fn test_hashmap_size() {
-        assert_eq!(core::mem::size_of::<RapidHashMap<u32, u32, true, true, false, false>>(), 48);
+        assert_eq!(core::mem::size_of::<RapidHashMap<u32, u32, true, true, false, false>>(), 40);
     }
 }

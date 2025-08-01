@@ -106,18 +106,41 @@ pub(crate) mod secrets {
         Initialized = 2,
     }
 
-    #[inline]
-    pub fn get_secrets() -> &'static [u64; 7] {
-        if SECRET_STORAGE.state.load(Ordering::Acquire) != SecretStorageStates::Initialized as usize {
-            initialize_secrets();
+    #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+    pub struct GlobalSecrets {
+        _private: (),
+    }
+
+    impl GlobalSecrets {
+        /// Set up the global secrets if they are not already initialized.
+        #[inline(always)]
+        pub fn new() -> Self {
+            if SECRET_STORAGE.state.load(Ordering::Acquire) != SecretStorageStates::Initialized as usize {
+                initialize_secrets();
+            }
+
+            Self { _private: () }
         }
 
-        // SAFETY: The secrets are guaranteed to be initialized before being accessed
-        unsafe {
-            &*SECRET_STORAGE.secrets.get()
+        /// Get the global secrets, which are guaranteed to be initialized.
+        #[inline(always)]
+        pub fn get(self) -> &'static [u64; 7] {
+            // SAFETY: The secrets are guaranteed to be initialized before being accessed
+            // as we cannot construct this struct without first calling `new()`
+            unsafe { &*SECRET_STORAGE.secrets.get() }
         }
     }
 
+    /// Get the global secrets, slow(ish).
+    ///
+    /// Short for `GlobalSecrets::new().get()`.
+    #[inline]
+    pub fn get_secrets() -> &'static [u64; 7] {
+        GlobalSecrets::new().get()
+    }
+
+    #[cold]
+    #[inline(never)]
     fn initialize_secrets() {
         let secrets = create_secrets();
         const INITIALIZED: usize = SecretStorageStates::Initialized as usize;

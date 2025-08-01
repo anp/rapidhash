@@ -9,7 +9,7 @@ mod tests {
         #[test]
         fn test_hashmap_size() {
             // only enable when std is available
-            assert_eq!(core::mem::size_of::<rapidhash::fast::RapidHashMap<u32, u32>>(), 48);
+            assert_eq!(core::mem::size_of::<rapidhash::fast::RapidHashMap<u32, u32>>(), 40);
             assert_eq!(core::mem::size_of::<foldhash::HashMap<u32, u32>>(), 40);
         }
     }
