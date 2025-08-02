@@ -127,6 +127,10 @@ pub fn bench(c: &mut Criterion) {
 
     bench_group::<std::hash::RandomState>(c, "hash/default");
     bench_group::<fxhash::FxBuildHasher>(c, "hash/fxhash");
+    #[cfg(any(
+        all(any(target_arch = "arm", target_arch = "aarch64"), all(target_feature = "aes", target_feature = "neon")),
+        all(any(target_arch = "x86", target_arch = "x86_64"), all(target_feature = "aes", target_feature = "sse2"))
+    ))]
     bench_group::<gxhash::GxBuildHasher>(c, "hash/gxhash");
     bench_group::<ahash::RandomState>(c, "hash/ahash");
     bench_group::<t1ha::T1haBuildHasher>(c, "hash/t1ha");

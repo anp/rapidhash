@@ -15,6 +15,10 @@ fn main() {
     bench_hasher_quality::<rapidhash::quality::RandomState>("RapidHash-Q");
     bench_hasher_quality::<std::collections::hash_map::RandomState>("Default");
     bench_hasher_quality::<BuildHasherDefault<wyhash::WyHash>>("WyHash");
+    #[cfg(any(
+        all(any(target_arch = "arm", target_arch = "aarch64"), all(target_feature = "aes", target_feature = "neon")),
+        all(any(target_arch = "x86", target_arch = "x86_64"), all(target_feature = "aes", target_feature = "sse2"))
+    ))]
     bench_hasher_quality::<gxhash::GxBuildHasher>("GxHash");
     bench_hasher_quality::<fxhash::FxBuildHasher>("FxHash");
     bench_hasher_quality::<BuildHasherDefault<twox_hash::XxHash3_64>>("XxHash (XXH3_64)");

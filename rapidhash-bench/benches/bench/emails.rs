@@ -17,6 +17,10 @@ pub fn bench(c: &mut Criterion) {
         ("hash/rapidhash_cc_v3", Box::new(bench_rapidhash_cc_v3)),
         ("hash/default", Box::new(bench_default)),
         ("hash/fxhash", Box::new(bench_fxhash)),
+        #[cfg(any(
+            all(any(target_arch = "arm", target_arch = "aarch64"), all(target_feature = "aes", target_feature = "neon")),
+            all(any(target_arch = "x86", target_arch = "x86_64"), all(target_feature = "aes", target_feature = "sse2"))
+        ))]
         ("hash/gxhash", Box::new(bench_gxhash)),
         ("hash/wyhash", Box::new(bench_wyhash)),
         ("hash/foldhash", Box::new(bench_foldhash)),
@@ -101,6 +105,10 @@ bench_hash_emails_raw!(bench_rapidhash_cc_v3, rapidhash_c::rapidhashcc_v3);
 bench_hash_emails_raw!(bench_rapidhash_raw, v3_bench);
 bench_hash_emails!(bench_default, std::hash::RandomState::default());
 bench_hash_emails!(bench_fxhash, fxhash::FxBuildHasher::default());
+#[cfg(any(
+    all(any(target_arch = "arm", target_arch = "aarch64"), all(target_feature = "aes", target_feature = "neon")),
+    all(any(target_arch = "x86", target_arch = "x86_64"), all(target_feature = "aes", target_feature = "sse2"))
+))]
 bench_hash_emails!(bench_gxhash, gxhash::GxBuildHasher::default());
 bench_hash_emails!(bench_wyhash, BuildHasherDefault::<WyHash>::default());
 bench_hash_emails!(bench_foldhash, foldhash::quality::RandomState::default());
