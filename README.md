@@ -193,7 +193,7 @@ Rapidhash uses the [foldhash benchmark suite](https://github.com/orlp/foldhash?t
 
 With the `target-cpu = native` option, hashers like gxhash and ahash perform well. Without adding compiler flags for certain features, ahash is slower, and gxhash fails to compile entirely.
 
-Rapidhash and foldhash should be almost identical for integer types and integer tuples, but for some reason rapidhash isn't being inlined for `rgba` or `accesslog` in this benchmark suite. This is potentially a quirk of LLVM inlining in this benchmarking suite, more testing will be done to fix this in a future release.
+Rapidhash and foldhash should be almost identical for integer types and integer tuples, but for some reason rapidhash isn't being inlined for `rgba` or `accesslog` in this benchmark suite. This is potentially a quirk of LLVM inlining in this benchmarking suite, for example, the default SipHasher was unexpectedly faster when not compiling with gxhash for the no CPU feature benchmarks. More testing will be done to address this in a future release.
 
 <details>
 <summary><strong>Intel Xeon, with target-cpu = native</strong></summary>
@@ -282,6 +282,8 @@ Rapidhash and foldhash should be almost identical for integer types and integer 
 
 <details>
 <summary><strong>Intel Xeon, without CPU feature flags</strong></summary>
+
+![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_x86_64_intel_xeon_8488c_portable.svg)
 
 ```text
              ┌────────────────┬─────────────┬─────────────┬────────────┬────────────┬────────┬───────┬─────────┐

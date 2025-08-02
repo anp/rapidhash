@@ -10,11 +10,24 @@ We need a C++ compiler so that we can test and benchmark the C implementations o
 
 AWS helper script to set up a fresh Amazon Linux instance for benchmarking.
 ```shell
+# install git and a C++ compiler
 sudo yum install -y git gcc gcc-c++
+
+# install rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-cargo install criterion
+. "$HOME/.cargo/env"
+
+# install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# install cargo-criterion for benchmarks
+cargo install cargo-criterion
+
+# clone rapidhash
 git clone https://github.com/hoxxep/rapidhash.git
 cd rapidhash
+
+# run tests
 cargo test --all-features
 ```
 

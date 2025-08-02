@@ -11,6 +11,7 @@ Big performance improvements, and potentially rust's fastest general-purpose has
   - `rapidhash::v*` portable hashing functions now all take a `&RapidSecrets` argument as a seed.
   - For full compatibility with the old integer seeds, instantiate `RapidSecrets::seed_cpp(u64)` with your integer seed which will continue to use the default secrets.
   - For minimal DoS resistance, use `RapidSecrets::seed(u64)` to generate a new seed and secrets.
+- `RapidHasher` removed the old `write_const` and `finish_const` methods as they were unlikely to be used and may cause confusion.
 - `rapidhash_v*_inner` methods have a new `AVALANCHE` const argument to control whether they should avalanche the output. Setting this to `true` will match the old hash output and C++ implementation for the highest quality hashing. Turning off avalanching will reduce the hash quality, but improve performance, especially for small inputs.
 - Fixed the `rapidhash::v1` `V1_BUG` argument to actually match the original `v1.x.x` crate behaviour, which changes the hash output. The if statement was fundamentally wrong in the `v2.x.x` crate and failing to hash some bytes, apologies. This now has a test for further regressions.
 
