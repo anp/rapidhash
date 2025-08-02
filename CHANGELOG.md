@@ -6,6 +6,7 @@ Big performance improvements, and potentially rust's fastest general-purpose has
 
 ### Breaking changes
 - Replaced `FNV` with a `SPONGE` configuration with `RapidHasher` to improve integer and tuple hashing performance.
+- `RandomState` removed the `with_seed` and `with_seed_and_static_secrets` methods to reduce the struct size. Please raise a GitHub issue if you need a `SeededState`-style hash builder for the in-memory `RapidHasher`.
 - Added a `RapidSecrets` type for all versions to generate seeds and secrets for HashDoS-resistant hashing. This makes generating unique seeds/secrets easier for persistent hashing use cases.
   - `rapidhash::v*` portable hashing functions now all take a `&RapidSecrets` argument as a seed.
   - For full compatibility with the old integer seeds, instantiate `RapidSecrets::seed_cpp(u64)` with your integer seed which will continue to use the default secrets.

@@ -93,3 +93,14 @@ echo "example" | cargo run --example cli
 # From file
 cargo run --example cli -- example.txt
 ```
+
+## Report Benchmark Data
+Our python scripts have the python dependencies listed at the top of the file in the uv script format to make running them easy without needing to manually set up a virtual environment.
+
+```shell
+# generate the --bench bench charts
+uv run generate_charts.py
+
+# generate the --bench realworld table
+uv run generate_table.py
+```

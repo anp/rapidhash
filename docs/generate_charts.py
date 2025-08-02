@@ -1,7 +1,15 @@
 #!/usr/bin/python3
+#
+# /// script
+# dependencies = [
+#   "cbor2",
+#   "matplotlib",
+# ]
+# ///
+#
+# To be run via: uv run docs/generate_charts.py
 
 import glob
-from xxsubtype import bench
 
 import cbor2
 from matplotlib import pyplot as plt
@@ -121,7 +129,7 @@ def draw_hash():
     axs[1, 1].grid(True, zorder=0, color="gainsboro")
 
     plt.tight_layout()
-    plt.savefig("bench_hash.svg")
+    plt.savefig("./docs/bench_hash.svg")
 
 def draw_map():
     hash_settings = [
@@ -176,7 +184,7 @@ def draw_map():
 
 
 def load_latest_measurement_file(group: str, hash_function: str, bench: str) -> (float, float):
-    measurements = glob.glob(f"../target/criterion/data/main/{group}_{hash_function}/{bench}/measurement*")
+    measurements = glob.glob(f"./target/criterion/data/main/{group}_{hash_function}/{bench}/measurement*")
     measurements.sort()
     assert len(measurements) > 0, f"No measurements found for {hash_function} {bench}"
     measurement_file = measurements[-1]

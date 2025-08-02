@@ -19,6 +19,13 @@ fn profile_bytes<H: BuildHasher + Default>(
     } else {
         group.sample_size(100);
     }
+
+    let batch_size = if bytes_len > 1024 * 1024 {
+        criterion::BatchSize::PerIteration
+    } else {
+        criterion::BatchSize::SmallInput
+    };
+
     group.throughput(Throughput::Bytes(bytes_len as u64));
     group.bench_function(&name, |b| {
         b.iter_batched_ref(|| {
@@ -33,7 +40,7 @@ fn profile_bytes<H: BuildHasher + Default>(
             let mut hasher = build_hasher.build_hasher();
             hasher.write(black_box(bytes));
             black_box(hasher.finish())
-        }, criterion::BatchSize::SmallInput);
+        }, batch_size);
     });
 }
 
@@ -84,6 +91,13 @@ fn profile_bytes_raw<H: Fn(&[u8], u64) -> u64>(
     } else {
         group.sample_size(100);
     }
+
+    let batch_size = if bytes_len > 1024 * 1024 {
+        criterion::BatchSize::PerIteration
+    } else {
+        criterion::BatchSize::SmallInput
+    };
+
     group.throughput(Throughput::Bytes(bytes_len as u64));
     group.bench_function(&name, |b| {
         b.iter_batched_ref(|| {
@@ -92,7 +106,7 @@ fn profile_bytes_raw<H: Fn(&[u8], u64) -> u64>(
             slice
         }, |bytes| {
             black_box(hash(black_box(bytes), 0xbdd89aa982704029))  // using rapidhash V1 seed
-        }, criterion::BatchSize::SmallInput);
+        }, batch_size);
     });
 }
 

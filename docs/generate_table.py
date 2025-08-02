@@ -1,4 +1,13 @@
-# Borrowed from foldhash to generate benchmarking tables.
+#!/usr/bin/python3
+#
+# /// script
+# dependencies = [
+#   "cbor2",
+#   "polars",
+# ]
+# ///
+#
+# To be run via: uv run docs/generate_table.py
 
 import csv
 import json
@@ -8,8 +17,8 @@ import polars as pl
 
 from pathlib import Path
 
-base_path = Path("../target/criterion/")
-csv_path = Path("bench.csv")
+base_path = Path("./target/criterion/")
+csv_path = Path("./docs/bench.csv")
 
 def extract():
 #     if csv_path.exists():
