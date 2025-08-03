@@ -100,7 +100,7 @@ echo "example" | rapidhash --v3
 ![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_aarch64_m1_max.svg)
 
 <details>
-<summary><strong>Benchmark suite, M1 Max (aarch64)</strong></summary>
+<summary><strong>Benchmarks, M1 Max (aarch64)</strong></summary>
 
 ![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_aarch64_m1_max.svg)
 
@@ -189,11 +189,7 @@ Rapidhash uses the [foldhash benchmark suite](https://github.com/orlp/foldhash?t
 </details>
 
 <details>
-<summary><strong>Benchmark suite, Intel Xeon Platinum 8488C (x86_64)</strong></summary>
-
-With the `target-cpu = native` option, hashers like gxhash and ahash perform well. Without adding compiler flags for certain features, ahash is slower, and gxhash fails to compile entirely.
-
-Rapidhash and foldhash should be almost identical for integer types and integer tuples, but for some reason rapidhash isn't being inlined for `rgba` or `accesslog` in this benchmark suite. This is potentially a quirk of LLVM inlining in this benchmarking suite, for example, the default SipHasher was unexpectedly faster when not compiling with gxhash for the no CPU feature benchmarks. More testing will be done to address this in a future release.
+<summary><strong>Benchmarks, Intel Xeon Platinum 8488C (x86_64)</strong></summary>
 
 <details>
 <summary><strong>Intel Xeon, with target-cpu = native</strong></summary>
@@ -364,6 +360,95 @@ Rapidhash and foldhash should be almost identical for integer types and integer 
 ```
 
 </details>
+
+With the `target-cpu = native` option, hashers like gxhash and ahash perform well. Without adding compiler flags for certain features, ahash is slower, and gxhash fails to compile entirely.
+
+Rapidhash and foldhash should be almost identical for integer types and integer tuples, but for some reason rapidhash isn't being inlined for `rgba` or `accesslog` in this benchmark suite. ~This is potentially a quirk of LLVM inlining in this benchmarking suite, for example, the default SipHasher was unexpectedly faster when not compiling with gxhash for the no CPU feature benchmarks. More testing will be done to address this in a future release.~ I made the functions look more inline-able to LLVM. TODO: rerun the benchmarks!
+
+</details>
+
+<details>
+<summary><strong>Benchmarks, AMD EPYC (x86_64)</strong></summary>
+
+```text
+             ┌────────────────┬─────────────┬─────────────┬────────────┬────────────┬────────┬────────┬───────┬─────────┐
+             │         metric ┆ rapidhash-f ┆ rapidhash-q ┆ foldhash-f ┆ foldhash-q ┆ gxhash ┆ fxhash ┆ ahash ┆ siphash │
+             ╞════════════════╪═════════════╪═════════════╪════════════╪════════════╪════════╪════════╪═══════╪═════════╡
+             │       avg_rank ┆        2.30 ┆        4.52 ┆       3.52 ┆       5.45 ┆   4.33 ┆   3.31 ┆  4.61 ┆    7.97 │
+             │ geometric_mean ┆        4.66 ┆        5.46 ┆       5.25 ┆       5.92 ┆   5.02 ┆   5.98 ┆  5.62 ┆   25.81 │
+             └────────────────┴─────────────┴─────────────┴────────────┴────────────┴────────┴────────┴───────┴─────────┘
+
+┌────────────────┬────────────┬─────────────┬─────────────┬────────────┬────────────┬─────────┬─────────┬─────────┬─────────┐
+│          distr ┆      bench ┆ rapidhash-f ┆ rapidhash-q ┆ foldhash-f ┆ foldhash-q ┆  gxhash ┆  fxhash ┆   ahash ┆ siphash │
+│            --- ┆        --- ┆         --- ┆         --- ┆        --- ┆        --- ┆     --- ┆     --- ┆     --- ┆     --- │
+│            str ┆        str ┆         f64 ┆         f64 ┆        f64 ┆        f64 ┆     f64 ┆     f64 ┆     f64 ┆     f64 │
+╞════════════════╪════════════╪═════════════╪═════════════╪════════════╪════════════╪═════════╪═════════╪═════════╪═════════╡
+│            u32 ┆   hashonly ┆        0.70 ┆        0.95 ┆       0.70 ┆       0.95 ┆    0.78 ┆    0.54 ┆    1.08 ┆    8.92 │
+│            u32 ┆ lookupmiss ┆        1.36 ┆        1.65 ┆       1.29 ┆       1.54 ┆    1.55 ┆    1.20 ┆    1.51 ┆    9.97 │
+│            u32 ┆  lookuphit ┆        2.30 ┆        2.73 ┆       2.31 ┆       2.71 ┆    2.90 ┆    2.03 ┆    2.87 ┆   10.79 │
+│            u32 ┆   setbuild ┆        4.32 ┆        4.76 ┆       4.37 ┆       4.80 ┆    5.29 ┆    3.28 ┆    6.23 ┆    9.59 │
+│        u32pair ┆   hashonly ┆        0.70 ┆        0.95 ┆       0.70 ┆       0.95 ┆    1.08 ┆    0.93 ┆    1.35 ┆   13.61 │
+│        u32pair ┆ lookupmiss ┆        1.41 ┆        1.61 ┆       1.40 ┆       1.65 ┆    2.09 ┆    1.40 ┆    1.80 ┆   15.14 │
+│        u32pair ┆  lookuphit ┆        2.19 ┆        2.61 ┆       2.19 ┆       2.58 ┆    2.98 ┆    2.30 ┆    2.89 ┆   16.16 │
+│        u32pair ┆   setbuild ┆        4.61 ┆        5.03 ┆       4.60 ┆       5.00 ┆    6.30 ┆    3.76 ┆    7.05 ┆   12.68 │
+│            u64 ┆   hashonly ┆        0.70 ┆        0.95 ┆       0.70 ┆       0.95 ┆    0.77 ┆    0.54 ┆    1.08 ┆   13.67 │
+│            u64 ┆ lookupmiss ┆        1.29 ┆        1.59 ┆       1.36 ┆       1.54 ┆    1.55 ┆    1.37 ┆    1.49 ┆   14.41 │
+│            u64 ┆  lookuphit ┆        2.21 ┆        2.72 ┆       2.21 ┆       2.71 ┆    2.89 ┆    2.03 ┆    2.82 ┆   14.62 │
+│            u64 ┆   setbuild ┆        4.41 ┆        4.78 ┆       4.36 ┆       4.80 ┆    5.41 ┆    3.30 ┆    6.56 ┆   11.32 │
+│      u64lobits ┆   hashonly ┆        0.70 ┆        0.95 ┆       0.70 ┆       0.95 ┆    0.77 ┆    0.54 ┆    1.08 ┆   13.71 │
+│      u64lobits ┆ lookupmiss ┆        1.39 ┆        1.65 ┆       1.39 ┆       1.54 ┆    1.54 ┆    1.20 ┆    1.49 ┆   14.43 │
+│      u64lobits ┆  lookuphit ┆        2.32 ┆        2.70 ┆       2.34 ┆       2.71 ┆    2.90 ┆    2.00 ┆    2.83 ┆   14.61 │
+│      u64lobits ┆   setbuild ┆        4.46 ┆        4.77 ┆       4.42 ┆       4.82 ┆    5.47 ┆    3.19 ┆    6.70 ┆   11.33 │
+│      u64hibits ┆   hashonly ┆        0.70 ┆        0.95 ┆       0.70 ┆       0.95 ┆    0.78 ┆    0.54 ┆    1.08 ┆   14.28 │
+│      u64hibits ┆ lookupmiss ┆        1.29 ┆        1.65 ┆       1.29 ┆       1.55 ┆    1.55 ┆    1.15 ┆    1.49 ┆   14.36 │
+│      u64hibits ┆  lookuphit ┆        2.30 ┆        2.73 ┆       2.33 ┆       2.71 ┆    2.89 ┆   34.60 ┆    2.82 ┆   14.61 │
+│      u64hibits ┆   setbuild ┆        4.35 ┆        4.83 ┆       4.51 ┆       4.85 ┆    5.44 ┆   82.57 ┆    6.66 ┆   11.33 │
+│        u64pair ┆   hashonly ┆        0.88 ┆        1.20 ┆       0.80 ┆       1.08 ┆    1.08 ┆    0.75 ┆    1.36 ┆   16.37 │
+│        u64pair ┆ lookupmiss ┆        1.50 ┆        1.82 ┆       1.49 ┆       1.80 ┆    1.95 ┆    1.49 ┆    1.93 ┆   18.06 │
+│        u64pair ┆  lookuphit ┆        2.57 ┆        3.00 ┆       2.57 ┆       3.12 ┆    2.97 ┆    2.46 ┆    2.78 ┆   18.24 │
+│        u64pair ┆   setbuild ┆        4.75 ┆        5.16 ┆       4.72 ┆       5.17 ┆    6.42 ┆    3.83 ┆    7.86 ┆   13.97 │
+│           ipv4 ┆   hashonly ┆        0.70 ┆        0.95 ┆       0.70 ┆       0.95 ┆    0.78 ┆    0.54 ┆    1.09 ┆    8.98 │
+│           ipv4 ┆ lookupmiss ┆        1.39 ┆        1.65 ┆       1.41 ┆       1.65 ┆    1.54 ┆    1.20 ┆    1.51 ┆   10.00 │
+│           ipv4 ┆  lookuphit ┆        2.33 ┆        2.72 ┆       2.33 ┆       2.70 ┆    2.89 ┆    2.04 ┆    2.87 ┆   10.97 │
+│           ipv4 ┆   setbuild ┆        4.38 ┆        4.79 ┆       4.38 ┆       4.72 ┆    5.40 ┆    3.40 ┆    6.16 ┆    9.57 │
+│           ipv6 ┆   hashonly ┆        0.68 ┆        0.96 ┆       0.82 ┆       1.13 ┆    0.74 ┆    0.74 ┆    1.35 ┆   12.26 │
+│           ipv6 ┆ lookupmiss ┆        1.43 ┆        1.70 ┆       1.63 ┆       1.80 ┆    1.55 ┆    1.48 ┆    1.66 ┆   15.00 │
+│           ipv6 ┆  lookuphit ┆        2.57 ┆        3.01 ┆       2.66 ┆       3.12 ┆    3.04 ┆    2.72 ┆    3.09 ┆   16.48 │
+│           ipv6 ┆   setbuild ┆        4.75 ┆        5.22 ┆       4.90 ┆       5.39 ┆    5.94 ┆    3.96 ┆    7.15 ┆   13.87 │
+│           rgba ┆   hashonly ┆        0.70 ┆        0.95 ┆       0.70 ┆       0.95 ┆    1.75 ┆    1.42 ┆    2.21 ┆   17.56 │
+│           rgba ┆ lookupmiss ┆        1.68 ┆        1.94 ┆       1.68 ┆       1.94 ┆    3.09 ┆    2.10 ┆    2.60 ┆   18.80 │
+│           rgba ┆  lookuphit ┆        2.88 ┆        3.22 ┆       2.88 ┆       3.25 ┆    4.69 ┆    3.71 ┆    4.15 ┆   19.79 │
+│           rgba ┆   setbuild ┆        5.07 ┆        5.56 ┆       5.11 ┆       5.61 ┆    8.08 ┆    5.23 ┆    8.74 ┆   12.40 │
+│ strenglishword ┆   hashonly ┆        1.60 ┆        2.36 ┆       4.32 ┆       4.39 ┆    1.38 ┆    2.63 ┆    2.62 ┆   13.34 │
+│ strenglishword ┆ lookupmiss ┆        3.86 ┆        4.65 ┆       7.10 ┆       7.40 ┆    4.76 ┆    3.98 ┆    3.01 ┆   14.66 │
+│ strenglishword ┆  lookuphit ┆        6.94 ┆        8.10 ┆      10.36 ┆      11.12 ┆    8.62 ┆    6.48 ┆    6.72 ┆   16.60 │
+│ strenglishword ┆   setbuild ┆       11.75 ┆       13.30 ┆      16.03 ┆      16.54 ┆   12.16 ┆   11.60 ┆   14.20 ┆   20.64 │
+│        struuid ┆   hashonly ┆        3.28 ┆        4.09 ┆       6.34 ┆       6.61 ┆    2.05 ┆    4.22 ┆    2.74 ┆   17.64 │
+│        struuid ┆ lookupmiss ┆        6.38 ┆        7.30 ┆       9.54 ┆       9.76 ┆    5.99 ┆    5.59 ┆    4.06 ┆   19.48 │
+│        struuid ┆  lookuphit ┆       10.35 ┆       11.68 ┆      12.80 ┆      13.55 ┆   10.39 ┆    8.83 ┆    7.99 ┆   22.44 │
+│        struuid ┆   setbuild ┆       15.75 ┆       17.77 ┆      18.48 ┆      19.19 ┆   14.78 ┆   14.69 ┆   15.96 ┆   26.90 │
+│         strurl ┆   hashonly ┆        5.27 ┆        6.51 ┆       8.46 ┆       8.66 ┆    3.43 ┆    9.27 ┆    5.32 ┆   30.95 │
+│         strurl ┆ lookupmiss ┆        7.83 ┆        8.99 ┆      10.83 ┆      11.13 ┆    7.05 ┆   10.81 ┆    6.68 ┆   31.62 │
+│         strurl ┆  lookuphit ┆       13.81 ┆       15.12 ┆      16.10 ┆      16.97 ┆   13.56 ┆   16.54 ┆   12.51 ┆   37.34 │
+│         strurl ┆   setbuild ┆       23.38 ┆       25.01 ┆      25.70 ┆      26.57 ┆   21.68 ┆   32.13 ┆   24.34 ┆   51.96 │
+│        strdate ┆   hashonly ┆        1.62 ┆        2.30 ┆       4.20 ┆       4.25 ┆    1.44 ┆    3.53 ┆    2.18 ┆   14.47 │
+│        strdate ┆ lookupmiss ┆        4.04 ┆        4.85 ┆       7.19 ┆       7.50 ┆    4.92 ┆    4.70 ┆    3.24 ┆   14.99 │
+│        strdate ┆  lookuphit ┆        6.92 ┆        8.09 ┆      10.31 ┆      11.09 ┆    8.51 ┆    7.48 ┆    6.63 ┆   17.02 │
+│        strdate ┆   setbuild ┆       11.06 ┆       12.51 ┆      15.19 ┆      15.79 ┆   11.99 ┆   12.04 ┆   13.52 ┆   19.95 │
+│      accesslog ┆   hashonly ┆        1.56 ┆        1.88 ┆       1.41 ┆       1.85 ┆    1.75 ┆    1.90 ┆    1.97 ┆   20.04 │
+│      accesslog ┆ lookupmiss ┆        2.31 ┆        2.69 ┆       2.28 ┆       2.64 ┆    3.13 ┆    2.92 ┆    2.75 ┆   25.64 │
+│      accesslog ┆  lookuphit ┆        4.88 ┆        5.55 ┆       4.65 ┆       5.08 ┆    6.39 ┆    5.83 ┆    5.44 ┆   30.74 │
+│      accesslog ┆   setbuild ┆        6.65 ┆        7.22 ┆       6.41 ┆       7.01 ┆    9.56 ┆    6.71 ┆    9.53 ┆   18.10 │
+│       kilobyte ┆   hashonly ┆       41.58 ┆       46.38 ┆      47.11 ┆      46.98 ┆   19.46 ┆  159.76 ┆   33.99 ┆  226.68 │
+│       kilobyte ┆ lookupmiss ┆       44.75 ┆       45.71 ┆      47.88 ┆      47.94 ┆   22.45 ┆  153.70 ┆   34.28 ┆  226.29 │
+│       kilobyte ┆  lookuphit ┆       81.00 ┆       82.67 ┆      82.18 ┆      84.00 ┆   64.61 ┆  200.98 ┆   73.51 ┆  256.11 │
+│       kilobyte ┆   setbuild ┆      110.04 ┆      111.02 ┆     111.58 ┆     113.11 ┆   88.97 ┆  257.86 ┆  100.07 ┆  288.33 │
+│    tenkilobyte ┆   hashonly ┆      351.27 ┆      339.95 ┆     380.77 ┆     382.12 ┆  119.51 ┆ 1716.82 ┆  311.11 ┆ 2102.55 │
+│    tenkilobyte ┆ lookupmiss ┆      359.89 ┆      345.88 ┆     383.51 ┆     383.71 ┆  133.03 ┆ 1719.31 ┆  317.48 ┆ 2107.31 │
+│    tenkilobyte ┆  lookuphit ┆      585.82 ┆      569.30 ┆     609.43 ┆     626.90 ┆  379.86 ┆ 2009.79 ┆  552.06 ┆ 2391.62 │
+│    tenkilobyte ┆   setbuild ┆     1543.31 ┆     1535.80 ┆    1602.53 ┆    1599.88 ┆ 1254.72 ┆ 2709.77 ┆ 1401.94 ┆ 2948.51 │
+└────────────────┴────────────┴─────────────┴─────────────┴────────────┴────────────┴─────────┴─────────┴─────────┴─────────┘
+```
 
 </details>
 

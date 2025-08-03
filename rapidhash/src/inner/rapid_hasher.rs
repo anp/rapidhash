@@ -4,6 +4,39 @@ use super::mix::rapid_mix_np;
 use super::rapid_const::rapidhash_core;
 use super::seed::rapidhash_seed;
 
+/// This function needs to be as small as possible to have as high a chance of being inlined as
+/// possible.
+///
+/// We try to generate the least amount of LLVM-IR code to reduce the inlining cost. Rust should
+/// remove the const statements before generating the LLVM-IR.
+macro_rules! write_num {
+    ($write_num:ident, $int:ident) => {
+
+        /// Write an integer to the hasher, marked as `#[inline(always)]`.
+        #[inline(always)]
+        fn $write_num(&mut self, i: $int) {
+            const N: u8 = core::mem::size_of::<$int>() as u8 * 8;
+            if SPONGE {
+                if self.sponge_len + N <= 128 {
+                    // HOT: add the bytes into the sponge
+                    self.sponge |= (i as u128) << self.sponge_len;
+                    self.sponge_len += N;
+                } else {
+                    // COLD: sponge is full, so we need to flush it
+                    let a = self.sponge as u64;
+                    let b = (self.sponge >> 64) as u64;
+                    self.seed = rapid_mix_np::<PROTECTED>(a ^ self.seed, b ^ self.secrets[0]);
+                    self.sponge = i as u128;
+                    self.sponge_len = N;
+                }
+            } else {
+                // slower but high-quality rapidhash
+                self.seed = rapid_mix_np::<PROTECTED>(i as u64 ^ self.secrets[0], i as u64 ^ self.seed);
+            }
+        }
+    };
+}
+
 /// A [Hasher] trait compatible hasher that uses the [rapidhash](https://github.com/Nicoshev/rapidhash)
 /// algorithm, and uses `#[inline(always)]` for all methods.
 ///
@@ -141,44 +174,6 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
     pub const fn default_const() -> Self {
         Self::new(Self::DEFAULT_SEED)
     }
-
-    /// This function needs to be as small as possible to have as high a chance of being inlined as
-    /// possible. So we use good-old SPONGE where the entropy won't be lost, and fold for 64bit inputs.
-    ///
-    /// N = number of _bits_ in the integer type.
-    #[inline(always)]
-    fn write_num<const N: u8>(&mut self, bytes: u128) {
-        if SPONGE {
-            if self.sponge_len + N <= 128 {
-                // HOT: add the bytes into the sponge
-                self.sponge |= bytes << self.sponge_len;
-                self.sponge_len += N;
-            } else {
-                // COLD: sponge is full, so we need to flush it
-                let a = self.sponge as u64;
-                let b = (self.sponge >> 64) as u64;
-                self.seed = rapid_mix_np::<PROTECTED>(a ^ self.seed, b ^ self.secrets[1]);
-                self.sponge = bytes;
-                self.sponge_len = N;
-            }
-        } else {
-            // slower but high-quality rapidhash
-            self.seed = rapid_mix_np::<PROTECTED>(bytes as u64 ^ self.secrets[1], bytes as u64 ^ self.seed);
-        }
-    }
-
-    /// Straightforward fold for 128bit aligned inputs.
-    #[inline(always)]
-    fn write_128(&mut self, bytes: u128) {
-        let a = bytes as u64;
-        let b = (bytes >> 64) as u64;
-        self.seed = rapid_mix_np::<PROTECTED>(a ^ self.secrets[1], b ^ self.seed);
-
-        if SPONGE && AVALANCHE {
-            // if the sponge is being used, u128's aren't guaranteed to be avalanched
-            self.seed = rapid_mix_np::<PROTECTED>(self.seed, DEFAULT_RAPID_SECRETS.secrets[0]);
-        }
-    }
 }
 
 impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Default for RapidHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
@@ -196,24 +191,29 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
 /// inline and heavily optimize the rapidhash_core for each. Where the bytes length is known the
 /// compiler can make significant optimisations and saves us writing them out by hand.
 impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Hasher for RapidHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
+    /// Produce the final hash value, marked as `#[inline(always)]`.
     #[inline(always)]
     fn finish(&self) -> u64 {
         // written to minimise the LLVM-IR lines, as rust should remove the const if statements
         if SPONGE {
-            if self.sponge_len > 0 {
-                let a = self.sponge as u64;
-                let b = (self.sponge >> 64) as u64;
-
-                if !AVALANCHE {
-                    rapid_mix_np::<PROTECTED>(a ^ self.seed, b ^ self.secrets[1])
+            if !AVALANCHE {
+                if self.sponge_len > 0 {
+                    let a = self.sponge as u64;
+                    let b = (self.sponge >> 64) as u64;
+                    rapid_mix_np::<PROTECTED>(a ^ self.seed, b ^ self.secrets[0])
                 } else {
-                    // any integer that's added to the sponge will cause the sponge_len to never be 0,
-                    // so avalanching inside this if is sufficient to avalanche all sponged inputs.
-                    let seed = rapid_mix_np::<PROTECTED>(a ^ self.seed, b ^ self.secrets[1]);
-                    rapid_mix_np::<PROTECTED>(seed, DEFAULT_RAPID_SECRETS.secrets[0])
+                    self.seed
                 }
             } else {
-                self.seed
+                let mut seed = self.seed;
+                if self.sponge_len > 0 {
+                    let a = self.sponge as u64;
+                    let b = (self.sponge >> 64) as u64;
+                    seed = rapid_mix_np::<PROTECTED>(a ^ self.seed, b ^ self.secrets[0]);
+                }
+                // FUTURE: revisit when write_str is stable, as we'd want to move this into the
+                // above if statement
+                rapid_mix_np::<PROTECTED>(seed, DEFAULT_RAPID_SECRETS.secrets[1])
             }
         } else {
             if !AVALANCHE {
@@ -230,96 +230,38 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
         self.seed = rapidhash_core::<AVALANCHE, COMPACT, PROTECTED>(self.seed, self.secrets, bytes);
     }
 
-    #[inline(always)]
-    fn write_u8(&mut self, i: u8) {
-        self.write_num::<8>(i as u128);
-    }
+    write_num!(write_u8, u8);
+    write_num!(write_u16, u16);
+    write_num!(write_u32, u32);
+    write_num!(write_u64, u64);
+    write_num!(write_usize, usize);
+    write_num!(write_i8, i8);
+    write_num!(write_i16, i16);
+    write_num!(write_i32, i32);
+    write_num!(write_i64, i64);
+    write_num!(write_isize, isize);
 
-    #[inline(always)]
-    fn write_u16(&mut self, i: u16) {
-        self.write_num::<16>(i as u128);
-    }
-
-    #[inline(always)]
-    fn write_u32(&mut self, i: u32) {
-        self.write_num::<32>(i as u128);
-    }
-
-    #[inline(always)]
-    fn write_u64(&mut self, i: u64) {
-        self.write_num::<64>(i as u128);
-    }
-
+    /// Write an int to the hasher, marked as `#[inline(always)]`.
     #[inline(always)]
     fn write_u128(&mut self, i: u128) {
-        #[cfg(target_pointer_width = "16")] {
-            self.write_num::<16>(i as u128);
-        }
-
-        #[cfg(target_pointer_width = "32")] {
-            self.write_num::<32>(i as u128);
-        }
-
-        #[cfg(target_pointer_width = "64")] {
-            self.write_num::<64>(i as u128);
-        }
+        let a = i as u64;
+        let b = (i >> 64) as u64;
+        self.seed = rapid_mix_np::<PROTECTED>(a ^ self.seed, b ^ self.secrets[0]);
     }
 
-    #[inline(always)]
-    fn write_usize(&mut self, i: usize) {
-        self.write_num::<64>(i as u128);
-    }
-
-    #[inline(always)]
-    fn write_i8(&mut self, i: i8) {
-        self.write_num::<8>(i as u128);
-    }
-
-    #[inline(always)]
-    fn write_i16(&mut self, i: i16) {
-        self.write_num::<16>(i as u128);
-    }
-
-    #[inline(always)]
-    fn write_i32(&mut self, i: i32) {
-        self.write_num::<32>(i as u128);
-    }
-
-    #[inline(always)]
-    fn write_i64(&mut self, i: i64) {
-        self.write_num::<64>(i as u128);
-    }
-
+    /// Write an int to the hasher, marked as `#[inline(always)]`.
     #[inline(always)]
     fn write_i128(&mut self, i: i128) {
-        self.write_128(i as u128);
+        let a = i as u64;
+        let b = (i as u128 >> 64) as u64;
+        self.seed = rapid_mix_np::<PROTECTED>(a ^ self.seed, b ^ self.secrets[0]);
     }
 
-    #[inline(always)]
-    fn write_isize(&mut self, i: isize) {
-        #[cfg(target_pointer_width = "16")] {
-            self.write_num::<16>(i as u128);
-        }
-
-        #[cfg(target_pointer_width = "32")] {
-            self.write_num::<32>(i as u128);
-        }
-
-        #[cfg(target_pointer_width = "64")] {
-            self.write_num::<64>(i as u128);
-        }
-    }
-
+    // TODO: write_str override once stable; nightly feature; or rustversion cfg
     // #[cfg(feature = "nightly")]
     // #[inline(always)]
     // fn write_str(&mut self, s: &str) {
     //     self.write(s.as_bytes());
-    // }
-    //
-    // #[cfg(feature = "nightly")]
-    // #[inline(always)]
-    // fn write_length_prefix(&mut self, len: usize) {
-    //     self.seed = self.seed.wrapping_add(len);
     // }
 }
 

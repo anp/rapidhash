@@ -10,7 +10,7 @@ use super::{DEFAULT_RAPID_SECRETS, RapidSecrets};
 #[inline]
 #[cfg(test)]
 pub(crate) const fn rapidhash_rs(data: &[u8]) -> u64 {
-    rapidhash_rs_inline::<false, false>(data, &DEFAULT_RAPID_SECRETS)
+    rapidhash_rs_inline::<true, false, false>(data, &DEFAULT_RAPID_SECRETS)
 }
 
 /// Rapidhash a single byte stream, matching the C++ implementation, with a custom seed.
@@ -19,7 +19,7 @@ pub(crate) const fn rapidhash_rs(data: &[u8]) -> u64 {
 #[inline]
 #[cfg(test)]
 pub(crate) const fn rapidhash_rs_seeded(data: &[u8], secrets: &RapidSecrets) -> u64 {
-    rapidhash_rs_inline::<false, false>(data, secrets)
+    rapidhash_rs_inline::<true, false, false>(data, secrets)
 }
 
 /// Rapidhash a single byte stream, matching the C++ implementation.
@@ -28,10 +28,15 @@ pub(crate) const fn rapidhash_rs_seeded(data: &[u8], secrets: &RapidSecrets) -> 
 /// Can provide large performance uplifts for fixed-length inputs at compile time.
 #[inline(always)]
 #[cfg(test)]
-pub(crate) const fn rapidhash_rs_inline<const COMPACT: bool, const PROTECTED: bool>(data: &[u8], secrets: &RapidSecrets) -> u64 {
+pub(crate) const fn rapidhash_rs_inline<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(data: &[u8], secrets: &RapidSecrets) -> u64 {
     let seed = secrets.seed;
     let secrets = &secrets.secrets;
-    rapidhash_core::<true, COMPACT, PROTECTED>(seed, secrets, data)
+    let hash = rapidhash_core::<true, COMPACT, PROTECTED>(seed, secrets, data);
+    if AVALANCHE {
+        rapid_mix_np::<PROTECTED>(hash, super::DEFAULT_RAPID_SECRETS.secrets[0])
+    } else {
+        hash
+    }
 }
 
 #[inline(always)]

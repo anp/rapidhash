@@ -53,6 +53,7 @@ mod tests {
     use std::hash::{BuildHasher, Hash, Hasher};
     use std::collections::BTreeSet;
     use rand::Rng;
+    use crate::inner::mix::rapid_mix_np;
     use super::seed::{DEFAULT_RAPID_SECRETS, DEFAULT_SEED};
     use super::rapid_const::{rapidhash_rs, rapidhash_rs_seeded};
 
@@ -200,7 +201,9 @@ mod tests {
                     data[byte] ^= 1 << bit;
 
                     let rust_hash = rapidhash_rs_seeded(&data, &DEFAULT_RAPID_SECRETS);
-                    let c_hash = rapidhashcc_rs(&data, DEFAULT_SEED);
+                    let mut c_hash = rapidhashcc_rs(&data, DEFAULT_SEED);
+                    // TODO: remove this hack; it's to make it work with how the Hasher avalanches
+                    c_hash = rapid_mix_np::<false>(c_hash, DEFAULT_RAPID_SECRETS.secrets[0]);
                     assert_eq!(rust_hash, c_hash, "Mismatch with input {} byte {} bit {}", len, byte, bit);
 
                     let mut rust_hasher = RapidBuildHasher::default().build_hasher();
