@@ -211,7 +211,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
 
     write_num!(write_u8, u8, u8);
     write_num!(write_u16, u16, u16);
-    write_num!(write_u32, u32, u16);
+    write_num!(write_u32, u32, u32);
     write_num!(write_u64, u64, u64);
     write_num!(write_usize, usize, usize);
     write_num!(write_i8, i8, u8);
