@@ -1,4 +1,4 @@
-use core::hash::{BuildHasher, Hash, Hasher};
+use core::hash::{BuildHasher};
 use crate::inner::RapidHasher;
 use crate::inner::seeding::secrets::GlobalSecrets;
 
@@ -57,17 +57,6 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
     #[inline(always)]
     fn build_hasher(&self) -> Self::Hasher {
         RapidHasher::new_precomputed_seed(self.seed, self.secrets.get())
-    }
-
-    #[inline]
-    fn hash_one<T: Hash>(&self, x: T) -> u64
-    where
-        Self: Sized,
-        Self::Hasher: Hasher,
-    {
-        let mut hasher = self.build_hasher();
-        x.hash(&mut hasher);  // <-- trying hard to inline this
-        hasher.finish()
     }
 }
 
