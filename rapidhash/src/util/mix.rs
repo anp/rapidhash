@@ -30,8 +30,13 @@ pub(crate) const fn rapid_mum<const PROTECTED: bool>(a: u64, b: u64) -> (u64, u6
 #[inline(always)]
 #[must_use]
 pub(crate) const fn rapid_mix<const PROTECTED: bool>(a: u64, b: u64) -> u64 {
-    let (a, b) = rapid_mum::<PROTECTED>(a, b);
-    a ^ b
+    let r = (a as u128).wrapping_mul(b as u128);
+
+    if !PROTECTED {
+        (r as u64) ^ (r >> 64) as u64
+    } else {
+        (a ^ r as u64) ^ (b ^ (r >> 64) as u64)
+    }
 }
 
 #[cfg(test)]
