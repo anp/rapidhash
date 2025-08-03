@@ -58,8 +58,8 @@ def draw_hash():
     if "--raw" in sys.argv:
         hash_settings = [
             ("rapidhash_raw", "b"),
-            ("rapidhash_cc_rs", "y"),
-            ("rapidhash_cc_v3", "b"),
+            ("rapidhash_cc_rs", "c"),
+            ("rapidhash_cc_v3", "y"),
             ("rapidhash_cc_v2_2", "g"),
 #             ("rapidhash_cc_v2_1", "g"),
 #             ("rapidhash_cc_v2", "g"),
@@ -89,7 +89,11 @@ def draw_hash():
         latency_data.append(latency_row)
         throughput_data.append(throughput_row)
 
-        latency, throughput = load_latest_measurement_file("hash", hash_function, "u64")
+        u64_measurement = "u64"
+        if "--raw" in sys.argv:
+            u64_measurement = "str_8"
+
+        latency, throughput = load_latest_measurement_file("hash", hash_function, u64_measurement)
         latency_data_u64.append(latency)
         throughput_data_u64.append(throughput)
 
