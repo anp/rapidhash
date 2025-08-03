@@ -61,7 +61,7 @@ pub fn rapidhash(data: &[u8]) -> u64 {
 }
 
 /// Hash streaming data with the rapidhash V3 algorithm.
-pub fn rapidhash_stream<R: std::io::Read>(reader: R) -> std::io::Error<u64> {
+pub fn rapidhash_stream<R: std::io::Read>(reader: R) -> std::io::Result<u64> {
     rapidhash_v3_file_seeded(reader, &RAPID_SECRETS)
 }
 
@@ -368,7 +368,7 @@ Rapidhash and foldhash should be almost identical for integer types and integer 
 </details>
 
 <details>
-<summary><strong>Benchmarks, AMD EPYC (x86_64)</strong></summary>
+<summary><strong>Benchmarks, AMD EPYC 9R14 (x86_64)</strong></summary>
 
 ```text
              ┌────────────────┬─────────────┬─────────────┬────────────┬────────────┬────────┬────────┬───────┬─────────┐
