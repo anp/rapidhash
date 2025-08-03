@@ -88,6 +88,10 @@ def table():
         "siphash"
     ]
 
+    # Filter out gxhash if --portable is set
+    if "--portable" in sys.argv:
+        hash_order = [h for h in hash_order if h != "gxhash"]
+
     distr_order_df = pl.DataFrame({"distr": distr_order, "distr_order_idx": range(len(distr_order))})
     bench_order_df = pl.DataFrame({"bench": bench_order, "bench_order_idx": range(len(bench_order))})
     hash_order_df = pl.DataFrame({"hash": hash_order, "hash_order_idx": range(len(hash_order))})
@@ -104,7 +108,7 @@ def table():
             .collect()
     )
 
-    with pl.Config(tbl_rows=-1, tbl_cols=-1, float_precision=2, tbl_cell_alignment="RIGHT"):
+    with pl.Config(tbl_rows=-1, tbl_cols=-1, tbl_width_chars=-1, float_precision=2, tbl_cell_alignment="RIGHT"):
         print(df.pivot("hash", values="ns"))
         print(
             df

@@ -10,6 +10,7 @@
 # To be run via: uv run docs/generate_charts.py
 
 import glob
+import sys
 
 import cbor2
 from matplotlib import pyplot as plt
@@ -46,6 +47,13 @@ def draw_hash():
         ("fxhash", "r"),
         ("default", "k"),
     ]
+
+    # Filter out gxhash if --portable is specified
+    if "--portable" in sys.argv:
+        hash_settings = [
+            setting for setting in hash_settings
+            if not setting[0].startswith("gxhash")
+        ]
 
     hash_names = [hash_function for hash_function, _ in hash_settings]
 

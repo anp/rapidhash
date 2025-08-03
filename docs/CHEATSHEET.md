@@ -26,9 +26,6 @@ cargo install cargo-criterion
 # clone rapidhash
 git clone https://github.com/hoxxep/rapidhash.git
 cd rapidhash
-
-# run tests
-cargo test --all-features
 ```
 
 ## Running Tests
@@ -59,7 +56,7 @@ RUSTFLAGS="-C target-cpu=native" cargo criterion --bench bench --all-features
 RUSTFLAGS="-C target-cpu=native" cargo criterion --bench bench --features bench
 
 # Run the realworld benchmark, which is a modification of the foldhash benchmarks
-RUSTFLAGS="-C target-cpu=native" cargo criterion --profile bench --bench realworld --all-features
+RUSTFLAGS="-C target-cpu=native" cargo criterion --bench realworld --all-features
 
 # Run quality tests across various hash functions
 RUSTFLAGS="-C target-cpu=native" cargo bench --bench quality --all-features
