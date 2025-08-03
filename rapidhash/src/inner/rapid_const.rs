@@ -31,9 +31,9 @@ pub(crate) const fn rapidhash_rs_seeded(data: &[u8], secrets: &RapidSecrets) -> 
 pub(crate) const fn rapidhash_rs_inline<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(data: &[u8], secrets: &RapidSecrets) -> u64 {
     let seed = secrets.seed;
     let secrets = &secrets.secrets;
-    let hash = rapidhash_core::<true, COMPACT, PROTECTED>(seed, secrets, data);
+    let hash = rapidhash_core::<AVALANCHE, COMPACT, PROTECTED>(seed, secrets, data);
     if AVALANCHE {
-        rapid_mix_np::<PROTECTED>(hash, super::DEFAULT_RAPID_SECRETS.secrets[0])
+        rapid_mix_np::<PROTECTED>(hash, super::DEFAULT_RAPID_SECRETS.secrets[1])
     } else {
         hash
     }

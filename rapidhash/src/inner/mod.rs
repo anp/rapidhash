@@ -71,12 +71,12 @@ mod tests {
         let object = Object { bytes: b"hello world".to_vec() };
         let mut hasher = RapidHasher::default();
         object.hash(&mut hasher);
-        assert_eq!(hasher.finish(), 1790036888308448300);
+        assert_eq!(hasher.finish(), 9938606849760368330);
 
         let mut hasher = RapidHasher::default();
         hasher.write_usize(b"hello world".len());
         hasher.write(b"hello world");
-        assert_eq!(hasher.finish(), 1790036888308448300);
+        assert_eq!(hasher.finish(), 9938606849760368330);
     }
 
     /// Check RapidHasher is equivalent to the raw rapidhash for a single byte stream.
@@ -203,7 +203,7 @@ mod tests {
                     let rust_hash = rapidhash_rs_seeded(&data, &DEFAULT_RAPID_SECRETS);
                     let mut c_hash = rapidhashcc_rs(&data, DEFAULT_SEED);
                     // TODO: remove this hack; it's to make it work with how the Hasher avalanches
-                    c_hash = rapid_mix_np::<false>(c_hash, DEFAULT_RAPID_SECRETS.secrets[0]);
+                    c_hash = rapid_mix_np::<false>(c_hash, DEFAULT_RAPID_SECRETS.secrets[1]);
                     assert_eq!(rust_hash, c_hash, "Mismatch with input {} byte {} bit {}", len, byte, bit);
 
                     let mut rust_hasher = RapidBuildHasher::default().build_hasher();

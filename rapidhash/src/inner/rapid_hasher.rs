@@ -17,21 +17,25 @@ macro_rules! write_num {
         fn $write_num(&mut self, i: $int) {
             const N: u8 = core::mem::size_of::<$int>() as u8 * 8;
             if SPONGE {
+                // this early u128 conversion is important on x86, as if it impacts the LLVM
+                // inlining cost too much to have it inside the if statement...
+                let bytes = i as u128;
                 if self.sponge_len + N <= 128 {
                     // HOT: add the bytes into the sponge
-                    self.sponge |= (i as u128) << self.sponge_len;
+                    self.sponge |= bytes << self.sponge_len;
                     self.sponge_len += N;
                 } else {
                     // COLD: sponge is full, so we need to flush it
                     let a = self.sponge as u64;
                     let b = (self.sponge >> 64) as u64;
                     self.seed = rapid_mix_np::<PROTECTED>(a ^ self.seed, b ^ self.secrets[0]);
-                    self.sponge = i as u128;
+                    self.sponge = bytes;
                     self.sponge_len = N;
                 }
             } else {
                 // slower but high-quality rapidhash
-                self.seed = rapid_mix_np::<PROTECTED>(i as u64 ^ self.secrets[0], i as u64 ^ self.seed);
+                let bytes = i as u64;
+                self.seed = rapid_mix_np::<PROTECTED>(bytes ^ self.secrets[0], bytes ^ self.seed);
             }
         }
     };
@@ -107,21 +111,6 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
         Self::Hasher::new_precomputed_seed(self.seed, self.secrets)
     }
 
-    /// The aim of the game here is twofold:
-    /// - let the compiler inline as much as possible
-    /// - ensure the compiler prioritises inlining `x.hash()`, which has the biggest boost to
-    ///   performance by allowing it to optimise out most of the sponge logic
-    ///
-    /// This is evident in the realworld benchmarks — only run one benchmark with inline everything
-    /// and hashing is up to 2x faster. Play your cards wrong with variables in the wrong order or
-    /// too many instructions and if x.hash() isn't inlined it can be 5x slower in a bunch of
-    /// benchmarks... Frustrating voodoo to be up against! An alternative is to remove the sponge
-    /// and hash numbers in a more optimal way.
-    ///
-    /// Ultimately `write_num` and `finish()` are more important to be inlined than the
-    /// `write(bytes)` as they can optimise away the sponge flushing/if logic. Write bytes is
-    /// simply incurring a single function call, unless the bytes are of compile-time known length,
-    /// in which case there are large gains again.
     #[inline]
     fn hash_one<T: Hash>(&self, x: T) -> u64
     where
