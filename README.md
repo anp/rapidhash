@@ -97,18 +97,16 @@ echo "example" | rapidhash --v3
 
 ## Benchmarks
 
+We believe rapidhash is one of the fastest _general-purpose_ hash functions. It places second to gxhash on some benchmarks, but gxhash is not portable and requires AES instructions to compile, and only shows significant advantages when hashing strings. Between rapidhash, gxhash, fxhash, and the default siphasher, we see little reason to use other hash functions without specifically benchmarking them for your workload.
+
 ![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_aarch64_apple_m1_max_native.svg)
 
-Raw throughput isn't the only measure to consider, as the interactions with Rust's `std::hash::Hasher` trait and the `HashMap` and `HashSet` types have a significant effect on inlining and performance across various different types.
+Rapidhash uses raw throughput benchmarks (the charts) to measure performance over various input sizes, and the [foldhash benchmark suite](https://github.com/orlp/foldhash?tab=readme-ov-file#performance) (the txt tables) to measure workloads that are closer to real-world usage. The foldhash suite benchmarks hashers by measuring raw hash throughput, hashmap lookup miss, hashmap lookup hit, and hashmap insertion performance on a wide variety of commonly hashed types.
 
-Rapidhash uses its own benchmark charts (the charts) to measure raw throughput, and the [foldhash benchmark suite](https://github.com/orlp/foldhash?tab=readme-ov-file#performance) (the txt tables) for benchmarks that are closer to real-world usage. The foldhash suite benchmarks hashers by measuring raw hash throughput, hashmap lookup miss, hashmap lookup hit, and hashmap insertion performance on a wide variety of commonly hashed types.
-
-We ran the benchmarks with and without `-C target-cpu=native` on a variety of platforms to demonstrate rapidhash's strong all-round performance. The full results are available in the [docs folder](https://github.com/hoxxep/rapidhash/tree/master/docs).
+The benchmarks have been compiled with and without `-C target-cpu=native` on a variety of platforms to demonstrate rapidhash's strong all-round performance. The full results are available in the [docs folder](https://github.com/hoxxep/rapidhash/tree/master/docs) and are summarised below.
 
 <details>
 <summary><strong>aarch64 Apple M1 Max (target-cpu=native)</strong></summary>
-
-![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_aarch64_apple_m1_max_native.svg)
 
 ```text
 ┌────────────────┬─────────────┬─────────────┬────────────┬────────────┬────────┬────────┬───────┬─────────┐
@@ -119,12 +117,28 @@ We ran the benchmarks with and without `-C target-cpu=native` on a variety of pl
 └────────────────┴─────────────┴─────────────┴────────────┴────────────┴────────┴────────┴───────┴─────────┘
 ```
 
+![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_aarch64_apple_m1_max_native.svg)
+
+</details>
+
+<details>
+<summary><strong>aarch64 AWS Graviton3</strong></summary>
+
+```text
+┌────────────────┬─────────────┬─────────────┬────────────┬────────────┬────────┬───────┬─────────┐
+│         metric ┆ rapidhash-f ┆ rapidhash-q ┆ foldhash-f ┆ foldhash-q ┆ fxhash ┆ ahash ┆ siphash │
+╞════════════════╪═════════════╪═════════════╪════════════╪════════════╪════════╪═══════╪═════════╡
+│       avg_rank ┆        2.27 ┆        3.88 ┆       3.08 ┆       4.66 ┆   2.11 ┆  5.05 ┆    6.97 │
+│ geometric_mean ┆        7.82 ┆        9.03 ┆       8.53 ┆       9.66 ┆   8.02 ┆ 10.98 ┆   29.31 │
+└────────────────┴─────────────┴─────────────┴────────────┴────────────┴────────┴───────┴─────────┘
+```
+
+![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_aarch64_aws_graviton3.svg)
+
 </details>
 
 <details>
 <summary><strong>aarch64 AWS Graviton3 (target-cpu=native)</strong></summary>
-
-![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_aarch64_aws_graviton3_native.svg)
 
 ```text
 ┌────────────────┬─────────────┬─────────────┬────────────┬────────────┬────────┬────────┬───────┬─────────┐
@@ -135,12 +149,28 @@ We ran the benchmarks with and without `-C target-cpu=native` on a variety of pl
 └────────────────┴─────────────┴─────────────┴────────────┴────────────┴────────┴────────┴───────┴─────────┘
 ```
 
+![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_aarch64_aws_graviton3_native.svg)
+
+</details>
+
+<details>
+<summary><strong>x86_64 AMD EPYC 9R14</strong></summary>
+
+```text
+┌────────────────┬─────────────┬─────────────┬────────────┬────────────┬────────┬───────┬─────────┐
+│         metric ┆ rapidhash-f ┆ rapidhash-q ┆ foldhash-f ┆ foldhash-q ┆ fxhash ┆ ahash ┆ siphash │
+╞════════════════╪═════════════╪═════════════╪════════════╪════════════╪════════╪═══════╪═════════╡
+│       avg_rank ┆        2.05 ┆        3.75 ┆       2.81 ┆       4.42 ┆   3.09 ┆  4.91 ┆    6.97 │
+│ geometric_mean ┆        4.67 ┆        5.38 ┆       5.27 ┆       5.99 ┆   6.13 ┆  6.50 ┆   23.66 │
+└────────────────┴─────────────┴─────────────┴────────────┴────────────┴────────┴───────┴─────────┘
+```
+
+![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_x86_64_amd_epyc_9R14.svg)
+
 </details>
 
 <details>
 <summary><strong>x86_64 AMD EPYC 9R14 (target-cpu=native)</strong></summary>
-
-![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_x86_64_amd_epyc_9R14_native.svg)
 
 ```text
 ┌────────────────┬─────────────┬─────────────┬────────────┬────────────┬────────┬────────┬───────┬─────────┐
@@ -151,12 +181,28 @@ We ran the benchmarks with and without `-C target-cpu=native` on a variety of pl
 └────────────────┴─────────────┴─────────────┴────────────┴────────────┴────────┴────────┴───────┴─────────┘
 ```
 
+![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_x86_64_amd_epyc_9R14_native.svg)
+
+</details>
+
+<details>
+<summary><strong>x86_64 Intel Xeon Platinum 8488C</strong></summary>
+
+```text
+┌────────────────┬─────────────┬─────────────┬────────────┬────────────┬────────┬───────┬─────────┐
+│         metric ┆ rapidhash-f ┆ rapidhash-q ┆ foldhash-f ┆ foldhash-q ┆ fxhash ┆ ahash ┆ siphash │
+╞════════════════╪═════════════╪═════════════╪════════════╪════════════╪════════╪═══════╪═════════╡
+│       avg_rank ┆        1.86 ┆        3.83 ┆       2.86 ┆       4.50 ┆   2.95 ┆  5.03 ┆    6.97 │
+│ geometric_mean ┆        4.52 ┆        5.18 ┆       4.95 ┆       5.55 ┆   5.67 ┆  6.33 ┆   20.24 │
+└────────────────┴─────────────┴─────────────┴────────────┴────────────┴────────┴───────┴─────────┘
+```
+
+![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_x86_64_intel_xeon_8488c.svg)
+
 </details>
 
 <details>
 <summary><strong>x86_64 Intel Xeon Platinum 8488C (target-cpu=native)</strong></summary>
-
-![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_x86_64_intel_xeon_8488c_native.svg)
 
 ```text
 ┌────────────────┬─────────────┬─────────────┬────────────┬────────────┬────────┬────────┬───────┬─────────┐
@@ -167,14 +213,16 @@ We ran the benchmarks with and without `-C target-cpu=native` on a variety of pl
 └────────────────┴─────────────┴─────────────┴────────────┴────────────┴────────┴────────┴───────┴─────────┘
 ```
 
+![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_x86_64_intel_xeon_8488c_native.svg)
+
 </details>
 
 <details>
 <summary><strong>Benchmark notes</strong></summary>
 
-- Hash throughput/latency does not measure hash "quality", and many of the benchmarked functions fail the [SMHasher3 hash benchmarks](https://gitlab.com/fwojcik/smhasher3). Hash quality affects hashmap performance, as well as algorithms that benefit from high quality hash functions such as HyperLogLog and MinHash.
-- Most hash functions will be affected heavily by whether the compiler has inlined them. Rapidhash tries very hard to always be inlined by the compiler, but the larger a program, benchmark, or the hashed type gets, the less likely it is to be inlined due to Rust's `Hash::hash` method not being `#[inline(always)]`.
-- `gxhash` achieves its high throughput by using AES instructions and consistently outperforms the other accelerated hashers (ahash, th1a, xxhash3_64). It's a great hash function, but is not a portable hash function (requiring `target-cpu=native` or specific feature flags to compile). Gxhash is a great choice for applications that can guarantee the availability of AES instructions and mostly hash strings.
+- Hash throughput does not measure hash "quality", and many of the benchmarked functions fail the [SMHasher3 hash quality benchmarks](https://gitlab.com/fwojcik/smhasher3). Rapidhash is the fastest hash to pass all quality benchmarks. Hash quality affects hashmap performance, as well as algorithms that benefit from high quality hash functions such as HyperLogLog and MinHash.
+- **Comparison to foldhash**: Rapidhash uses the same integer buffer construction as foldhash, but is notably faster when hashing strings by making use of the rapidhash algorithm. Rapidhash also offers portable and streaming hash flavours.
+- **Comparison to gxhash**: gxhash achieves its high throughput by using AES instructions and consistently outperforms the other accelerated hashers (ahash, th1a, xxhash3_64). It's a great hash function, but is not a portable hash function, requiring `target-cpu=native` or specific feature flags to compile. Gxhash is a great choice for applications that can guarantee the availability of AES instructions and mostly hash strings, but rapidhash may be preferred for hashing tuples and structs, or by libraries that support a wide range of platforms.
 - The default rust hasher (SipHasher) unexpectedly appears to run consistently faster _without_ `target-cpu=native` on various x86 and ARM chips.
 - Benchmark your own use case, with your real world dataset! We suggest experimenting with different hash functions to see which one works best for your use case. Rapidhash is great for fast general-purpose hashing in libraries and applications, but certain hashers will outperform for specific use cases.
 
