@@ -208,7 +208,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
             if !AVALANCHE {
                 self.seed
             } else {
-                rapid_mix_np::<PROTECTED>(self.seed, DEFAULT_RAPID_SECRETS.secrets[0])
+                rapid_mix_np::<PROTECTED>(self.seed, DEFAULT_RAPID_SECRETS.secrets[1])
             }
         }
     }

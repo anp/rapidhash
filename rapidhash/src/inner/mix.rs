@@ -69,7 +69,13 @@ pub(super) const fn rapid_mum_np<const PROTECTED: bool>(a: u64, b: u64) -> (u64,
         let hl = (hx as u64).wrapping_mul(ly as u64);
         let hh = (hx as u64).wrapping_mul(hy as u64);
 
-        ((hh ^ ll), (hl ^ lh).rotate_right(32))
+        if !PROTECTED {
+            ((hh ^ ll), (hl ^ lh).rotate_right(32))
+        } else {
+            // If protected, we XOR the inputs with the results.
+            // This is to ensure that the inputs are not recoverable from the output.
+            ((a ^ hh ^ ll), (b ^ hl ^ lh).rotate_right(32))
+        }
     }
 }
 
@@ -129,7 +135,13 @@ pub(super) const fn rapid_mix_np<const PROTECTED: bool>(a: u64, b: u64) -> u64 {
         let hl = (hx as u64).wrapping_mul(ly as u64);
         let hh = (hx as u64).wrapping_mul(hy as u64);
 
-        (hh ^ ll) ^ (hl ^ lh).rotate_right(32)
+        if !PROTECTED {
+            (hh ^ ll) ^ (hl ^ lh).rotate_right(32)
+        } else {
+            // If protected, we XOR the inputs with the results.
+            // This is to ensure that the inputs are not recoverable from the output.
+            (a ^ hh ^ ll) ^ (b ^ hl ^ lh).rotate_right(32)
+        }
     }
 }
 

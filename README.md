@@ -61,7 +61,7 @@ pub fn rapidhash(data: &[u8]) -> u64 {
 }
 
 /// Hash streaming data with the rapidhash V3 algorithm.
-pub fn rapidhash_stream<R: std::io::Read>(reader: R) -> u64 {
+pub fn rapidhash_stream<R: std::io::Read>(reader: R) -> std::io::Error<u64> {
     rapidhash_v3_file_seeded(reader, &RAPID_SECRETS)
 }
 
