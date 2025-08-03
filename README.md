@@ -39,7 +39,7 @@ use rapidhash::quality::RapidBuildHasher;
 
 // Using the RapidHasher directly for in-memory hashing.
 let hasher = RapidBuildHasher::default();
-assert_eq!(hasher.hash_one(b"hello world"), 1790036888308448300);
+assert_eq!(hasher.hash_one(b"hello world"), 9938606849760368330);
 ```
 
 ### Portable Hashing
@@ -66,7 +66,7 @@ pub fn rapidhash_stream<R: std::io::Read>(reader: R) -> std::io::Result<u64> {
 }
 
 assert_eq!(rapidhash(b"hello world"), 11653223729569656151);
-assert_eq!(rapidhash_stream(std::io::Cursor::new(b"hello world")), 11653223729569656151);
+assert_eq!(rapidhash_stream(std::io::Cursor::new(b"hello world")).unwrap(), 11653223729569656151);
 ```
 
 Please see the [`portable-hash` crate](https://github.com/hoxxep/portable-hash) for why using the standard library hashing traits is not recommended for portable hashing. Rapidhash is planning to implement the `PortableHash` and `PortableHasher` traits in a future release.
