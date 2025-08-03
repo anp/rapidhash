@@ -11,7 +11,9 @@ use super::{DEFAULT_RAPID_SECRETS, RapidSecrets, rapidhash_finish};
 /// This method will check the metadata for a file length, and then stream the file with a
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
+#[deprecated(note = "Rapidhash V2 is not a streaming algorithm. We recommend using V3 instead.")]
 pub fn rapidhash_v2_2_file(data: &mut File) -> std::io::Result<u64> {
+    #[allow(deprecated)]
     rapidhash_v2_file_inline::<2, false>(data, &DEFAULT_RAPID_SECRETS)
 }
 
@@ -22,7 +24,9 @@ pub fn rapidhash_v2_2_file(data: &mut File) -> std::io::Result<u64> {
 /// This method will check the metadata for a file length, and then stream the file with a
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
+#[deprecated(note = "Rapidhash V2 is not a streaming algorithm. We recommend using V3 instead.")]
 pub fn rapidhash_v2_2_file_seeded(data: &mut File, secrets: &RapidSecrets) -> std::io::Result<u64> {
+    #[allow(deprecated)]
     rapidhash_v2_file_inline::<2, false>(data, secrets)
 }
 
@@ -44,6 +48,7 @@ pub fn rapidhash_v2_2_file_seeded(data: &mut File, secrets: &RapidSecrets) -> st
 /// - 1: v2.1
 /// - 2: v2.2
 #[inline(always)]
+#[deprecated(note = "Rapidhash V2 is not a streaming algorithm. We recommend using V3 instead.")]
 pub fn rapidhash_v2_file_inline<const MINOR: u8, const PROTECTED: bool>(data: &mut File, secrets: &RapidSecrets) -> std::io::Result<u64> {
     let len = data.metadata()?.len();
     let mut reader = BufReader::new(data);
@@ -201,6 +206,8 @@ fn rapidhash_file_core<const MINOR: u8, const PROTECTED: bool>(mut seed: u64, se
 
 #[cfg(test)]
 mod tests {
+    #![allow(deprecated)]
+
     use std::io::{Seek, SeekFrom, Write};
     use crate::util::macros::compare_rapidhash_file;
     use crate::v2::rapidhash_v2_inline;

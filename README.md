@@ -165,7 +165,6 @@ We ran the benchmarks with and without `-C target-cpu=native` on a variety of pl
 │       avg_rank ┆        2.38 ┆        4.69 ┆       3.52 ┆       5.30 ┆   4.08 ┆   3.39 ┆  4.69 ┆    7.97 │
 │ geometric_mean ┆        4.46 ┆        5.09 ┆       4.88 ┆       5.42 ┆   4.73 ┆   5.58 ┆  5.26 ┆   21.34 │
 └────────────────┴─────────────┴─────────────┴────────────┴────────────┴────────┴────────┴───────┴─────────┘
-
 ```
 
 </details>
@@ -181,12 +180,12 @@ We ran the benchmarks with and without `-C target-cpu=native` on a variety of pl
 
 </details>
 
-## Rapidhash Versions
+## Rapidhash Versioning
 
 ### Portable Hashing
-Fixed versioning with C++ compatibility is presented in `rapidhash::v1`, `rapidhash::v2`, and `rapidhash::v3` modules.
+C++ compatibility is presented in `rapidhash::v1`, `rapidhash::v2`, and `rapidhash::v3` modules. The output for these is guaranteed to be stable between major crate versions.
 
-Rapidhash V3 is the recommended, fastest, and most recent version of the hash. Others are provided for backwards compatibility.
+Rapidhash V3 is the recommended, fastest, and most recent version of the hash. Streaming is only possible with the rapidhash V3 algorithm. Others are provided for backwards compatibility.
 
 ### In-Memory Hashing
 Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in `rapidhash::fast`, `rapidhash::quality`, and `rapidhash::inner` modules. These are not guaranteed to give a consistent hash output between platforms, compiler versions, or crate versions as the rust `Hasher` trait [is not suitable](https://github.com/hoxxep/portable-hash/?tab=readme-ov-file#whats-wrong-with-the-stdhash-traits) for portable hashing.

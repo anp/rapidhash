@@ -9,7 +9,9 @@ use super::{DEFAULT_RAPID_SECRETS, RapidSecrets, rapidhash_finish};
 /// This method will check the metadata for a file length, and then stream the file with a
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
+#[deprecated(note = "Rapidhash V1 is not a streaming algorithm. We recommend using V3 instead.")]
 pub fn rapidhash_v1_file(data: &mut File) -> std::io::Result<u64> {
+    #[allow(deprecated)]
     rapidhash_v1_file_inline::<false>(data, &DEFAULT_RAPID_SECRETS)
 }
 
@@ -18,7 +20,9 @@ pub fn rapidhash_v1_file(data: &mut File) -> std::io::Result<u64> {
 /// This method will check the metadata for a file length, and then stream the file with a
 /// [BufReader] to compute the hash. This avoids loading the entire file into memory.
 #[inline]
+#[deprecated(note = "Rapidhash V1 is not a streaming algorithm. We recommend using V3 instead.")]
 pub fn rapidhash_v1_file_seeded(data: &mut File, secrets: &RapidSecrets) -> std::io::Result<u64> {
+    #[allow(deprecated)]
     rapidhash_v1_file_inline::<false>(data, secrets)
 }
 
@@ -35,6 +39,7 @@ pub fn rapidhash_v1_file_seeded(data: &mut File, secrets: &RapidSecrets) -> std:
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
 /// Can provide large performance uplifts for inputs where the length is known at compile time.
 #[inline(always)]
+#[deprecated(note = "Rapidhash V1 is not a streaming algorithm. We recommend using V3 instead.")]
 pub fn rapidhash_v1_file_inline<const PROTECTED: bool>(data: &mut File, secrets: &RapidSecrets) -> std::io::Result<u64> {
     let len = data.metadata()?.len();
     let mut reader = BufReader::new(data);
@@ -140,6 +145,7 @@ fn rapidhash_file_core<const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 3],
 
 #[cfg(test)]
 mod tests {
+    #![allow(deprecated)]
     use std::io::{Seek, SeekFrom, Write};
     use crate::util::macros::compare_rapidhash_file;
     use crate::v1::rapidhash_v1_inline;

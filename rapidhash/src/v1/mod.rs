@@ -17,6 +17,8 @@ pub use seed::*;
 
 #[cfg(test)]
 mod tests {
+    #![allow(deprecated)]
+
     extern crate std;
 
     use crate::util::macros::{compare_to_c, flip_bit_trial};

@@ -22,7 +22,7 @@ def main():
 
 def draw_hash():
     hash_settings = [
-#         ("rapidhash", "b"),
+#         ("rapidhash_raw", "b"),
 #         ("rapidhash_cc_rs", "orange"),
 #         ("rapidhash_cc_v3", "b"),
 #         ("rapidhash_cc_v2_1", "y"),
@@ -53,6 +53,17 @@ def draw_hash():
         hash_settings = [
             setting for setting in hash_settings
             if not setting[0].startswith("gxhash")
+        ]
+
+    if "--raw" in sys.argv:
+        hash_settings = [
+            ("rapidhash_raw", "b"),
+            ("rapidhash_cc_rs", "y"),
+            ("rapidhash_cc_v3", "b"),
+            ("rapidhash_cc_v2_2", "g"),
+#             ("rapidhash_cc_v2_1", "g"),
+#             ("rapidhash_cc_v2", "g"),
+            ("rapidhash_cc_v1", "r"),
         ]
 
     hash_names = [hash_function for hash_function, _ in hash_settings]

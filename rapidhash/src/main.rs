@@ -190,6 +190,7 @@ impl RapidhashVersion {
         }
     }
 
+    #[allow(deprecated)]
     pub fn hash_file(&self, reader: &mut std::fs::File) -> u64 {
         match self {
             RapidhashVersion::V1 { protected } => {
