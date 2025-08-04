@@ -1,0 +1,23 @@
+[package]
+name = "rapidhash-bench-wasm"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]  # Produces a .wasm file
+
+[[bench]]
+name = "wasm"
+harness = false
+
+[dependencies]
+rapidhash = { path = "../rapidhash" }
+foldhash = "0.1.5"
+fxhash = "0.2.1"
+
+[dev-dependencies]
+criterion = { version = "0.7.0", default-features = false, features = ["rayon", "cargo_bench_support"] }
+wasmtime = "35.0.0"
+
+[lints]
+workspace = true

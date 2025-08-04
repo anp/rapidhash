@@ -1,7 +1,16 @@
 #!/usr/bin/python3
+#
+# /// script
+# dependencies = [
+#   "cbor2",
+#   "matplotlib",
+# ]
+# ///
+#
+# To be run via: uv run docs/generate_charts.py
 
 import glob
-from xxsubtype import bench
+import sys
 
 import cbor2
 from matplotlib import pyplot as plt
@@ -13,7 +22,7 @@ def main():
 
 def draw_hash():
     hash_settings = [
-#         ("rapidhash", "b"),
+#         ("rapidhash_raw", "b"),
 #         ("rapidhash_cc_rs", "orange"),
 #         ("rapidhash_cc_v3", "b"),
 #         ("rapidhash_cc_v2_1", "y"),
@@ -39,6 +48,24 @@ def draw_hash():
         ("default", "k"),
     ]
 
+    # Filter out gxhash if --portable is specified
+    if "--portable" in sys.argv:
+        hash_settings = [
+            setting for setting in hash_settings
+            if not setting[0].startswith("gxhash")
+        ]
+
+    if "--raw" in sys.argv:
+        hash_settings = [
+            ("rapidhash_raw", "b"),
+            ("rapidhash_cc_rs", "c"),
+            ("rapidhash_cc_v3", "y"),
+            ("rapidhash_cc_v2_2", "g"),
+#             ("rapidhash_cc_v2_1", "g"),
+#             ("rapidhash_cc_v2", "g"),
+            ("rapidhash_cc_v1", "r"),
+        ]
+
     hash_names = [hash_function for hash_function, _ in hash_settings]
 
     # also available: 65536, 524288000
@@ -62,7 +89,11 @@ def draw_hash():
         latency_data.append(latency_row)
         throughput_data.append(throughput_row)
 
-        latency, throughput = load_latest_measurement_file("hash", hash_function, "u64")
+        u64_measurement = "u64"
+        if "--raw" in sys.argv:
+            u64_measurement = "str_8"
+
+        latency, throughput = load_latest_measurement_file("hash", hash_function, u64_measurement)
         latency_data_u64.append(latency)
         throughput_data_u64.append(throughput)
 
@@ -121,7 +152,7 @@ def draw_hash():
     axs[1, 1].grid(True, zorder=0, color="gainsboro")
 
     plt.tight_layout()
-    plt.savefig("bench_hash.svg")
+    plt.savefig("./docs/bench_hash.svg")
 
 def draw_map():
     hash_settings = [
@@ -176,7 +207,7 @@ def draw_map():
 
 
 def load_latest_measurement_file(group: str, hash_function: str, bench: str) -> (float, float):
-    measurements = glob.glob(f"../target/criterion/data/main/{group}_{hash_function}/{bench}/measurement*")
+    measurements = glob.glob(f"./target/criterion/data/main/{group}_{hash_function}/{bench}/measurement*")
     measurements.sort()
     assert len(measurements) > 0, f"No measurements found for {hash_function} {bench}"
     measurement_file = measurements[-1]

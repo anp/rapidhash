@@ -1,4 +1,13 @@
-# Borrowed from foldhash to generate benchmarking tables.
+#!/usr/bin/python3
+#
+# /// script
+# dependencies = [
+#   "cbor2",
+#   "polars",
+# ]
+# ///
+#
+# To be run via: uv run docs/generate_table.py
 
 import csv
 import json
@@ -8,8 +17,8 @@ import polars as pl
 
 from pathlib import Path
 
-base_path = Path("../target/criterion/")
-csv_path = Path("bench.csv")
+base_path = Path("./target/criterion/")
+csv_path = Path("./docs/bench.csv")
 
 def extract():
 #     if csv_path.exists():
@@ -70,14 +79,18 @@ def table():
     bench_order = ["hashonly", "lookupmiss", "lookuphit", "setbuild"]
     hash_order = [
         "rapidhash-f",
-#         "rapidhash-q",
+        "rapidhash-q",
         "foldhash-f",
-#         "foldhash-q",
-#         "gxhash",
-#         "fxhash",
-#         "ahash",
-#         "siphash"
+        "foldhash-q",
+        "gxhash",
+        "fxhash",
+        "ahash",
+        "siphash"
     ]
+
+    # Filter out gxhash if --portable is set
+    if "--portable" in sys.argv:
+        hash_order = [h for h in hash_order if h != "gxhash"]
 
     distr_order_df = pl.DataFrame({"distr": distr_order, "distr_order_idx": range(len(distr_order))})
     bench_order_df = pl.DataFrame({"bench": bench_order, "bench_order_idx": range(len(bench_order))})
@@ -95,7 +108,7 @@ def table():
             .collect()
     )
 
-    with pl.Config(tbl_rows=-1, float_precision=2, tbl_cell_alignment="RIGHT"):
+    with pl.Config(tbl_rows=-1, tbl_cols=-1, tbl_width_chars=-1, float_precision=2, tbl_cell_alignment="RIGHT"):
         print(df.pivot("hash", values="ns"))
         print(
             df

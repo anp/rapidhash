@@ -6,6 +6,9 @@
 #![cfg_attr(docsrs, feature(doc_cfg_hide))]
 #![cfg_attr(docsrs, doc(cfg_hide(docsrs)))]
 
+// note: we don't #![deny(unsafe_code)] as seeding.rs uses unsafe code to initialise the static
+// secrets, but we're confident about the safety of that code (and it cannot interact with
+// user-generated values).
 #![deny(missing_docs)]
 #![deny(unused_must_use)]
 #![allow(clippy::manual_hash_one)]

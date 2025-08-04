@@ -19,6 +19,13 @@ fn profile_bytes<H: BuildHasher + Default>(
     } else {
         group.sample_size(100);
     }
+
+    let batch_size = if bytes_len > 1024 * 1024 {
+        criterion::BatchSize::PerIteration
+    } else {
+        criterion::BatchSize::SmallInput
+    };
+
     group.throughput(Throughput::Bytes(bytes_len as u64));
     group.bench_function(&name, |b| {
         b.iter_batched_ref(|| {
@@ -33,7 +40,7 @@ fn profile_bytes<H: BuildHasher + Default>(
             let mut hasher = build_hasher.build_hasher();
             hasher.write(black_box(bytes));
             black_box(hasher.finish())
-        }, criterion::BatchSize::SmallInput);
+        }, batch_size);
     });
 }
 
@@ -84,6 +91,13 @@ fn profile_bytes_raw<H: Fn(&[u8], u64) -> u64>(
     } else {
         group.sample_size(100);
     }
+
+    let batch_size = if bytes_len > 1024 * 1024 {
+        criterion::BatchSize::PerIteration
+    } else {
+        criterion::BatchSize::SmallInput
+    };
+
     group.throughput(Throughput::Bytes(bytes_len as u64));
     group.bench_function(&name, |b| {
         b.iter_batched_ref(|| {
@@ -91,8 +105,8 @@ fn profile_bytes_raw<H: Fn(&[u8], u64) -> u64>(
             rand::rng().fill(slice.as_mut_slice());
             slice
         }, |bytes| {
-            black_box(hash(black_box(bytes), rapidhash::v1::RAPID_SEED))
-        }, criterion::BatchSize::SmallInput);
+            black_box(hash(black_box(bytes), 0xbdd89aa982704029))  // using rapidhash V1 seed
+        }, batch_size);
     });
 }
 
@@ -113,6 +127,10 @@ pub fn bench(c: &mut Criterion) {
 
     bench_group::<std::hash::RandomState>(c, "hash/default");
     bench_group::<fxhash::FxBuildHasher>(c, "hash/fxhash");
+    #[cfg(any(
+        all(any(target_arch = "arm", target_arch = "aarch64"), all(target_feature = "aes", target_feature = "neon")),
+        all(any(target_arch = "x86", target_arch = "x86_64"), all(target_feature = "aes", target_feature = "sse2"))
+    ))]
     bench_group::<gxhash::GxBuildHasher>(c, "hash/gxhash");
     bench_group::<ahash::RandomState>(c, "hash/ahash");
     bench_group::<t1ha::T1haBuildHasher>(c, "hash/t1ha");
@@ -125,7 +143,7 @@ pub fn bench(c: &mut Criterion) {
     bench_group::<highway::HighwayBuildHasher>(c, "hash/highwayhash");
     bench_group::<rustc_hash::FxBuildHasher>(c, "hash/rustc-hash");
 
-    bench_group_raw(c, "hash/rapidhash_raw", &rapidhash::v3::rapidhash_v3_seeded);
+    bench_group_raw(c, "hash/rapidhash_raw", &v3_bench);
     bench_group_raw(c, "hash/rapidhash_cc_v1", &rapidhash_c::rapidhashcc_v1);
     bench_group_raw(c, "hash/rapidhash_cc_v2", &rapidhash_c::rapidhashcc_v2);
     bench_group_raw(c, "hash/rapidhash_cc_v2_1", &rapidhash_c::rapidhashcc_v2_1);
@@ -133,4 +151,9 @@ pub fn bench(c: &mut Criterion) {
     bench_group_raw(c, "hash/rapidhash_cc_v3", &rapidhash_c::rapidhashcc_v3);
     bench_group_raw(c, "hash/rapidhash_cc_rs", &rapidhash_c::rapidhashcc_rs);
     bench_group_raw(c, "hash/wyhash_raw", &wyhash::wyhash);
+}
+
+fn v3_bench(data: &[u8], seed: u64) -> u64 {
+    let secrets = rapidhash::v3::RapidSecrets::seed_cpp(seed);
+    rapidhash::v3::rapidhash_v3_seeded(data, &secrets)
 }

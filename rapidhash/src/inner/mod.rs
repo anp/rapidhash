@@ -8,10 +8,10 @@
 //! Each structure may have the compile time const generics:
 //! - `AVALANCHE`: Whether to use a final avalanche mix step, required to pass SMHasher3. This
 //!   option changes the hash output. Enabled on [rapidhash::quality], disabled on [rapidhash::fast].
-//! - `FNV`: Allow RapidHasher to use FNV when hashing integer types: hashing ints will be twice as
-//!   fast but the hash quality will be reduced. This also removes the minimal DoS resistance on
-//!   integer types. This changes the hash output when hashing integers. Disabled on
-//!   [rapidhash::quality], enabled on [rapidhash::fast].
+//! - `SPONGE`: Allow RapidHasher to cache integers into a 128-bit buffer to perform a single
+//!   folded multiply step on the entire buffer. If disabled, a mix step is performed on each
+//!   individual integer. This changes the hash output when hashing integers. Enabled on both
+//!   [rapidhash::quality] and [rapidhash::fast].
 //! - `COMPACT`: Reduce the code size of the hasher by preventing manually unrolled loops. This does
 //!   _not_ affect the hash output. Disabled on both [rapidhash::quality] and [rapidhash::fast].
 //! - `PROTECTED`: When performing the folded multiply mix step, XOR the a and b back into their
@@ -32,10 +32,10 @@ mod collections;
 mod rapid_const;
 mod rapid_hasher;
 mod state;
-mod seeding;
+pub(crate) mod seeding;
+mod mix;
+mod seed;
 
-#[doc(inline)]
-pub use rapid_const::*;
 #[doc(inline)]
 pub use rapid_hasher::*;
 #[doc(inline)]
@@ -43,6 +43,8 @@ pub use rapid_hasher::*;
 pub use collections::*;
 #[doc(inline)]
 pub use state::*;
+#[doc(inline)]
+use seed::*;
 
 #[cfg(test)]
 mod tests {
@@ -51,10 +53,12 @@ mod tests {
     use std::hash::{BuildHasher, Hash, Hasher};
     use std::collections::BTreeSet;
     use rand::Rng;
-    use super::{rapidhash_rs, rapidhash_rs_seeded, RAPID_SEED};
+    use crate::inner::mix::rapid_mix_np;
+    use super::seed::{DEFAULT_RAPID_SECRETS, DEFAULT_SEED};
+    use super::rapid_const::{rapidhash_rs, rapidhash_rs_seeded};
 
-    type RapidHasher = super::RapidHasher<true, false>;
-    type RapidBuildHasher = super::RapidBuildHasher<true, false>;
+    type RapidHasher = super::RapidHasher<true, true, true>;
+    type RapidBuildHasher = super::RapidBuildHasher<true, true, true>;
 
     #[derive(Hash)]
     struct Object {
@@ -67,12 +71,12 @@ mod tests {
         let object = Object { bytes: b"hello world".to_vec() };
         let mut hasher = RapidHasher::default();
         object.hash(&mut hasher);
-        assert_eq!(hasher.finish(), 16959177219018390528);
+        assert_eq!(hasher.finish(), 9938606849760368330);
 
         let mut hasher = RapidHasher::default();
         hasher.write_usize(b"hello world".len());
         hasher.write(b"hello world");
-        assert_eq!(hasher.finish(), 16959177219018390528);
+        assert_eq!(hasher.finish(), 9938606849760368330);
     }
 
     /// Check RapidHasher is equivalent to the raw rapidhash for a single byte stream.
@@ -196,8 +200,10 @@ mod tests {
                     let mut data = data.clone();
                     data[byte] ^= 1 << bit;
 
-                    let rust_hash = rapidhash_rs_seeded(&data, RAPID_SEED);
-                    let c_hash = rapidhashcc_rs(&data, RAPID_SEED);
+                    let rust_hash = rapidhash_rs_seeded(&data, &DEFAULT_RAPID_SECRETS);
+                    let mut c_hash = rapidhashcc_rs(&data, DEFAULT_SEED);
+                    // TODO: remove this hack; it's to make it work with how the Hasher avalanches
+                    c_hash = rapid_mix_np::<false>(c_hash, DEFAULT_RAPID_SECRETS.secrets[1]);
                     assert_eq!(rust_hash, c_hash, "Mismatch with input {} byte {} bit {}", len, byte, bit);
 
                     let mut rust_hasher = RapidBuildHasher::default().build_hasher();

@@ -1,5 +1,31 @@
 # Changelog
 
+## 3.0.0 (20250730)
+
+Big performance improvements, and potentially rust's fastest general-purpose hasher!
+
+### Breaking changes
+- Replaced `FNV` with a `SPONGE` configuration with `RapidHasher` to improve integer and tuple hashing performance.
+- `RandomState` removed the `with_seed` and `with_seed_and_static_secrets` methods to reduce the struct size. Please raise a GitHub issue if you need a `SeededState`-style hash builder for the in-memory `RapidHasher`.
+- Added a `RapidSecrets` type for all versions to generate seeds and secrets for HashDoS-resistant hashing. This makes generating unique seeds/secrets easier for persistent hashing use cases.
+  - `rapidhash::v*` portable hashing functions now all take a `&RapidSecrets` argument as a seed.
+  - For full compatibility with the old integer seeds, instantiate `RapidSecrets::seed_cpp(u64)` with your integer seed which will continue to use the default secrets.
+  - For minimal DoS resistance, use `RapidSecrets::seed(u64)` to generate a new seed and secrets.
+- `RapidHasher` removed the old `write_const` and `finish_const` methods as they were unlikely to be used and may cause confusion.
+- `rapidhash_v*_inner` methods have a new `AVALANCHE` const argument to control whether they should avalanche the output. Setting this to `true` will match the default hash output and C++ implementation for the highest quality hashing. Turning off avalanching will reduce the hash quality, but improve performance, especially for small inputs.
+- Fixed the `rapidhash::v1` `V1_BUG` argument to actually match the original `v1.x.x` crate behaviour, which changes the hash output. The if statement was fundamentally wrong in the `v2.x.x` crate and failing to hash some bytes, apologies. This now has a proper test to prevent future regressions.
+
+### Additions
+- `rapidhash::rng::rapidrng_fast_non_portable`: a slightly faster, lower-quality RNG that also has optimisations for u32 platforms without wide-arithmetic support. Excellent for generating fixtures in our WASM benchmarks.
+
+### Deprecations
+- The V1 and V2 `rapidhash_file` methods have been deprecated, with a note to use `rapidhash::v3` instead. This is because they aren't streaming-compatible hashing algorithms which may be misleading if someone has not read the documentation in detail. They will continue to be included for the foreseeable future as they provide the CLI functionality.
+
+### Performance improvements
+- `RapidHasher` significantly improved performance hashing integers, tuples, and integer types using the new `SPONGE` configuration in both fast and quality modes.
+- `RapidHasher` now uses a non-portable mixing function for an improvement on platforms with slow wide arithmetic, such as wasm32.
+- `rapidhash::v3` has a healthy performance improvement for mid-size input lengths by skipping the 112+ length setup/teardown.
+
 ## 2.0.2 (20250723)
 
 - Fix docs.rs crashing with a broken README link.
@@ -14,12 +40,12 @@
 
 - **Breaking:** `RapidHasher` in-memory hasher overhaul:
   - `RapidHasher` deviates from the main rapidhash algorithm to improve performance hashing rust objects while maintaining similar hash quality. Performance should be significantly improved over the v1 crate.
-  - `RapidHasher` may change the underlying hash between minor versions. The rust `Hasher` trait is not to be used for persistent hashing, and we will follow this mantra to allow easily improving hashing performance. Persistent hashing should be done though the `rapidhash::v3::rapidhash_v3(bytes: &[u8])` and equivalent functions.
+  - `RapidHasher` may change the underlying hash between minor versions. The rust `Hasher` trait is not to be used for portable hashing, and we will follow this mantra to allow easily improving hashing performance. Portable hashing should be done though the `rapidhash::v3::rapidhash_v3(bytes: &[u8])` and equivalent functions.
   - `RapidHasher`, `RandomState`, `RapidHashMap`, and `RapidHashSet` now move behind the following three modules:
     - `rapidhash::fast` when hashing speed is the priority. This sacrifices some hash quality for speed, uses FNV when hashing integer types, and skips the final avalanche mixing step.
     - `rapidhash::quality` when hash quality is the ultimate priority. This closely resembles the rapidhash algorithm and hash quality.
     - `rapidhash::inner` when you want to configure the settings for `AVALANCHE`, `FNV`, `COMPACT`, and `PROTECTED` modes as necessary.
-- **Breaking:** `rapidhash` persistent hashing function moved and renamed, with different hash output:
+- **Breaking:** `rapidhash` portable hashing function moved and renamed, with different hash output:
   - Fixed the rapidhash V1 algorithm for 48 and 144 length inputs, where it would previously mismatch with the C implementation.
     - If you need the old broken rapidhash V1 hash output, `rapidhash::v1::rapidhash_v1_inline` can accept a compile time argument `V1_BUG=true`, which will reproduce the old hash output from the 1.x crate versions.
   - Moved and renamed `rapidhash::rapidhash()` to `rapidhash::v1::rapidhash_v1()` to allow us to include other rapidhash versions in the same naming convention.

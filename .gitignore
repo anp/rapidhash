@@ -7,3 +7,5 @@ Cargo.lock
 .venv/
 __pycache__/
 docs/*.csv
+docs/bench_hash.svg
+docs/bench_hash_orig.svg
