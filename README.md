@@ -99,7 +99,7 @@ echo "example" | rapidhash --v3
 
 In our benchmarking, rapidhash is one of the fastest general-purpose non-cryptographic hash functions. It places second to gxhash on some benchmarks, but gxhash is not portable, requires AES instructions to compile, and its main advantage is hashing string types. Between rapidhash, gxhash, and the default siphasher, we see little reason to use other hash functions on modern platforms without specifically benchmarking them for your workload and platform.
 
-![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_aarch64_apple_m1_max_native.svg)
+![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_aarch64_apple_m1_max.svg)
 
 Rapidhash uses raw throughput benchmarks (the charts) to measure performance over various input sizes, and the [foldhash benchmark suite](https://github.com/orlp/foldhash?tab=readme-ov-file#performance) (the txt tables) to measure workloads that are closer to real-world usage. The foldhash suite benchmarks hashers by measuring raw hash throughput, hashmap lookup miss, hashmap lookup hit, and hashmap insertion performance on a wide variety of commonly hashed types.
 
@@ -246,9 +246,9 @@ The benchmarks have been compiled with and without `-C target-cpu=native` on a v
 
 ## Minimal DoS Resistance
 
-Rapidhash is a keyed hash function and the rust implementation deviates from its C++ counterpart by also randomising the secrets array. The algorithm primarily relies on the same 128-bit folded multiply mixing step used by foldhash and ahash's backup algorithm. It aims to be immune to length extension and re-ordering attacks.
+Rapidhash is a keyed hash function and the rust implementation deviates from its C++ counterpart by also randomising the secrets array. The algorithm primarily relies on the same 128-bit folded multiply mixing step used by foldhash and ahash's fallback algorithm. It aims to be immune to length extension and re-ordering attacks.
 
-We believe rapidhash is a minimally DoS resistant hash function, such that a non-interactive attacker cannot trivially create collisions if they do not know the seed. The adverb "minimally" is used to describe that rapidhash is not a cryptographic hash, and so it may be possible for an interactive attacker to learn the seed by observing hash outputs or application response times over a large number of inputs.
+We believe rapidhash is a minimally DoS resistant hash function, such that a non-interactive attacker cannot trivially create collisions if they do not know the seed or secrets. The adverb "minimally" is used to describe that rapidhash is not a cryptographic hash, it is possible to construct collisions if the seed or secrets are known, and it may be possible for an interactive attacker to learn the seed by observing hash outputs or application response times over a large number of inputs.
 
 Provided rapidhash has been instantiated through `RandomState` or `RapidSecrets` using a randomised secret seed, we believe rapidhash is minimally resistant to hash DoS attacks.
 
