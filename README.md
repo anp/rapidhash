@@ -97,7 +97,7 @@ echo "example" | rapidhash --v3
 
 ## Benchmarks
 
-We believe rapidhash is one of the fastest _general-purpose_ hash functions. It places second to gxhash on some benchmarks, but gxhash is not portable and requires AES instructions to compile, and only shows significant advantages when hashing strings. Between rapidhash, gxhash, fxhash, and the default siphasher, we see little reason to use other hash functions without specifically benchmarking them for your workload.
+In our benchmarking, rapidhash is one of the fastest general-purpose non-cryptographic hash functions. It places second to gxhash on some benchmarks, but gxhash is not portable, requires AES instructions to compile, and its main advantage is hashing string types. Between rapidhash, gxhash, and the default siphasher, we see little reason to use other hash functions on modern platforms without specifically benchmarking them for your workload and platform.
 
 ![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_aarch64_apple_m1_max_native.svg)
 
@@ -106,14 +106,30 @@ Rapidhash uses raw throughput benchmarks (the charts) to measure performance ove
 The benchmarks have been compiled with and without `-C target-cpu=native` on a variety of platforms to demonstrate rapidhash's strong all-round performance. The full results are available in the [docs folder](https://github.com/hoxxep/rapidhash/tree/master/docs) and are summarised below.
 
 <details>
+<summary><strong>aarch64 Apple M1 Max</strong></summary>
+
+```text
+┌────────────────┬─────────────┬─────────────┬────────────┬────────────┬────────┬───────┬─────────┐
+│         metric ┆ rapidhash-f ┆ rapidhash-q ┆ foldhash-f ┆ foldhash-q ┆ fxhash ┆ ahash ┆ siphash │
+╞════════════════╪═════════════╪═════════════╪════════════╪════════════╪════════╪═══════╪═════════╡
+│       avg_rank ┆        2.11 ┆        3.53 ┆       2.84 ┆       4.62 ┆   2.88 ┆  5.05 ┆    6.97 │
+│ geometric_mean ┆        4.29 ┆        4.82 ┆       4.83 ┆       5.24 ┆   5.50 ┆  5.94 ┆   22.17 │
+└────────────────┴─────────────┴─────────────┴────────────┴────────────┴────────┴───────┴─────────┘
+```
+
+![Hashing Benchmarks](https://github.com/hoxxep/rapidhash/raw/master/docs/bench_hash_aarch64_apple_m1_max.svg)
+
+</details>
+
+<details>
 <summary><strong>aarch64 Apple M1 Max (target-cpu=native)</strong></summary>
 
 ```text
 ┌────────────────┬─────────────┬─────────────┬────────────┬────────────┬────────┬────────┬───────┬─────────┐
 │         metric ┆ rapidhash-f ┆ rapidhash-q ┆ foldhash-f ┆ foldhash-q ┆ gxhash ┆ fxhash ┆ ahash ┆ siphash │
 ╞════════════════╪═════════════╪═════════════╪════════════╪════════════╪════════╪════════╪═══════╪═════════╡
-│       avg_rank ┆        2.03 ┆        4.22 ┆       3.38 ┆       4.98 ┆   4.69 ┆   3.16 ┆  5.58 ┆    7.97 │
-│ geometric_mean ┆        4.26 ┆        4.88 ┆       4.83 ┆       5.22 ┆   4.96 ┆   5.49 ┆  5.94 ┆   21.95 │
+│       avg_rank ┆        2.23 ┆        3.94 ┆       3.30 ┆       5.08 ┆   4.69 ┆   3.16 ┆  5.64 ┆    7.97 │
+│ geometric_mean ┆        4.25 ┆        4.79 ┆       4.79 ┆       5.19 ┆   4.93 ┆   5.48 ┆  5.91 ┆   21.99 │
 └────────────────┴─────────────┴─────────────┴────────────┴────────────┴────────┴────────┴───────┴─────────┘
 ```
 
@@ -222,11 +238,19 @@ The benchmarks have been compiled with and without `-C target-cpu=native` on a v
 
 - Hash throughput does not measure hash "quality", and many of the benchmarked functions fail the [SMHasher3 hash quality benchmarks](https://gitlab.com/fwojcik/smhasher3). Rapidhash is the fastest hash to pass all quality benchmarks. Hash quality affects hashmap performance, as well as algorithms that benefit from high quality hash functions such as HyperLogLog and MinHash.
 - **Comparison to foldhash**: Rapidhash uses the same integer buffer construction as foldhash, but is notably faster when hashing strings by making use of the rapidhash algorithm. Rapidhash also offers portable and streaming hash flavours.
-- **Comparison to gxhash**: gxhash achieves its high throughput by using AES instructions and consistently outperforms the other accelerated hashers (ahash, th1a, xxhash3_64). It's a great hash function, but is not a portable hash function, requiring `target-cpu=native` or specific feature flags to compile. Gxhash is a great choice for applications that can guarantee the availability of AES instructions and mostly hash strings, but rapidhash may be preferred for hashing tuples and structs, or by libraries that support a wide range of platforms.
+- **Comparison to gxhash**: gxhash achieves its high throughput by using AES instructions and consistently outperforms the other accelerated hashers (ahash, th1a, xxhash3_64). It's a great hash function, but is not a portable hash function, requiring `target-cpu=native` or specific feature flags to compile. Gxhash is a great choice for applications that can guarantee the availability of AES instructions and mostly hash strings, but rapidhash may be preferred for hashing tuples and structs, or by libraries that aim to support a wide range of platforms.
 - The default rust hasher (SipHasher) unexpectedly appears to run consistently faster _without_ `target-cpu=native` on various x86 and ARM chips.
-- Benchmark your own use case, with your real world dataset! We suggest experimenting with different hash functions to see which one works best for your use case. Rapidhash is great for fast general-purpose hashing in libraries and applications, but certain hashers will outperform for specific use cases.
+- Benchmark your own use case, with your real world dataset! We suggest experimenting with different hash functions to see which one works best for your use case. Rapidhash is great for fast general-purpose hashing in libraries and applications that only need minimal DoS resistance, but certain hashers will outperform for specific use cases.
 
 </details>
+
+## Minimal DoS Resistance
+
+Rapidhash is a keyed hash function and the rust implementation deviates from its C++ counterpart by also randomising the secrets array. The algorithm primarily relies on the same 128-bit folded multiply mixing step used by foldhash and ahash's backup algorithm. It aims to be immune to length extension and re-ordering attacks.
+
+We believe rapidhash is a minimally DoS resistant hash function, such that a non-interactive attacker cannot trivially create collisions if they do not know the seed. The adverb "minimally" is used to describe that rapidhash is not a cryptographic hash, and so it may be possible for an interactive attacker to learn the seed by observing hash outputs or application response times over a large number of inputs.
+
+Provided rapidhash has been instantiated through `RandomState` or `RapidSecrets` using a randomised secret seed, we believe rapidhash is minimally resistant to hash DoS attacks.
 
 ## Rapidhash Versioning
 

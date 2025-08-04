@@ -8,7 +8,7 @@ CHIP=$1
 FILTER=''
 
 # The below filter should run only the graphed/tabled benchmarks if uncommented.
-#FILTER='hash/.*^(_raw|_rs|_cc_.*)/(str.*|u64)'
+FILTER='hash/.*^(_raw|_rs|_cc_.*)/(str.*|u64)'
 
 echo "Running on branch $(git rev-parse --abbrev-ref HEAD) with commit $(git rev-parse HEAD)"
 
