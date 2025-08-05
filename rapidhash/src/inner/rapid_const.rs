@@ -45,22 +45,22 @@ pub(super) const fn rapidhash_core<const AVALANCHE: bool, const COMPACT: bool, c
     if data.len() <= 16 {
         let mut a = 0;
         let mut b = 0;
-        if data.len() >= 4 {
-            if data.len() >= 8 {
-                a ^= read_u64(data, 0);
-                b ^= read_u64(data, data.len() - 8);
-            } else {
-                a ^= read_u32(data, 0) as u64;
-                b ^= read_u32(data, data.len() - 4) as u64;
-            }
+
+        if data.len() >= 8 {
+            a = read_u64(data, 0);
+            b = read_u64(data, data.len() - 8);
+        } else if data.len() >= 4 {
+            a = read_u32(data, 0) as u64;
+            b = read_u32(data, data.len() - 4) as u64;
         } else if !data.is_empty() {
-            a ^= ((data[0] as u64) << 45) | data[data.len() - 1] as u64;
-            b ^= data[data.len() >> 1] as u64;
+            a = ((data[0] as u64) << 45) | data[data.len() - 1] as u64;
+            b = data[data.len() >> 1] as u64;
         }
 
         seed = seed.wrapping_add(data.len() as u64);
         rapidhash_finish::<AVALANCHE, PROTECTED>(a, b , seed, secrets)
     } else {
+        // rapidhash_core_16_288::<AVALANCHE, COMPACT, PROTECTED>(seed, secrets, data)
         if data.len() <= 288 {
             // This can cause other code to not be inlined, and slow everything down. So at the cost of
             // marginally slower (-10%) 16..288 hashing,
