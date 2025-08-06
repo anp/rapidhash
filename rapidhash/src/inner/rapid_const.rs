@@ -60,21 +60,16 @@ pub(super) const fn rapidhash_core<const AVALANCHE: bool, const COMPACT: bool, c
         seed = seed.wrapping_add(data.len() as u64);
         rapidhash_finish::<AVALANCHE, PROTECTED>(a, b , seed, secrets)
     } else {
-        // rapidhash_core_16_288::<AVALANCHE, COMPACT, PROTECTED>(seed, secrets, data)
-        if data.len() <= 288 {
-            // This can cause other code to not be inlined, and slow everything down. So at the cost of
-            // marginally slower (-10%) 16..288 hashing,
-            // NOT COMPACT: len is 16..=288
-            rapidhash_core_16_288::<AVALANCHE, COMPACT, PROTECTED>(seed, secrets, data)
-        } else {
-            // len is >288, on a cold path to avoid inlining as this doesn't impact large strings, but
-            // can otherwise prevent
-            rapidhash_core_cold::<AVALANCHE, COMPACT, PROTECTED>(seed, secrets, data)
-        }
+        rapidhash_core_16_288::<AVALANCHE, COMPACT, PROTECTED>(seed, secrets, data)
     }
 }
 
-// allow rustc to inline this, but it should prefer inlining the .hash and .finish
+// Never inline this, keep the small string path as small as possible to improve the inlining
+// chances of the write_length_prefix and finish functions. If those two don't get inlined, the
+// overall performance can be 5x worse when hashing a single string under 100 bytes. <=288 inputs
+// pay the cost of one extra if, and >288 inputs pay one more function call, but this is nominal
+// in comparison to the overall hashing cost.
+#[cold]
 #[inline(never)]
 #[must_use]
 const fn rapidhash_core_16_288<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> u64 {
@@ -83,6 +78,10 @@ const fn rapidhash_core_16_288<const AVALANCHE: bool, const COMPACT: bool, const
     let mut slice = data;
 
     if slice.len() > 48 {
+        if slice.len() > 288 {
+            return rapidhash_core_cold::<AVALANCHE, COMPACT, PROTECTED>(seed, secrets, data);
+        }
+
         // most CPUs appear to benefit from this unrolled loop
         let mut see1 = seed;
         let mut see2 = seed;
