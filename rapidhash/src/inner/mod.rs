@@ -33,8 +33,9 @@ mod rapid_const;
 mod rapid_hasher;
 mod state;
 pub(crate) mod seeding;
-mod mix;
+mod mix_np;
 mod seed;
+mod read_np;
 
 #[doc(inline)]
 pub use rapid_hasher::*;
@@ -53,7 +54,7 @@ mod tests {
     use std::hash::{BuildHasher, Hash, Hasher};
     use std::collections::BTreeSet;
     use rand::Rng;
-    use crate::inner::mix::rapid_mix_np;
+    use crate::inner::mix_np::rapid_mix_np;
     use super::seed::{DEFAULT_RAPID_SECRETS, DEFAULT_SEED};
     use super::rapid_const::{rapidhash_rs, rapidhash_rs_seeded};
 
@@ -66,6 +67,7 @@ mod tests {
     }
 
     /// `#[derive(Hash)]` writes a length prefix first, check understanding.
+    #[cfg(target_endian = "little")]
     #[test]
     fn derive_hash_works() {
         let object = Object { bytes: b"hello world".to_vec() };
@@ -186,6 +188,7 @@ mod tests {
     }
 
     /// Compare to the C rapidhash implementation to ensure we match perfectly.
+    #[cfg(target_endian = "little")]
     #[test]
     fn compare_to_c() {
         use rand::Rng;
