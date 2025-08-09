@@ -44,6 +44,9 @@ pub(crate) mod seed {
 
         // without std we fall back to a global atomic and accept the chance of
         // race conditions, but don't consider this an issue
+        //
+        // Most targets without atomics can still do atomic load/store, but just can't
+        // do atomic compare-and-swap instructions. So this should still compile/work...
         #[cfg(not(feature = "std"))] {
             use core::sync::atomic::{AtomicUsize, Ordering};
             static RANDOM_SEED: AtomicUsize = AtomicUsize::new(0);
@@ -76,6 +79,28 @@ pub(crate) mod secrets {
         // This is a no-op for platforms that do not support atomic pointers.
         // The secrets are not used, so we return an empty slice.
         &crate::inner::seed::DEFAULT_RAPID_SECRETS.secrets
+    }
+
+    #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+    pub struct GlobalSecrets {
+        _only_uses_default_secrets: (),
+    }
+
+    impl GlobalSecrets {
+        /// Set up the global secrets if they are not already initialized.
+        #[inline(always)]
+        pub fn new() -> Self {
+            Self {
+                _only_uses_default_secrets: (),
+            }
+        }
+
+        /// Get the global secrets, which are guaranteed to be initialized, but these will
+        /// be the default rapidhash secrets as this target does not support atomic pointers.
+        #[inline(always)]
+        pub fn get(self) -> &'static [u64; 7] {
+            get_secrets()
+        }
     }
 }
 

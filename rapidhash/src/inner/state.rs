@@ -29,12 +29,17 @@ pub struct RandomState<const AVALANCHE: bool, const SPONGE: bool, const COMPACT:
 impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> RandomState<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     /// Create a new random state with a random seed.
     ///
-    /// With the `rand` feature enabled, this will use [rand::random] to initialise the seed.
+    /// The seed is always randomised by using ASLR on every new instance of RandomState.
     ///
-    /// Without `rand` but with the `std` feature enabled, this will use [crate::rapidrng_time] to
-    /// initialise the seed.
+    /// With the `rand` feature enabled, the secrets will be randomised using [rand::random].
+    /// Otherwise, a mix of ASLR and some other poorer sources of entropy will be mixed together to
+    /// generate the secrets. The secrets are statically cached for the lifetime of the program
+    /// after their initial generation.
+    ///
+    /// On platforms that do not support atomic pointers, the secrets will be the default rapidhash
+    /// secrets, which are not randomised. Therefore, **targets without atomic pointer support will
+    /// not have minimal HashDoS resistance guarantees**.
     #[inline]
-    #[cfg(target_has_atomic = "ptr")]
     pub fn new() -> Self {
         Self {
             seed: super::seeding::seed::get_seed(),
