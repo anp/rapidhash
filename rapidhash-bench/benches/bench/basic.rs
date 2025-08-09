@@ -69,7 +69,8 @@ where
 fn bench_group<H: BuildHasher + Default>(c: &mut Criterion, group_name: &str) {
     let mut group = c.benchmark_group(group_name.to_string());
     let sizes = [2usize, 8, 16, 25, 50, 64, 80, 160, 256, 350, 1024, 4096, 65536, 1024 * 1024 * 500];
-    for &size in &sizes {
+    // let sizes = 0usize..68;  // for micro short input testing
+    for size in sizes {
         profile_bytes::<H>(size, &mut group);
     }
     profile_int::<H, u8>("u8", &mut group);
@@ -113,7 +114,7 @@ fn profile_bytes_raw<H: Fn(&[u8], u64) -> u64>(
 fn bench_group_raw<H: Fn(&[u8], u64) -> u64>(c: &mut Criterion, group_name: &str, hash: &H) {
     let mut group = c.benchmark_group(group_name.to_string());
     let sizes = [2usize, 8, 16, 25, 50, 64, 80, 160, 256, 350, 1024, 4096, 65536, 1024 * 1024 * 500];
-    for &size in &sizes {
+    for size in sizes {
         profile_bytes_raw(hash, size, &mut group);
     }
 }
