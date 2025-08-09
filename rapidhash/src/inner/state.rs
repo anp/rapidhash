@@ -8,6 +8,17 @@ use crate::inner::seeding::secrets::GlobalSecrets;
 /// This is designed to provide some HashDoS resistance by using a random seed per hashmap, and
 /// a global random set of secrets.
 ///
+/// # Portability
+///
+/// On most target platforms, the secrets are randomly initialized once and cached globally for the
+/// lifetime of the program using a mix of ASLR and other entropy sources. The seed is randomly
+/// initialized for each new instance of `RandomState` using only ASLR and a mixing step.
+///
+/// On targets without atomic pointer support, the global secrets will not be randomised, and
+/// instead will fall back to the default secrets. This means these platforms will not have minimal
+/// HashDoS resistance guarantees. If this is important for your application, please raise a GitHub
+/// issue to improve support for these platforms.
+///
 /// # Example
 /// ```rust
 /// use std::collections::HashMap;
