@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.1.0 (20250809)
+
+## Performance improvements
+- Improved `RapidHasher` small string hashing performance by 1.5-15% depending on the benchmark, by reducing the small string hashing code size and allowing the compiler to inline more. Performance was also improved on big-endian platforms by reading native-endian bytes. The portable hashers (`rapidhash::v3` etc. modules) are unaffected by this change. [#37](https://github.com/hoxxep/rapidhash/pull/37)
+
+## Fixes
+- Fixed compilation on targets without atomic pointers. [#38](https://github.com/hoxxep/rapidhash/issues/38), [#39](https://github.com/hoxxep/rapidhash/pull/39)
+
 ## 3.0.0 (20250730)
 
 Big performance improvements, and potentially rust's fastest general-purpose hasher!
