@@ -11,7 +11,7 @@ name = "wasm"
 harness = false
 
 [dependencies]
-rapidhash = { path = "../rapidhash" }
+rapidhash = { path = "../rapidhash", default-features = false }
 foldhash = "0.1.5"
 fxhash = "0.2.1"
 

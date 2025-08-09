@@ -281,6 +281,6 @@ This project is licensed under both the MIT and Apache-2.0 licenses. You are fre
 
 With thanks to [Nicolas De Carli](https://github.com/Nicoshev) for the original [rapidhash](https://github.com/Nicoshev/rapidhash) C++ implementation, which is licensed under the [MIT License](https://github.com/Nicoshev/rapidhash/blob/master/LICENSE).
 
-With thanks to [Orson Peters](https://github.com/orlp) for his work on [foldhash](https://github.com/orlp/foldhash), which inspired much of the integer hashing optimisations in this crate.
+With thanks to [Orson Peters](https://github.com/orlp) for his work on [foldhash](https://github.com/orlp/foldhash), which inspired much of the integer hashing optimisations in this crate. Some of the RapidHasher string hashing [optimisations](https://github.com/orlp/foldhash/pull/35) have made their way back into foldhash as a thanks, and both hashers are now very similar in performance and quality. The rust community wins!
 
 With thanks to [Justin Bradford](https://github.com/jabr) for letting us use the rapidhash crate name 🍻

@@ -14,7 +14,7 @@ const DEFAULT_SECRETS: [u64; 7] = [
 ];
 
 pub(crate) mod seed {
-    use crate::inner::mix::rapid_mix_np;
+    use crate::inner::mix_np::rapid_mix_np;
     use super::DEFAULT_SECRETS;
 
     #[inline]

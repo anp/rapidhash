@@ -1,6 +1,6 @@
 use core::hash::{BuildHasher, Hasher};
 use super::DEFAULT_RAPID_SECRETS;
-use super::mix::rapid_mix_np;
+use super::mix_np::rapid_mix_np;
 use super::rapid_const::rapidhash_core;
 use super::seed::rapidhash_seed;
 
