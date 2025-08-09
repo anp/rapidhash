@@ -94,8 +94,8 @@ jobs:
         run: RUSTDOCFLAGS="--cfg docsrs" cargo +nightly test -p rapidhash --all-features --doc --no-fail-fast
 
   test-wasm:
-    # Test compiling for the webassembly target with default features.
-    name: "Test (wasm)"
+    # Check compiling for the webassembly target with default features.
+    name: "Build (wasm)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -108,7 +108,7 @@ jobs:
         run: cargo build -p rapidhash --target wasm32-unknown-unknown
 
   test-no-atomics:
-    # check that the no-atomics target compiles, but it sadly can't run tests
+    # Check that a no-atomics target compiles, but it sadly can't run tests
     name: "Build (no atomics)"
     runs-on: ubuntu-latest
     steps:
