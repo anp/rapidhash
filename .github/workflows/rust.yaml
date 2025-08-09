@@ -106,3 +106,17 @@ jobs:
         run: rustup target add wasm32-unknown-unknown
       - name: Compile and run tests
         run: cargo build -p rapidhash --target wasm32-unknown-unknown
+
+  test-no-atomics:
+    # check that the no-atomics target compiles, but it sadly can't run tests
+    name: "Build (no atomics)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Rust dependency cache
+        uses: Swatinem/rust-cache@v2
+      - name: Install no-atomics target
+        run: rustup target add thumbv6m-none-eabi
+      - name: Compile and run tests
+        run: cargo build -p rapidhash --no-default-features --lib --target thumbv6m-none-eabi
