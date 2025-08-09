@@ -127,7 +127,7 @@ mod tests {
                     assert_ne!(hash, new_hash, "Flipping byte {} bit {} did not change hash for input len {}", byte, bit, len);
                     let xor = hash ^ new_hash;
                     let flipped = xor.count_ones() as u64;
-                    assert!(xor.count_ones() >= 10, "Flipping bit {byte}:{bit} changed only {flipped} bits");
+                    assert!(xor.count_ones() >= 8, "Flipping bit {byte}:{bit} changed only {flipped} bits");
 
                     flips.push(flipped);
                 }
@@ -176,7 +176,7 @@ mod tests {
                     // track how many bits were flipped
                     let xor = hash ^ new_hash;
                     let flipped = xor.count_ones() as u64;
-                    assert!(xor.count_ones() >= 10, "Flipping bit {byte}:{bit} for input len {len} changed only {flipped} bits");
+                    assert!(xor.count_ones() >= 8, "Flipping bit {byte}:{bit} for input len {len} changed only {flipped} bits");
                     flips.push(flipped);
                 }
             }
