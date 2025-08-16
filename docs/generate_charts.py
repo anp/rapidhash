@@ -66,10 +66,18 @@ def draw_hash():
             ("rapidhash_cc_v1", "r"),
         ]
 
+    if "--small" in sys.argv:
+        hash_settings = [
+            ("rapidhash-f", "b"),
+            ("foldhash-f", "y"),
+        ]
+
     hash_names = [hash_function for hash_function, _ in hash_settings]
 
     # also available: 65536, 524288000
     sizes = [2, 8, 16, 25, 50, 64, 80, 160, 256, 350, 1024, 4096, ]
+    if "--small" in sys.argv:
+        sizes = list(range(0, 257))
 
     latency_data = []
     throughput_data = []
@@ -81,8 +89,12 @@ def draw_hash():
         latency_row = []
         throughput_row = []
 
+        prefix = "str"
+        if "--small" in sys.argv:
+            prefix = "small"
+
         for size in sizes:
-            latency, throughput = load_latest_measurement_file("hash", hash_function, f"str_{size}")
+            latency, throughput = load_latest_measurement_file("hash", hash_function, f"{prefix}_{size}")
             latency_row.append(latency)
             throughput_row.append(throughput)
 
@@ -105,9 +117,10 @@ def draw_hash():
 
     for i, (hash_function, color) in reversed(list(enumerate(hash_settings))):
         linestyle = "--" if hash_function.endswith("-f") else "-"
+        linewidth = 1.0 if "--small" in sys.argv else 0.5
 
-        axs[0, 0].plot(sizes, latency_data[i], label=hash_function, color=color, linestyle=linestyle)
-        axs[0, 1].plot(sizes, throughput_data[i], label=hash_function, color=color, linestyle=linestyle)
+        axs[0, 0].plot(sizes, latency_data[i], label=hash_function, color=color, linestyle=linestyle, linewidth=linewidth)
+        axs[0, 1].plot(sizes, throughput_data[i], label=hash_function, color=color, linestyle=linestyle, linewidth=linewidth)
 
         # Annotate the end of each line
         axs[0, 0].annotate(hash_function, (sizes[-1], latency_data[i][-1]), color=color,
@@ -123,21 +136,27 @@ def draw_hash():
         axs[1, 0].bar(hash_function, throughput_data_u64[i], color=color, edgecolor=edgecolor, hatch=hatchstyle, zorder=3)
         axs[1, 1].bar(hash_function, throughput_data_64k[i], color=color, edgecolor=edgecolor, hatch=hatchstyle, zorder=3)
 
+    labels = sizes
+    if "--small" in sys.argv:
+        labels = sizes[::20]
+
     axs[0, 0].set_title("Latency (byte stream)")
     axs[0, 0].set_xlabel("Input size (bytes)")
     axs[0, 0].set_ylabel("Latency (ns)")
-    axs[0, 0].set_xscale("log", base=2)
-    axs[0, 0].set_yscale("log", base=10)
-    axs[0, 0].set_xticks(sizes)
-    axs[0, 0].set_xticklabels(sizes, rotation=90, ha="right")
+    if "--small" not in sys.argv:
+        axs[0, 0].set_xscale("log", base=2)
+        axs[0, 0].set_yscale("log", base=10)
+    axs[0, 0].set_xticks(labels)
+    axs[0, 0].set_xticklabels(labels, rotation=90, ha="right")
 
     axs[0, 1].set_title("Throughput (byte stream)")
     axs[0, 1].set_xlabel("Input size (bytes)")
     axs[0, 1].set_ylabel("Throughput (GB/s)")
-    axs[0, 1].set_xscale("log", base=2)
-    axs[0, 1].set_yscale("log", base=10)
-    axs[0, 1].set_xticks(sizes)
-    axs[0, 1].set_xticklabels(sizes, rotation=90, ha="right")
+    if "--small" not in sys.argv:
+        axs[0, 1].set_xscale("log", base=2)
+        axs[0, 1].set_yscale("log", base=10)
+    axs[0, 1].set_xticks(labels)
+    axs[0, 1].set_xticklabels(labels, rotation=90, ha="right")
 
     axs[1, 0].set_title("Throughput (u64)")
     axs[1, 0].set_ylabel("Throughput (M Items/s)")
