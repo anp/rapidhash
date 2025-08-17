@@ -72,6 +72,12 @@ def draw_hash():
             ("foldhash-f", "y"),
         ]
 
+    if "--small" in sys.argv and "--raw" in sys.argv:
+        hash_settings = [
+            ("rapidhash_cc_v3", "y"),
+            ("rapidhash_cc_v3_1", "g"),
+        ]
+
     hash_names = [hash_function for hash_function, _ in hash_settings]
 
     # also available: 65536, 524288000
@@ -102,14 +108,18 @@ def draw_hash():
         throughput_data.append(throughput_row)
 
         u64_measurement = "u64"
+        s64k_measurement = "str_65536"
         if "--raw" in sys.argv:
             u64_measurement = "str_8"
+            if "--small" in sys.argv:
+                u64_measurement = "small_8"
+                s64k_measurement = "small_256"
 
         latency, throughput = load_latest_measurement_file("hash", hash_function, u64_measurement)
         latency_data_u64.append(latency)
         throughput_data_u64.append(throughput)
 
-        latency, throughput = load_latest_measurement_file("hash", hash_function, "str_65536")
+        latency, throughput = load_latest_measurement_file("hash", hash_function, s64k_measurement)
         latency_data_64k.append(latency)
         throughput_data_64k.append(throughput)
 
@@ -158,13 +168,19 @@ def draw_hash():
     axs[0, 1].set_xticks(labels)
     axs[0, 1].set_xticklabels(labels, rotation=90, ha="right")
 
-    axs[1, 0].set_title("Throughput (u64)")
+    if "--small" in sys.argv:
+        axs[1, 0].set_title("Throughput (bytes, 8B)")
+    else:
+        axs[1, 0].set_title("Throughput (u64)")
     axs[1, 0].set_ylabel("Throughput (M Items/s)")
     axs[1, 0].set_xticks(range(len(hash_names)))
     axs[1, 0].set_xticklabels(hash_names, rotation=45, ha="right")
     axs[1, 0].grid(True, zorder=0, color="gainsboro")
 
-    axs[1, 1].set_title("Throughput (bytes, 64kB)")
+    if "--small" in sys.argv:
+        axs[1, 1].set_title("Throughput (bytes, 256B)")
+    else:
+        axs[1, 1].set_title("Throughput (bytes, 64kB)")
     axs[1, 1].set_ylabel("Throughput (GB/s)")
     axs[1, 1].set_xticks(range(len(hash_names)))
     axs[1, 1].set_xticklabels(hash_names, rotation=45, ha="right")

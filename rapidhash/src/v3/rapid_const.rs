@@ -239,8 +239,8 @@ const fn rapidhash_micro_core<const AVALANCHE: bool, const PROTECTED: bool>(mut 
                 b ^= read_u64(data, plast);
             } else {
                 let plast = data.len() - 4;
-                b ^= read_u32(data, 0) as u64;
-                a ^= read_u32(data, plast) as u64;
+                a ^= read_u32(data, 0) as u64;
+                b ^= read_u32(data, plast) as u64;
             }
         } else if !data.is_empty() {
             a ^= ((data[0] as u64) << 45) | data[data.len() - 1] as u64;
@@ -315,8 +315,8 @@ const fn rapidhash_nano_core<const AVALANCHE: bool, const PROTECTED: bool>(mut s
                 b ^= read_u64(data, plast);
             } else {
                 let plast = data.len() - 4;
-                b ^= read_u32(data, 0) as u64;
-                a ^= read_u32(data, plast) as u64;
+                a ^= read_u32(data, 0) as u64;
+                b ^= read_u32(data, plast) as u64;
             }
         } else if !data.is_empty() {
             a ^= ((data[0] as u64) << 45) | data[data.len() - 1] as u64;

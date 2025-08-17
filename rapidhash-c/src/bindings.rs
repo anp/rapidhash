@@ -62,6 +62,7 @@ bindings!(rapidhash_v2_2_extern, rapidhashcc_v2_2, "rapidhash_v2_2", tests_v2_2)
 bindings!(rapidhash_v3_extern, rapidhashcc_v3, "rapidhash_v3", tests_v3);
 bindings!(rapidhash_v3_micro_extern, rapidhashcc_v3_micro, "rapidhash_v3", tests_v3_micro);
 bindings!(rapidhash_v3_nano_extern, rapidhashcc_v3_nano, "rapidhash_v3", tests_v3_nano);
+// bindings!(rapidhash_v3_1_extern, rapidhashcc_v3_1, "rapidhash_v3_1", tests_v3_1);
 bindings!(rapidhash_rs_extern, rapidhashcc_rs, "rapidhash_rs", tests_rs);
 
 #[cfg(test)]
