@@ -1,6 +1,6 @@
 use crate::inner::RandomState;
 
-/// A [std::collections::HashMap] type that uses the [crate::inner::RapidBuildHasher] hasher.
+/// A [std::collections::HashMap] type that uses the [crate::fast::RandomState] hasher.
 ///
 /// # Example
 /// ```
@@ -15,7 +15,7 @@ use crate::inner::RandomState;
 /// ```
 pub type RapidHashMap<K, V, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool = false, const PROTECTED: bool = false> = std::collections::HashMap<K, V, RandomState<AVALANCHE, SPONGE, COMPACT, PROTECTED>>;
 
-/// A [std::collections::HashSet] type that uses the [crate::inner::RapidBuildHasher] hasher.
+/// A [std::collections::HashSet] type that uses the [crate::fast::RandomState] hasher.
 ///
 /// # Example
 /// ```

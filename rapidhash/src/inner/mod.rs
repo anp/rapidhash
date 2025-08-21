@@ -58,8 +58,8 @@ mod tests {
     use super::seed::{DEFAULT_RAPID_SECRETS, DEFAULT_SEED};
     use super::rapid_const::{rapidhash_rs, rapidhash_rs_seeded};
 
-    type RapidHasher = super::RapidHasher<true, true, true>;
-    type RapidBuildHasher = super::RapidBuildHasher<true, true, true>;
+    type RapidHasher = super::RapidHasher<'static, true, true, true>;
+    type SeedableState = super::SeedableState<'static, true, true, true>;
 
     #[derive(Hash)]
     struct Object {
@@ -209,7 +209,7 @@ mod tests {
                     c_hash = rapid_mix_np::<false>(c_hash, DEFAULT_RAPID_SECRETS.secrets[1]);
                     assert_eq!(rust_hash, c_hash, "Mismatch with input {} byte {} bit {}", len, byte, bit);
 
-                    let mut rust_hasher = RapidBuildHasher::default().build_hasher();
+                    let mut rust_hasher = SeedableState::fixed().build_hasher();
                     rust_hasher.write(&data);
                     let rust_hasher_hash = rust_hasher.finish();
                     assert_eq!(rust_hash, rust_hasher_hash, "Hasher mismatch with input {} byte {} bit {}", len, byte, bit);
@@ -222,7 +222,7 @@ mod tests {
     fn disambiguation_check() {
         use std::vec::Vec;
 
-        let hasher = RapidBuildHasher::default();
+        let hasher = SeedableState::default();
 
         let a = [std::vec![1], std::vec![2, 3]];
         let b = [std::vec![1, 2], std::vec![3]];

@@ -1,11 +1,18 @@
 # Changelog
 
+## 4.0.0 (20250901)
+
+### Breaking changes
+- **rapidhash::v3 micro/nano output change:** input lengths 5-7 were mismatching the intended C++ V3 output. The C++ rapidhash has been re-released as V3 to fix the bug, and this rust implementation will follow. This changes the hash outputs for `rapidhash_v3_micro_inline` and `rapidhash_v3_nano_inline` for inputs of size 5, 6, and 7 bytes.
+- **RapidBuildHasher** has been removed in favour of `SeedableState`.
+- **RapidHasher** has a new lifetime parameter to support user-defined secrets via `SeedableState`.
+
 ## 3.1.0 (20250809)
 
-## Performance improvements
+### Performance improvements
 - Improved `RapidHasher` small string hashing performance by 1.5-15% depending on the benchmark, by reducing the small string hashing code size and allowing the compiler to inline more. Performance was also improved on big-endian platforms by reading native-endian bytes. The portable hashers (`rapidhash::v3` etc. modules) are unaffected by this change. [#37](https://github.com/hoxxep/rapidhash/pull/37)
 
-## Fixes
+### Fixes
 - Fixed compilation on targets without atomic pointers. [#38](https://github.com/hoxxep/rapidhash/issues/38), [#39](https://github.com/hoxxep/rapidhash/pull/39)
 
 ## 3.0.0 (20250730)

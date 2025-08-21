@@ -98,7 +98,7 @@ fn v3_bench(data: &[u8], seed: u64) -> u64 {
     rapidhash::v3::rapidhash_v3_seeded(data, &secrets)
 }
 
-bench_hash_emails!(bench_rapidhash, rapidhash::quality::RapidBuildHasher::default());
+bench_hash_emails!(bench_rapidhash, rapidhash::quality::RandomState::default());
 bench_hash_emails_raw!(bench_rapidhash_cc_v1, rapidhash_c::rapidhashcc_v1);
 bench_hash_emails_raw!(bench_rapidhash_cc_v2, rapidhash_c::rapidhashcc_v2);
 bench_hash_emails_raw!(bench_rapidhash_cc_v3, rapidhash_c::rapidhashcc_v3);

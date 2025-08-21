@@ -1,4 +1,4 @@
-use core::hash::{BuildHasher, Hasher};
+use core::hash::Hasher;
 use super::DEFAULT_RAPID_SECRETS;
 use super::mix_np::rapid_mix_np;
 use super::rapid_const::rapidhash_core;
@@ -65,62 +65,14 @@ macro_rules! write_num {
 /// let hash = hasher.finish();
 /// ```
 #[derive(Copy, Clone)]
-pub struct RapidHasher<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool = false, const PROTECTED: bool = false> {
+pub struct RapidHasher<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool = false, const PROTECTED: bool = false> {
     seed: u64,
-    secrets: &'static [u64; 7],  // FUTURE: non-static secrets?
+    secrets: &'s [u64; 7],  // FUTURE: non-static secrets?
     sponge: u128,
     sponge_len: u8,
 }
 
-/// A [std::hash::BuildHasher] trait compatible hasher that uses the [RapidHasher] algorithm.
-///
-/// This is an alias for [`std::hash::BuildHasherDefault<RapidHasher>`] with a static seed.
-///
-/// Note there that [crate::RapidRandomState] with can be used instead for a
-/// [std::hash::BuildHasher] that initialises with a random seed.
-///
-/// # Example
-/// ```
-/// use std::collections::HashMap;
-/// use std::hash::Hasher;
-///
-/// use rapidhash::quality::RapidBuildHasher;
-///
-/// let mut map = HashMap::with_hasher(RapidBuildHasher::default());
-/// map.insert(42, "the answer");
-/// ```
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub struct RapidBuildHasher<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool = false, const PROTECTED: bool = false> {
-    seed: u64,
-    secrets: &'static [u64; 7],
-}
-
-impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> RapidBuildHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
-    /// New rapid inline build hasher, and pre-compute the seed.
-    #[inline(always)]
-    pub const fn new(mut seed: u64) -> Self {
-        seed = rapidhash_seed(seed);
-        Self { seed, secrets: &DEFAULT_RAPID_SECRETS.secrets }
-    }
-}
-
-impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> BuildHasher for RapidBuildHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
-    type Hasher = RapidHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED>;
-
-    #[inline(always)]
-    fn build_hasher(&self) -> Self::Hasher {
-        Self::Hasher::new_precomputed_seed(self.seed, self.secrets)
-    }
-}
-
-impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Default for RapidBuildHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
-    #[inline]
-    fn default() -> Self {
-        Self::new(RapidHasher::<AVALANCHE, SPONGE, COMPACT, PROTECTED>::DEFAULT_SEED)
-    }
-}
-
-impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> RapidHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
+impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> RapidHasher<'s, AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     /// Default `RapidHasher` seed.
     pub const DEFAULT_SEED: u64 = super::seed::DEFAULT_SEED;
 
@@ -138,7 +90,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
 
     #[inline(always)]
     #[must_use]
-    pub(super) const fn new_precomputed_seed(seed: u64, secrets: &'static [u64; 7]) -> Self {
+    pub(super) const fn new_precomputed_seed(seed: u64, secrets: &'s [u64; 7]) -> Self {
         Self {
             seed,
             secrets,
@@ -155,7 +107,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
     }
 }
 
-impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Default for RapidHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
+impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Default for RapidHasher<'_, AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     /// Create a new [RapidHasher] with the default seed.
     ///
     /// See [crate::RapidRandomState] for a [std::hash::BuildHasher] that initialises with a random
@@ -169,7 +121,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
 /// This implementation implements methods for all integer types as the compiler will (hopefully...)
 /// inline and heavily optimize the rapidhash_core for each. Where the bytes length is known the
 /// compiler can make significant optimisations and saves us writing them out by hand.
-impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Hasher for RapidHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
+impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Hasher for RapidHasher<'_, AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     /// Produce the final hash value, marked as `#[inline(always)]`.
     #[inline(always)]
     fn finish(&self) -> u64 {
@@ -247,6 +199,9 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
 #[cfg(test)]
 mod tests {
     extern crate std;
+
+    use std::hash::BuildHasher;
+    use crate::fast::SeedableState;
     use super::*;
 
     #[test]
@@ -284,7 +239,7 @@ mod tests {
     #[ignore]
     #[cfg(feature = "std")]
     fn test_num_collisions() {
-        let builder = RapidBuildHasher::<true, false>::default();
+        let builder = SeedableState::default();
         let mut collisions = 0;
         let mut set = std::collections::HashSet::new();
         for i in 0..=u16::MAX {
@@ -304,6 +259,6 @@ mod tests {
             //     }
             // }
         }
-        assert_eq!(collisions, 0, "Collisions found when hashing numbers");
+        assert_eq!(collisions, 0, "Collisions found when hashing numbers with seed {builder:?}");
     }
 }

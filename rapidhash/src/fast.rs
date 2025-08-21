@@ -24,21 +24,30 @@ use crate::inner;
 /// - `PROTECTED` is disabled.
 ///
 /// Use [crate::quality::RapidHasher] for a higher quality hash output where necessary.
-pub type RapidHasher = inner::RapidHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED>;
+pub type RapidHasher<'s> = inner::RapidHasher<'s, AVALANCHE, SPONGE, COMPACT, PROTECTED>;
 
-/// A [std::hash::BuildHasher] trait compatible hasher that uses the [RapidHasher] algorithm.
+/// A rapidhash equivalent to [std::hash::RandomState] that uses a random seed and secrets for
+/// minimal DoS resistance.
 ///
-/// This is an alias for [inner::RapidBuildHasher] with the following settings:
+/// This initialises a [crate::quality::RapidHasher] with the following settings:
 /// - `AVALANCHE` is disabled.
 /// - `SPONGE` is enabled.
 /// - `COMPACT` is disabled.
 /// - `PROTECTED` is disabled.
 ///
-/// Note there that [crate::RapidRandomState] should be used
-pub type RapidBuildHasher = inner::RapidBuildHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED>;
-
-/// A rapidhash equivalent to [std::hash::RandomState] that uses a random seed and secrets.
+/// Use [crate::quality::RandomState] for a higher quality but slower hash output where desirable.
 pub type RandomState = inner::RandomState<AVALANCHE, SPONGE, COMPACT, PROTECTED>;
+
+/// A [std::hash::BuildHasher] trait compatible hasher that uses the [RapidHasher] algorithm.
+///
+/// This initialises a [crate::quality::RapidHasher] with the following settings:
+/// - `AVALANCHE` is disabled.
+/// - `SPONGE` is enabled.
+/// - `COMPACT` is disabled.
+/// - `PROTECTED` is disabled.
+///
+/// Use [crate::quality::SeedableState] for a higher quality but slower hash output where desirable.
+pub type SeedableState<'secrets> = inner::SeedableState<'secrets, AVALANCHE, SPONGE, COMPACT, PROTECTED>;
 
 /// A [std::collections::HashMap] that uses the [RapidHasher] hash.
 ///

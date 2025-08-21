@@ -21,8 +21,8 @@ A rust implementation of [rapidhash](https://github.com/Nicoshev/rapidhash), the
 Following rust's `std::hash` traits, the underlying hash function may change between minor versions, and is only suitable for in-memory hashing. These types are optimised for speed and minimal DoS resistance, available in the `rapidhash::fast` and `rapidhash::quality` flavours.
 
 - `RapidHasher`: A `std::hash::Hasher` compatible hasher that uses the rapidhash algorithm.
-- `RapidHashBuilder`: A `std::hash::BuildHasher` for initialising the hasher with the default seed and secrets.
 - `RandomState`: A `std::hash::BuildHasher` for initialising the hasher with a random seed and secrets.
+- `SeedableState`: A `std::hash::BuildHasher` for initialising the hasher with the custom seed and secrets.
 - `RapidHashMap` and `RapidHashSet`: Helper types for using `RapidHasher` with `HashMap` and `HashSet`.
 
 ```rust
@@ -35,10 +35,10 @@ map.insert("key", "value");
 
 ```rust
 use std::hash::BuildHasher;
-use rapidhash::quality::RapidBuildHasher;
+use rapidhash::quality::SeedableState;
 
 // Using the RapidHasher directly for in-memory hashing.
-let hasher = RapidBuildHasher::default();
+let hasher = SeedableState::fixed();
 assert_eq!(hasher.hash_one(b"hello world"), 9938606849760368330);
 ```
 
@@ -260,7 +260,7 @@ C++ compatibility is presented in `rapidhash::v1`, `rapidhash::v2`, and `rapidha
 Rapidhash V3 is the recommended, fastest, and most recent version of the hash. Streaming is only possible with the rapidhash V3 algorithm. Others are provided for backwards compatibility.
 
 ### In-Memory Hashing
-Rust hasing traits (`RapidHasher`, `RapidBuildHasher`, etc.) are implemented in `rapidhash::fast`, `rapidhash::quality`, and `rapidhash::inner` modules. These are not guaranteed to give a consistent hash output between platforms, compiler versions, or crate versions as the rust `Hasher` trait [is not suitable](https://github.com/hoxxep/portable-hash/?tab=readme-ov-file#whats-wrong-with-the-stdhash-traits) for portable hashing.
+Rust hashing traits (`RapidHasher`, `RandomState`, etc.) are implemented in `rapidhash::fast`, `rapidhash::quality`, and `rapidhash::inner` modules. These are not guaranteed to give a consistent hash output between platforms, compiler versions, or crate versions as the rust `Hasher` trait [is not suitable](https://github.com/hoxxep/portable-hash/?tab=readme-ov-file#whats-wrong-with-the-stdhash-traits) for portable hashing.
 
 - Use `rapidhash::fast` for optimal hashing speed with a slightly lower hash quality. Best for most datastructures such as HashMap and HashSet usage.
 - Use `rapidhash::quality` where statistical hash quality is the priority, such as HyperLogLog or MinHash algorithms.

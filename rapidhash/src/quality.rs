@@ -22,22 +22,30 @@ use crate::inner;
 /// - `PROTECTED` is disabled.
 ///
 /// Use [crate::fast::RapidHasher] for a lower quality but faster hash output where desirable.
-pub type RapidHasher = inner::RapidHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED>;
+pub type RapidHasher<'s> = inner::RapidHasher<'s, AVALANCHE, SPONGE, COMPACT, PROTECTED>;
 
-/// A [std::hash::BuildHasher] inspired by [rapidhash::v3::rapidhash_v3] with a focus on hash quality.
+/// A rapidhash equivalent to [std::hash::RandomState] that uses a random seed and secrets for
+/// minimal DoS resistance.
 ///
-/// This is an alias for [inner::RapidBuildHasher] with the following settings:
+/// This initialises a [RapidHasher] with the following settings:
 /// - `AVALANCHE` is enabled.
 /// - `SPONGE` is enabled.
 /// - `COMPACT` is disabled.
 /// - `PROTECTED` is disabled.
 ///
-/// Use [crate::fast::RapidHasher] for a lower quality but faster hash output where desirable.
-pub type RapidBuildHasher = inner::RapidBuildHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED>;
-
-/// A rapidhash equivalent to [std::hash::RandomState] that uses a random seed and secrets for
-/// minimal DoS resistance.
+/// Use [crate::fast::RandomState] for a lower quality but faster hash output where desirable.
 pub type RandomState = inner::RandomState<AVALANCHE, SPONGE, COMPACT, PROTECTED>;
+
+/// A [std::hash::BuildHasher] trait compatible hasher that uses the [crate::fast::RapidHasher] algorithm.
+///
+/// This initialises a [RapidHasher] with the following settings:
+/// - `AVALANCHE` is enabled.
+/// - `SPONGE` is enabled.
+/// - `COMPACT` is disabled.
+/// - `PROTECTED` is disabled.
+///
+/// Use [crate::fast::SeedableState] for a lower quality but faster hash output where desirable.
+pub type SeedableState<'secrets> = inner::SeedableState<'secrets, AVALANCHE, SPONGE, COMPACT, PROTECTED>;
 
 /// A [std::collections::HashMap] that uses the [RapidHasher] hash.
 ///

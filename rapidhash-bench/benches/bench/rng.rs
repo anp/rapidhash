@@ -24,7 +24,7 @@ pub fn bench(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("random_state");
     group.bench_function("random_state", bench_state::<rapidhash::quality::RandomState>);
-    group.bench_function("build_hasher", bench_state::<rapidhash::quality::RapidBuildHasher>);
+    group.bench_function("seedable_state", bench_state::<rapidhash::quality::SeedableState>);
 }
 
 pub fn bench_rapidhash(count: usize) -> Box<dyn FnMut(&mut Bencher)> {
