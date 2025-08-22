@@ -1,4 +1,4 @@
-use std::hash::BuildHasher;
+use core::hash::BuildHasher;
 use crate::inner::RapidHasher;
 use crate::inner::seeding::secrets::GlobalSecrets;
 
