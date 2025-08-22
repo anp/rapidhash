@@ -28,6 +28,7 @@ harness = false
 # avoid bringing in all of these during workspace default tests
 bench = ["rapidhash/std", "rapidhash/rand", "rapidhash/rng"]
 unsafe = ["rapidhash/unsafe"]
+nightly = ["rapidhash/nightly"]
 
 [dependencies]
 rapidhash = { workspace = true, default-features = false }

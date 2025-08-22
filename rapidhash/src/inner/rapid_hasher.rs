@@ -3,6 +3,7 @@ use super::DEFAULT_RAPID_SECRETS;
 use super::mix_np::rapid_mix_np;
 use super::rapid_const::rapidhash_core;
 use super::seed::rapidhash_seed;
+use crate::util::hints::likely;
 
 /// This function needs to be as small as possible to have as high a chance of being inlined as
 /// possible.
@@ -22,7 +23,7 @@ macro_rules! write_num {
                 // The compiler also converts an i32 -> i128 -> u128 unless we coerce it into its
                 // unsigned type first.
                 let bytes = (i as $unsigned) as u128;
-                if self.sponge_len + N <= 128 {
+                if likely(self.sponge_len + N <= 128) {
                     // HOT: add the bytes into the sponge
                     self.sponge |= bytes << self.sponge_len;
                     self.sponge_len += N;
@@ -188,12 +189,20 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
         self.seed = rapid_mix_np::<PROTECTED>(a ^ self.seed, b ^ self.secrets[0]);
     }
 
-    // TODO: write_str override once stable; nightly feature; or rustversion cfg
-    // #[cfg(feature = "nightly")]
-    // #[inline(always)]
-    // fn write_str(&mut self, s: &str) {
-    //     self.write(s.as_bytes());
-    // }
+    /// Write a length prefix to the hasher, marked as `#[inline(always)]`.
+    #[cfg(feature = "nightly")]
+    #[inline(always)]
+    fn write_length_prefix(&mut self, len: usize) {
+        self.write_usize(len);
+    }
+
+    /// Write a string to the hasher, without adding a length prefix as rapidhash already mixes in
+    /// the byte length to prevent length extension attacks, marked as `#[inline(always)]`.
+    #[cfg(feature = "nightly")]
+    #[inline(always)]
+    fn write_str(&mut self, s: &str) {
+        self.write(s.as_bytes());
+    }
 }
 
 #[cfg(test)]

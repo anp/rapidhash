@@ -13,6 +13,9 @@
 #![deny(unused_must_use)]
 #![allow(clippy::manual_hash_one)]
 
+#![cfg_attr(feature = "nightly", feature(likely_unlikely))]
+#![cfg_attr(feature = "nightly", feature(hasher_prefixfree_extras))]
+
 pub(crate) mod util;
 
 pub mod v1;

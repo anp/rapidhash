@@ -1,3 +1,4 @@
+use crate::util::hints::{likely, unlikely};
 use super::mix_np::{rapid_mix_np, rapid_mum_np};
 use super::read_np::{read_u32_np, read_u64_np};
 
@@ -42,7 +43,7 @@ pub(crate) const fn rapidhash_rs_inline<const AVALANCHE: bool, const COMPACT: bo
 #[inline(always)]
 #[must_use]
 pub(super) const fn rapidhash_core<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> u64 {
-    if data.len() <= 16 {
+    if likely(data.len() <= 16) {
         let mut a = 0;
         let mut b = 0;
 
@@ -78,7 +79,7 @@ const fn rapidhash_core_16_288<const AVALANCHE: bool, const COMPACT: bool, const
     let mut slice = data;
 
     if slice.len() > 48 {
-        if slice.len() > 288 {
+        if unlikely(slice.len() > 288) {
             return rapidhash_core_cold::<AVALANCHE, COMPACT, PROTECTED>(seed, secrets, data);
         }
 

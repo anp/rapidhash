@@ -23,7 +23,7 @@ const BENCHMARKS: &[&str] = &[
 
 pub fn wasm_bench(c: &mut Criterion) {
     compile_wasm();
-    
+
     for &hash in HASHES.iter() {
         let group_name = format!("wasm/{}", hash);
         let mut group = c.benchmark_group(&group_name);
@@ -89,15 +89,21 @@ impl WasmEnv {
 fn compile_wasm() {
     let out_path = Path::new(WASM_PATH);
 
+    let mut args = Vec::new();
+    #[cfg(feature = "nightly")] {
+        args.push("+nightly")
+    }
+    args.extend_from_slice(&[
+        "build",
+        "--release",
+        "--package", "rapidhash-bench-wasm",
+        "--target", "wasm32-unknown-unknown",
+    ]);
+
     // Run cargo build --target
     let status = Command::new("cargo")
-        .args(&[
-            "build",
-            "--release",
-            "--package", "rapidhash-bench-wasm",
-            "--target", "wasm32-unknown-unknown",
-        ])
-        .env("RUSTFLAGS", "")  // clear any bench flags
+        .args(&args)
+        .env("RUSTFLAGS", "")  // explicitly clear any bench flags
         .status()
         .expect("Failed to run cargo build for wasm target");
 

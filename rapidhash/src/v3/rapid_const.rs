@@ -1,3 +1,4 @@
+use crate::util::hints::{likely, unlikely};
 use crate::util::mix::{rapid_mix, rapid_mum};
 use crate::util::read::{read_u32, read_u64};
 use super::{DEFAULT_RAPID_SECRETS, RapidSecrets};
@@ -78,7 +79,7 @@ pub(super) const fn rapidhash_core<const AVALANCHE: bool, const COMPACT: bool, c
     let mut b;
 
     let remainder;
-    if data.len() <= 16 {
+    if likely(data.len() <= 16) {
         a = 0;
         b = 0;
 
@@ -127,7 +128,7 @@ const fn rapidhash_core_cold<const AVALANCHE: bool, const COMPACT: bool, const P
 
     let mut slice = data;
 
-    if slice.len() > 112 {
+    if unlikely(slice.len() > 112) {
         // most CPUs appear to benefit from this unrolled loop
         let mut see1 = seed;
         let mut see2 = seed;
@@ -230,7 +231,7 @@ const fn rapidhash_micro_core<const AVALANCHE: bool, const PROTECTED: bool>(mut 
     let mut b = 0;
 
     let remainder;
-    if data.len() <= 16 {
+    if likely(data.len() <= 16) {
         if data.len() >= 4 {
             seed ^= data.len() as u64;
             if data.len() >= 8 {
@@ -306,7 +307,7 @@ const fn rapidhash_nano_core<const AVALANCHE: bool, const PROTECTED: bool>(mut s
     let mut b = 0;
 
     let remainder;
-    if data.len() <= 16 {
+    if likely(data.len() <= 16) {
         if data.len() >= 4 {
             seed ^= data.len() as u64;
             if data.len() >= 8 {
