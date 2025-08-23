@@ -69,7 +69,8 @@ def draw_hash():
     if "--small" in sys.argv:
         hash_settings = [
             ("rapidhash-f", "b"),
-            ("foldhash-f", "y"),
+#             ("foldhash-f", "y"),
+#             ("fxhash", "r"),
         ]
 
     if "--small" in sys.argv and "--raw" in sys.argv:
@@ -83,7 +84,7 @@ def draw_hash():
     # also available: 65536, 524288000
     sizes = [2, 8, 16, 25, 50, 64, 80, 160, 256, 350, 1024, 4096, ]
     if "--small" in sys.argv:
-        sizes = list(range(0, 257))
+        sizes = list(range(0, 300))
 
     latency_data = []
     throughput_data = []
@@ -111,9 +112,10 @@ def draw_hash():
         s64k_measurement = "str_65536"
         if "--raw" in sys.argv:
             u64_measurement = "str_8"
-            if "--small" in sys.argv:
-                u64_measurement = "small_8"
-                s64k_measurement = "small_256"
+
+        if "--small" in sys.argv:
+            u64_measurement = "small_8"
+            s64k_measurement = "small_256"
 
         latency, throughput = load_latest_measurement_file("hash", hash_function, u64_measurement)
         latency_data_u64.append(latency)

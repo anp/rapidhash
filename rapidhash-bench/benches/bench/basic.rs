@@ -91,8 +91,7 @@ fn bench_group_small<H: BuildHasher + Default>(c: &mut Criterion, group_name: &s
     group.measurement_time(std::time::Duration::from_millis(1000));
 
     // micro benchmarks
-    let sizes = 0usize..=256;
-    for size in sizes {
+    for size in 0usize..=300 {
         profile_bytes::<H>(size, "small", &mut group);
     }
 }
@@ -153,8 +152,8 @@ fn bench_group_small_raw<H: Fn(&[u8], u64) -> u64>(c: &mut Criterion, group_name
 
 pub fn bench(c: &mut Criterion) {
     bench_group_small::<rapidhash::fast::RandomState>(c, "hash/rapidhash-f");
-    bench_group_small::<foldhash::fast::RandomState>(c, "hash/rapidhash-f");
-    bench_group_small::<fxhash::FxBuildHasher>(c, "hash/rapidhash-f");
+    bench_group_small::<foldhash::fast::RandomState>(c, "hash/foldhash-f");
+    bench_group_small::<fxhash::FxBuildHasher>(c, "hash/fxhash");
 
     bench_group::<rapidhash::fast::RandomState>(c, "hash/rapidhash-f");
     bench_group::<rapidhash::quality::RandomState>(c, "hash/rapidhash-q");

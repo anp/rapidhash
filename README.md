@@ -241,6 +241,13 @@ The benchmarks have been compiled with and without `-C target-cpu=native` on a v
 - **Comparison to gxhash**: gxhash achieves its high throughput by using AES instructions and consistently outperforms the other accelerated hashers (ahash, th1a, xxhash3_64). It's a great hash function, but is not a portable hash function, requiring `target-cpu=native` or specific feature flags to compile. Gxhash is a great choice for applications that can guarantee the availability of AES instructions and mostly hash strings, but rapidhash may be preferred for hashing tuples and structs, or by libraries that aim to support a wide range of platforms.
 - The default rust hasher (SipHasher) unexpectedly appears to run consistently faster _without_ `target-cpu=native` on various x86 and ARM chips.
 - Benchmark your own use case, with your real world dataset! We suggest experimenting with different hash functions to see which one works best for your use case. Rapidhash is great for fast general-purpose hashing in libraries and applications that only need minimal DoS resistance, but certain hashers will outperform for specific use cases.
+- We recommend setting LTO and codegen-units in your `Cargo.toml` release and bench profiles to ensure consistent inlining, application performance, and benchmarking results. For example:
+    ```toml
+    [profile.release]
+    opt-level = 3
+    lto = "fat"  # or "thin"
+    codegen-units = 1
+    ```
 
 </details>
 
