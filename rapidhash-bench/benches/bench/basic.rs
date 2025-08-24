@@ -87,8 +87,8 @@ fn bench_group<H: BuildHasher + Default>(c: &mut Criterion, group_name: &str) {
 
 fn bench_group_small<H: BuildHasher + Default>(c: &mut Criterion, group_name: &str) {
     let mut group = c.benchmark_group(group_name.to_string());
-    group.warm_up_time(std::time::Duration::from_millis(250));
-    group.measurement_time(std::time::Duration::from_millis(1000));
+    group.warm_up_time(std::time::Duration::from_millis(100));
+    group.measurement_time(std::time::Duration::from_millis(500));
 
     // micro benchmarks
     for size in 0usize..=300 {

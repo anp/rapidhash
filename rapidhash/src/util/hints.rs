@@ -6,6 +6,10 @@ pub(crate) const fn likely(x: bool) -> bool {
     }
 
     #[cfg(not(feature = "nightly"))] {
+        if !x {
+            cold_path();
+        }
+
         x
     }
 }
@@ -18,8 +22,32 @@ pub(crate) const fn unlikely(x: bool) -> bool {
     }
 
     #[cfg(not(feature = "nightly"))] {
+        if x {
+            cold_path();
+        }
+
         x
     }
 }
 
+#[cold]
+#[inline(always)]
+const fn cold_path() {}
 
+/// Provides a stable `assume` function that uses `core::hint::assert_unchecked` when the stable
+/// rust compiler supports it.
+///
+/// This is particularly relevant when LLVM isn't able to specialise the >16 input functions. This
+/// often happens with the default release profile, which uses a large number of codegen units and
+/// LTO off.
+#[rustversion::since(1.81)]
+#[inline(always)]
+pub(crate) const unsafe fn assume(cond: bool) {
+    core::hint::assert_unchecked(cond);
+}
+
+/// Provides a stable `assume` function that uses `core::hint::assert_unchecked` when the stable
+/// rust compiler supports it.
+#[rustversion::before(1.81)]
+#[inline(always)]
+pub(crate) const unsafe fn assume(_cond: bool) {}

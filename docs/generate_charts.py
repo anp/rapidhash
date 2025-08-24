@@ -69,7 +69,7 @@ def draw_hash():
     if "--small" in sys.argv:
         hash_settings = [
             ("rapidhash-f", "b"),
-#             ("foldhash-f", "y"),
+            ("foldhash-f", "y"),
 #             ("fxhash", "r"),
         ]
 

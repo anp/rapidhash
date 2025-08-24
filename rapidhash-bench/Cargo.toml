@@ -28,7 +28,7 @@ harness = false
 # avoid bringing in all of these during workspace default tests
 bench = ["rapidhash/std", "rapidhash/rand", "rapidhash/rng"]
 unsafe = ["rapidhash/unsafe"]
-nightly = ["rapidhash/nightly"]
+nightly = ["rapidhash/nightly", "foldhash/nightly"]
 
 [dependencies]
 rapidhash = { workspace = true, default-features = false }
@@ -50,7 +50,7 @@ ahash = "0.8.11"
 farmhash = "1.1.5"
 highway = "1.2.0"
 rustc-hash = "2.0.0"
-foldhash = "0.1.5"
+foldhash = "0.2.0"
 museair = "0.4.0"
 
 # benchmarking helpers

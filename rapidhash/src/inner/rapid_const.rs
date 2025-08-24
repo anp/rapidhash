@@ -1,5 +1,4 @@
-use crate::util::assume::assume;
-use crate::util::hints::{likely, unlikely};
+use crate::util::hints::{assume, likely, unlikely};
 use super::mix_np::{rapid_mix_np, rapid_mum_np};
 use super::read_np::{read_u32_np, read_u64_np};
 
