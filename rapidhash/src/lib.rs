@@ -1,10 +1,13 @@
 #![cfg_attr(docsrs, doc = include_str!("../README.md"))]
 #![cfg_attr(not(docsrs), doc = "# Rapidhash")]
-#![cfg_attr(not(feature = "std"), no_std)]
 
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![cfg_attr(docsrs, feature(doc_cfg_hide))]
 #![cfg_attr(docsrs, doc(cfg_hide(docsrs)))]
+
+#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(feature = "nightly", feature(likely_unlikely))]
+#![cfg_attr(feature = "nightly", feature(hasher_prefixfree_extras))]
 
 // note: we don't #![deny(unsafe_code)] as seeding.rs uses unsafe code to initialise the static
 // secrets, but we're confident about the safety of that code (and it cannot interact with
@@ -12,9 +15,6 @@
 #![deny(missing_docs)]
 #![deny(unused_must_use)]
 #![allow(clippy::manual_hash_one)]
-
-#![cfg_attr(feature = "nightly", feature(likely_unlikely))]
-#![cfg_attr(feature = "nightly", feature(hasher_prefixfree_extras))]
 
 pub(crate) mod util;
 

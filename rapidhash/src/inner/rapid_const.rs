@@ -1,4 +1,4 @@
-use core::hint::assert_unchecked;
+use crate::util::assume::assume;
 use crate::util::hints::{likely, unlikely};
 use super::mix_np::{rapid_mix_np, rapid_mum_np};
 use super::read_np::{read_u32_np, read_u64_np};
@@ -81,7 +81,7 @@ const unsafe fn rapidhash_core_17_288<const AVALANCHE: bool, const COMPACT: bool
     // SAFETY: we promise to never call this with <=16 length data to omit some bounds checks.
     // This is really intended for codegen-units >1 and/or no LTO.
     debug_assert!(data.len() > 16);
-    assert_unchecked(data.len() > 16);
+    assume(data.len() > 16);
 
     let mut a = 0;
     let mut b = 0;
@@ -131,7 +131,7 @@ const unsafe fn rapidhash_core_17_288<const AVALANCHE: bool, const COMPACT: bool
 const unsafe fn rapidhash_core_cold<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> u64 {
     // SAFETY: we promise to never call this with <=288 length data to omit some bounds checks
     debug_assert!(data.len() > 288);
-    assert_unchecked(data.len() > 288);
+    assume(data.len() > 288);
 
     let mut a = 0;
     let mut b = 0;

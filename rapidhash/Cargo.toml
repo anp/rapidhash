@@ -31,8 +31,9 @@ nightly = []  # enable nightly features, faster str hashing and likely/unlikely 
 unsafe = []  # enable unsafe pointer arithmetic; this is used to check for bounds-check regressions
 
 [dependencies]
-rand = { version = "0.9.0", optional = true }
-rand_core = { version = "0.9.1", default-features = false, optional = true }
+rustversion = "1.0"
+rand = { version = "0.9", optional = true }
+rand_core = { version = "0.9", default-features = false, optional = true }
 
 [dev-dependencies]
 rapidhash-c = { path = "../rapidhash-c" }

@@ -7,3 +7,4 @@ pub mod read;
 #[cfg(test)]
 pub mod macros;
 pub mod hints;
+pub mod assume;
