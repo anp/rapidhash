@@ -66,10 +66,10 @@ def draw_hash():
             ("rapidhash_cc_v1", "r"),
         ]
 
-    if "--small" in sys.argv:
+    if "--small" in sys.argv or "--medium" in sys.argv:
         hash_settings = [
             ("rapidhash-f", "b"),
-            ("foldhash-f", "y"),
+#             ("foldhash-f", "y"),
 #             ("fxhash", "r"),
         ]
 
@@ -85,6 +85,8 @@ def draw_hash():
     sizes = [2, 8, 16, 25, 50, 64, 80, 160, 256, 350, 1024, 4096, ]
     if "--small" in sys.argv:
         sizes = list(range(0, 300))
+    if "--medium" in sys.argv:  # 50B increments up to 4kB
+        sizes = list(range(0, 40 * 100, 50))
 
     latency_data = []
     throughput_data = []
@@ -99,6 +101,8 @@ def draw_hash():
         prefix = "str"
         if "--small" in sys.argv:
             prefix = "small"
+        if "--medium" in sys.argv:
+            prefix = "medium"
 
         for size in sizes:
             latency, throughput = load_latest_measurement_file("hash", hash_function, f"{prefix}_{size}")
@@ -117,6 +121,10 @@ def draw_hash():
             u64_measurement = "small_8"
             s64k_measurement = "small_256"
 
+        if "--medium" in sys.argv:
+            u64_measurement = "medium_100"
+            s64k_measurement = "medium_19000"
+
         latency, throughput = load_latest_measurement_file("hash", hash_function, u64_measurement)
         latency_data_u64.append(latency)
         throughput_data_u64.append(throughput)
@@ -129,7 +137,7 @@ def draw_hash():
 
     for i, (hash_function, color) in reversed(list(enumerate(hash_settings))):
         linestyle = "--" if hash_function.endswith("-f") else "-"
-        linewidth = 1.0 if "--small" in sys.argv else 0.5
+        linewidth = 1.0 if "--small" in sys.argv or "--medium" in sys.argv else 0.5
 
         axs[0, 0].plot(sizes, latency_data[i], label=hash_function, color=color, linestyle=linestyle, linewidth=linewidth)
         axs[0, 1].plot(sizes, throughput_data[i], label=hash_function, color=color, linestyle=linestyle, linewidth=linewidth)
@@ -149,13 +157,13 @@ def draw_hash():
         axs[1, 1].bar(hash_function, throughput_data_64k[i], color=color, edgecolor=edgecolor, hatch=hatchstyle, zorder=3)
 
     labels = sizes
-    if "--small" in sys.argv:
+    if "--small" in sys.argv or "--medium" in sys.argv:
         labels = sizes[::20]
 
     axs[0, 0].set_title("Latency (byte stream)")
     axs[0, 0].set_xlabel("Input size (bytes)")
     axs[0, 0].set_ylabel("Latency (ns)")
-    if "--small" not in sys.argv:
+    if not ("--small" in sys.argv or "--medium" in sys.argv):
         axs[0, 0].set_xscale("log", base=2)
         axs[0, 0].set_yscale("log", base=10)
     axs[0, 0].set_xticks(labels)
@@ -164,7 +172,7 @@ def draw_hash():
     axs[0, 1].set_title("Throughput (byte stream)")
     axs[0, 1].set_xlabel("Input size (bytes)")
     axs[0, 1].set_ylabel("Throughput (GB/s)")
-    if "--small" not in sys.argv:
+    if not ("--small" in sys.argv or "--medium" in sys.argv):
         axs[0, 1].set_xscale("log", base=2)
         axs[0, 1].set_yscale("log", base=10)
     axs[0, 1].set_xticks(labels)
@@ -172,6 +180,8 @@ def draw_hash():
 
     if "--small" in sys.argv:
         axs[1, 0].set_title("Throughput (bytes, 8B)")
+    elif "--medium" in sys.argv:
+        axs[1, 0].set_title("Throughput (bytes, 100B)")
     else:
         axs[1, 0].set_title("Throughput (u64)")
     axs[1, 0].set_ylabel("Throughput (M Items/s)")
@@ -181,6 +191,8 @@ def draw_hash():
 
     if "--small" in sys.argv:
         axs[1, 1].set_title("Throughput (bytes, 256B)")
+    if "--medium" in sys.argv:
+        axs[1, 1].set_title("Throughput (bytes, 19kB)")
     else:
         axs[1, 1].set_title("Throughput (bytes, 64kB)")
     axs[1, 1].set_ylabel("Throughput (GB/s)")

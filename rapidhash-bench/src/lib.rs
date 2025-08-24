@@ -39,7 +39,7 @@ mod tests {
         let hash_builder = foldhash::fast::FixedState::default();
         let mut flips = std::vec![];
 
-        for len in 1..=256 {
+        for len in 1..=512 {
             let mut data = std::vec![0; len];
             rand::rng().fill(&mut data[..]);
 

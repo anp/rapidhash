@@ -93,6 +93,7 @@ echo "example" | rapidhash --v3
 - `rand`: Enables using the `rand` library to more securely initialise `RandomState`. Includes the `rand` crate dependency.
 - `rng`: Enables `RapidRng`, a fast, non-cryptographic PRNG based on rapidrng. Includes the `rand_core` crate dependency.
 - `unsafe`: Uses unsafe pointer arithmetic to skip some unnecessary bounds checks for a small 3-4% performance improvement.
+- `nightly`: Enable nightly-only features for even faster hashing, such as overriding `Hasher::write_str` and likely hints.
 
 ## Benchmarks
 

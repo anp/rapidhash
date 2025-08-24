@@ -9,9 +9,6 @@
 #![cfg_attr(feature = "nightly", feature(likely_unlikely))]
 #![cfg_attr(feature = "nightly", feature(hasher_prefixfree_extras))]
 
-// note: we don't #![deny(unsafe_code)] as seeding.rs uses unsafe code to initialise the static
-// secrets, but we're confident about the safety of that code (and it cannot interact with
-// user-generated values).
 #![deny(missing_docs)]
 #![deny(unused_must_use)]
 #![allow(clippy::manual_hash_one)]

@@ -83,6 +83,11 @@ fn bench_group<H: BuildHasher + Default>(c: &mut Criterion, group_name: &str) {
     profile_int::<H, u32>("u32", &mut group);
     profile_int::<H, u64>("u64", &mut group);
     profile_int::<H, u128>("u128", &mut group);
+
+    // 50B increments up to 4kB
+    for size in 0usize..=80 {
+        profile_bytes::<H>(size * 50, "medium", &mut group);
+    }
 }
 
 fn bench_group_small<H: BuildHasher + Default>(c: &mut Criterion, group_name: &str) {

@@ -40,6 +40,9 @@ hash_benchmark!(
     "abcdefg12345678abcdefg12345678abcdefg12345678abcdefg12345678"
 );
 
+hash_benchmark!(hash_string_1kb, "a".repeat(1024));
+hash_benchmark!(hash_string_10kb, "a".repeat(1024 * 10));
+
 hash_benchmark!(hash_string_uuid, "20ff9c15-3723-45b4-91d0-df234b4d852b");
 hash_benchmark!(hash_string_date, "2025-05-18T15:11:10+0000");
 
@@ -67,6 +70,8 @@ library_benchmark_group!(name = hash_string_group; benchmarks =
     hash_string_64,
     hash_string_uuid,
     hash_string_date,
+    hash_string_1kb,
+    hash_string_10kb,
 );
 
 library_benchmark_group!(name = hash_bytes_group; benchmarks =
