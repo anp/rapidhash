@@ -258,7 +258,7 @@ const fn rapidhash_micro_core<const AVALANCHE: bool, const PROTECTED: bool>(mut 
         remainder = data.len() as u64;
     } else {
         let mut slice = data;
-        if slice.len() > 80 {
+        if unlikely(slice.len() > 80) {
             let mut see1 = seed;
             let mut see2 = seed;
             let mut see3 = seed;
@@ -334,7 +334,7 @@ const fn rapidhash_nano_core<const AVALANCHE: bool, const PROTECTED: bool>(mut s
         remainder = data.len() as u64;
     } else {
         let mut slice = data;
-        if slice.len() > 48 {
+        if unlikely(slice.len() > 48) {
             let mut see1 = seed;
             let mut see2 = seed;
 
