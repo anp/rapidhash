@@ -18,7 +18,7 @@ mod tests {
         fn test_hasher_size() {
             // only enable when std is available
             assert_eq!(core::mem::size_of::<rapidhash::fast::RapidHasher>(), 48);
-            assert_eq!(core::mem::size_of::<foldhash::fast::FoldHasher>(), 64);
+            assert_eq!(core::mem::size_of::<foldhash::fast::FoldHasher>(), 48);
         }
     }
 
