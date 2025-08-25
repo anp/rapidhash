@@ -88,15 +88,18 @@ const unsafe fn rapidhash_core_17_288<const AVALANCHE: bool, const COMPACT: bool
     // This is really intended for codegen-units >1 and/or no LTO.
     assume(data.len() > 16);
 
-    // This branch is a hack against the function prologue/epilogue:
-    // - It slows down aarch64, where there is no stack spill.
-    // - It speeds up x86_64 by removing the stack spill on the <48 path.
+    // This branch is a hack to move the function prologue/epilogue (stack spilling) into the >48
+    // path as it otherwise unnecessarily hurts the <48 path.
+    // - It slows down aarch64 >48 inputs, where there is no stack spill.
+    // - It speeds up x86_64 by removing the stack spill on the <48 path, but is
+    //   slightly slower on the >48 path... I cannot figure out how to move the spill into the >48
+    //   path only but then re-use the already cached <48 path finish. Ideas welcome.
     // - It makes minimal difference on WASM.
-    // #[cfg(not(target_arch = "aarch64"))]
-    // if likely(data.len() <= 48) {
-    //     // SAFETY: data.len() is guaranteed to be >16
-    //     return rapidhash_final_48::<AVALANCHE, PROTECTED>(seed, secrets, data, data);
-    // }
+    #[cfg(not(target_arch = "aarch64"))]
+    if likely(data.len() <= 48) {
+        // SAFETY: data.len() is guaranteed to be >16
+        return rapidhash_final_48::<AVALANCHE, PROTECTED>(seed, secrets, data, data);
+    }
 
     let mut slice = data;
     if unlikely(data.len() > 48) {
