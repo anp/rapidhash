@@ -1,11 +1,11 @@
 [package]
 name = "rapidhash"
-version = "3.1.0"
+version = "4.0.0"
 edition = "2021"
 publish = true
 rust-version = "1.71.0"  # const split_at and read_unaligned is our limitation
 authors = ["Liam Gray <gmail@liamg.me>"]
-description = "A rust port of rapidhash: an extremely fast, high quality, platform-independent hashing algorithm."
+description = "An extremely fast, high quality, platform-independent hashing algorithm."
 repository = "https://github.com/hoxxep/rapidhash"
 documentation = "https://docs.rs/rapidhash"
 license = "MIT OR Apache-2.0"
