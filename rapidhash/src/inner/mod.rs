@@ -27,8 +27,6 @@
 //! crate versions.
 
 
-#[cfg(any(feature = "std", docsrs))]
-mod collections;
 mod rapid_const;
 mod rapid_hasher;
 mod state;
@@ -39,9 +37,6 @@ mod read_np;
 
 #[doc(inline)]
 pub use rapid_hasher::*;
-#[doc(inline)]
-#[cfg(any(feature = "std", docsrs))]
-pub use collections::*;
 #[doc(inline)]
 pub use state::*;
 #[doc(inline)]

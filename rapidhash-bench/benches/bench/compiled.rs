@@ -1,7 +1,7 @@
 use const_random::const_random;
 use criterion::{Bencher, Criterion};
 use rand::prelude::*;
-use rapidhash::quality::RapidHashMap;
+use rapidhash::RapidHashMap;
 use rapidhash::v3::rapidhash_v3;
 
 /// Benchmark approaches for matching bytes against compile-time known values.

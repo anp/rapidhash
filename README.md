@@ -38,7 +38,7 @@ use rapidhash::quality::SeedableState;
 
 // Using the RapidHasher directly for in-memory hashing.
 let hasher = SeedableState::fixed();
-assert_eq!(hasher.hash_one(b"hello world"), 9938606849760368330);
+assert_eq!(hasher.hash_one(b"hello world"), 3348275917668072623);
 ```
 
 ### Portable Hashing

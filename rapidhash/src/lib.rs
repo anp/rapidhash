@@ -24,3 +24,8 @@ pub mod fast;
 pub mod quality;
 
 pub mod rng;
+mod collections;
+
+#[doc(inline)]
+#[cfg(any(feature = "std", docsrs))]
+pub use collections::*;

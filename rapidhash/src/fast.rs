@@ -49,48 +49,14 @@ pub type RandomState = inner::RandomState<AVALANCHE, SPONGE, COMPACT, PROTECTED>
 /// Use [crate::quality::SeedableState] for a higher quality but slower hash output where desirable.
 pub type SeedableState<'secrets> = inner::SeedableState<'secrets, AVALANCHE, SPONGE, COMPACT, PROTECTED>;
 
-/// A [std::collections::HashMap] that uses the [RapidHasher] hash.
-///
-/// This is an alias for [inner::RapidHashMap] with the following settings:
-/// - `AVALANCHE` is disabled.
-/// - `SPONGE` is enabled.
-/// - `COMPACT` is disabled.
-/// - `PROTECTED` is disabled.
-///
-/// Use [crate::quality::RapidHashMap] where higher hash collision resistance is required.
-#[cfg(any(feature = "std", docsrs))]
-pub type RapidHashMap<K, V> = inner::RapidHashMap<K, V, AVALANCHE, SPONGE, COMPACT, PROTECTED>;
+#[deprecated(since = "0.4.0", note = "Please use the top-level rapidhash::RapidHashMap instead")]
+pub use crate::RapidHashMap;
 
-/// A [std::collections::HashSet] that uses the [RapidHasher] hash.
-///
-/// This is an alias for [inner::RapidHashSet] with the following settings:
-/// - `AVALANCHE` is disabled.
-/// - `SPONGE` is enabled.
-/// - `COMPACT` is disabled.
-/// - `PROTECTED` is disabled.
-///
-/// Use [crate::quality::RapidHashSet] where higher hash collision resistance is required.
-#[cfg(any(feature = "std", docsrs))]
-pub type RapidHashSet<K> = inner::RapidHashSet<K, AVALANCHE, SPONGE, COMPACT, PROTECTED>;
+#[deprecated(since = "0.4.0", note = "Please use the top-level rapidhash::RapidHashSet instead")]
+pub use crate::RapidHashSet;
 
-#[cfg(any(feature = "std", docsrs))]
-pub use inner::HashMapExt;
-#[cfg(any(feature = "std", docsrs))]
-pub use inner::HashSetExt;
+#[deprecated(since = "0.4.0", note = "Please use the top-level rapidhash::HashMapExt instead")]
+pub use crate::HashMapExt;
 
-#[cfg(all(test, feature = "std"))]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_hashmap_new() {
-        let mut map = RapidHashMap::new();
-        map.insert("key", "value");
-    }
-
-    #[test]
-    fn test_hashset_new() {
-        let mut set = RapidHashSet::new();
-        set.insert("value");
-    }
-}
+#[deprecated(since = "0.4.0", note = "Please use the top-level rapidhash::HashSetExt instead")]
+pub use crate::HashSetExt;
