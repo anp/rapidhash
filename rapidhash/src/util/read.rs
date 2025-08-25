@@ -56,12 +56,6 @@ mod tests {
     #[test]
     fn test_read_u32() {
         let bytes = &[23, 145, 3, 34];
-
-        let split_result = bytes.split_at(0).1;
-        assert_eq!(split_result.len(), 4);
-        let maybe_buf = split_result.first_chunk::<4>();
-        assert_eq!(maybe_buf, Some(&[23, 145, 3, 34]));
-
         assert_eq!(read_u32(bytes, 0), 570659095);
 
         let bytes = &[24, 54, 3, 23, 145, 3, 34];

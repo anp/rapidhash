@@ -73,7 +73,7 @@ jobs:
     name: "Test (MSRV)"
     runs-on: ubuntu-latest
     env:
-      RUST_VERSION: 1.77.0
+      RUST_VERSION: 1.71.0
     steps:
       - uses: actions/checkout@v5
       - name: Rust dependency cache
@@ -81,10 +81,12 @@ jobs:
       - name: Install Rust (rustup, ${{ env.RUST_VERSION }})
         shell: bash
         run: rustup update ${{ env.RUST_VERSION }} --no-self-update && rustup default ${{ env.RUST_VERSION }} && cargo -V && rustc -V
-      - name: Compile and run tests (std)
-        run: cargo test -p rapidhash --no-fail-fast --features std,rand,rng,unsafe
-      - name: Compile and run tests (no_std)
-        run: cargo test -p rapidhash --no-fail-fast --lib --tests --no-default-features
+      - name: Compile and run tests (no-std)
+        working-directory: rapidhash-msrv
+        run: cargo test --no-fail-fast --no-default-features
+      - name: Compile and run tests (all features)
+        working-directory: rapidhash-msrv
+        run: cargo test --no-fail-fast --all-features
 
   test-c:
     name: "Test (C implementations)"

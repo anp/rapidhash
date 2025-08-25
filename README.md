@@ -274,7 +274,7 @@ Rust hashing traits (`RapidHasher`, `RandomState`, etc.) are implemented in `rap
 - Use `rapidhash::inner` to set advanced parameters to configure the hash function specifically to your use case.
 
 ## Crate Versioning
-The minimum supported Rust version (MSRV) is 1.77.0.
+The minimum supported Rust version (MSRV) is 1.71.0.
 
 The rapidhash crate follows the following versioning scheme:
 - Major for breaking API changes and MSRV version bumps or any changes to `rapidhash_v*` method output.

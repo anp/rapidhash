@@ -6,13 +6,17 @@
 - **`rapidhash::v3` micro/nano output change:** input lengths 5-7 were mismatching the intended C++ V3 output. The C++ rapidhash has been re-released as V3 to fix the bug, and this rust implementation will follow. This changes the hash outputs for `rapidhash_v3_micro_inline` and `rapidhash_v3_nano_inline` for inputs of size 5, 6, and 7 bytes. [PR #43](https://github.com/hoxxep/rapidhash/pull/43)
 - **`RapidBuildHasher` renamed** in favour of `SeedableState`.
 - **`RapidHasher<'s>` new lifetime parameter** added to support user-defined secrets via `SeedableState`.
-- **`RapidHashMap` and `RapidHashSet` moved to top level** for convenience. The top level uses the `fast::` variants, and the `quality::` and `inner::` hashmaps have been removed. They can still be built manually using `inner::RandomState` if required. The `fast::` variants have been deprecated to be removed in a future major release.
+- **`RapidHashMap` and `RapidHashSet` moved to crate top level** for convenience. The top level uses the `fast::` variants, and the `quality::` and `inner::` hashmaps have been removed. They can still be built manually using `inner::RandomState` if required. The `fast::` collection variants have been deprecated to be removed in a future major release.
 
 ### Additions
 - **`nightly` feature** which improves str hashing performance by omitting the `0xFF` suffix write and adds likely/unlikely hints.
 
 ### Performance improvements
 - **Bounds check elision**: Improved `RapidHasher` by eliding extra bounds checks in some cases by using `assert_unchecked`.
+- **Likely/unlikely hints**: Added stable likely/unlikely hints in various places to ensure small inputs are favoured.
+
+### MSRV
+- **MSRV reduced to 1.71.0** from 1.77.0 by removing const usage of `first_chunk`.
 
 ## 3.1.0 (20250809)
 
