@@ -30,6 +30,7 @@ pub(crate) const fn unlikely(x: bool) -> bool {
     }
 }
 
+#[allow(dead_code)]
 #[cold]
 #[inline(always)]
 const fn cold_path() {}
@@ -43,6 +44,7 @@ const fn cold_path() {}
 #[rustversion::since(1.81)]
 #[inline(always)]
 pub(crate) const unsafe fn assume(cond: bool) {
+    debug_assert!(cond);
     core::hint::assert_unchecked(cond);
 }
 
@@ -50,4 +52,6 @@ pub(crate) const unsafe fn assume(cond: bool) {
 /// rust compiler supports it.
 #[rustversion::before(1.81)]
 #[inline(always)]
-pub(crate) const unsafe fn assume(_cond: bool) {}
+pub(crate) const unsafe fn assume(cond: bool) {
+    debug_assert!(cond);
+}

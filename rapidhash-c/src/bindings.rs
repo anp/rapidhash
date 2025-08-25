@@ -62,7 +62,6 @@ bindings!(rapidhash_v2_2_extern, rapidhashcc_v2_2, "rapidhash_v2_2", tests_v2_2)
 bindings!(rapidhash_v3_extern, rapidhashcc_v3, "rapidhash_v3", tests_v3);
 bindings!(rapidhash_v3_micro_extern, rapidhashcc_v3_micro, "rapidhash_v3", tests_v3_micro);
 bindings!(rapidhash_v3_nano_extern, rapidhashcc_v3_nano, "rapidhash_v3", tests_v3_nano);
-// bindings!(rapidhash_v3_1_extern, rapidhashcc_v3_1, "rapidhash_v3_1", tests_v3_1);
 bindings!(rapidhash_rs_extern, rapidhashcc_rs, "rapidhash_rs", tests_rs);
 
 #[cfg(test)]
@@ -73,14 +72,14 @@ mod tests_verification {
     #[test]
     fn verification_rs() {
         let inputs: [(u64, &str); 8] = [
-            (0x0fce4257ab06643c, ""),
-            (0xed6a07793969b797, "a"),
-            (0x7cfa284389ee95cb, "abc"),
-            (0x4005b3c2c8cf6b85, "message digest"),
-            (0x4846cfa4bda06275, "abcdefghijklmnopqrstuvwxyz"),
-            (0x3420e11fc0f7ae03, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"),
-            (0x0e5efb3a4c2f7d79, "12345678901234567890123456789012345678901234567890123456789012345678901234567890"),
-            (0x9376b1483d42b69d, "vlong123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"),
+            (0x0894342f79b4e6d9, ""),
+            (0x8b58663657733d01, "a"),
+            (0xbef2833301a85a24, "abc"),
+            (0x3942bb61ee99487d, "message digest"),
+            (0x84ceed9776a410a4, "abcdefghijklmnopqrstuvwxyz"),
+            (0x66afe1ce46f2a1fe, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"),
+            (0xcd2631a72e5e12eb, "12345678901234567890123456789012345678901234567890123456789012345678901234567890"),
+            (0x56e9951f176b61c4, "vlong123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"),
         ];
 
         for (i, (expected, input)) in inputs.iter().enumerate() {

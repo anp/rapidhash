@@ -350,16 +350,16 @@ RAPIDHASH_INLINE uint64_t rapidhash_internal_cold(const uint8_t *p, size_t len, 
   seed ^= see5;
   seed ^= see3;
   if (i > 16) {
-    seed = rapid_mix(rapid_read64(p) ^ secret[2], rapid_read64(p + 8) ^ seed);
+    seed = rapid_mix(rapid_read64(p) ^ secret[0], rapid_read64(p + 8) ^ seed);
     if (RAPIDHASH_UNLIKELY_BULK(i > 32))
-      seed = rapid_mix(rapid_read64(p + 16) ^ secret[2], rapid_read64(p + 24) ^ seed);
+      seed = rapid_mix(rapid_read64(p + 16) ^ secret[0], rapid_read64(p + 24) ^ seed);
   }
 
   uint64_t a, b;
   a=rapid_read64(p+i-16);  b=rapid_read64(p+i-8);
 
   seed += len;
-  a ^= secret[1];
+  a ^= secret[0];
   b ^= seed;
 
   rapid_mum(&a, &b);
@@ -401,7 +401,7 @@ RAPIDHASH_INLINE uint64_t rapidhash_internal(const void *key, size_t len, uint64
       b = p[len>>1];
     } else
       a = b = 0;
-  } else if (len <= 288) {
+  } else if (len <= 400) {
     // input len [65, 288] — using the original rapidhash V1 logic
     size_t i = len;
 
@@ -427,7 +427,7 @@ RAPIDHASH_INLINE uint64_t rapidhash_internal(const void *key, size_t len, uint64
     if(i>16){
       seed=rapid_mix(rapid_read64(p)^secret[0],rapid_read64(p+8)^seed);
       if(i>32)
-        seed=rapid_mix(rapid_read64(p+16)^secret[1],rapid_read64(p+24)^seed);
+        seed=rapid_mix(rapid_read64(p+16)^secret[0],rapid_read64(p+24)^seed);
     }
     a=rapid_read64(p+i-16);  b=rapid_read64(p+i-8);
   } else {
@@ -436,7 +436,7 @@ RAPIDHASH_INLINE uint64_t rapidhash_internal(const void *key, size_t len, uint64
   }
 
   seed += len;
-  a ^= secret[1];
+  a ^= secret[0];
   b ^= seed;
 
   rapid_mum(&a, &b);

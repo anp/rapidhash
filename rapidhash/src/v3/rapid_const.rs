@@ -128,7 +128,6 @@ pub(super) const fn rapidhash_core<const AVALANCHE: bool, const COMPACT: bool, c
 const unsafe fn rapidhash_core_cold<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> u64 {
     // SAFETY: we promise to never call this with <=16 length data to omit some bounds checks.
     // This is really intended for codegen-units >1 and/or no LTO.
-    debug_assert!(data.len() > 16);
     assume(data.len() > 16);
 
     let mut a = 0;

@@ -5,6 +5,13 @@ use super::read_np::{read_u32_np, read_u64_np};
 #[cfg(test)]
 use super::{DEFAULT_RAPID_SECRETS, RapidSecrets};
 
+/// This is a somewhat arbitrary cutoff for the long path.
+///
+/// It's dependent on the cost of the function call, register clobbering, setup/teardown of the 7
+/// independent lanes etc. The current value should be reached by testing against the
+/// hash/rapidhash-f/medium benchmarks, and may benefit from being tuned per target platform.
+const COLD_PATH_CUTOFF: usize = 400;
+
 /// Rapidhash a single byte stream, matching the C++ implementation, with the default seed.
 ///
 /// Fixed length inputs will greatly benefit from inlining with [rapidhash_rs_inline] instead.
@@ -79,20 +86,25 @@ pub(super) const fn rapidhash_core<const AVALANCHE: bool, const COMPACT: bool, c
 const unsafe fn rapidhash_core_17_288<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> u64 {
     // SAFETY: we promise to never call this with <=16 length data to omit some bounds checks.
     // This is really intended for codegen-units >1 and/or no LTO.
-    debug_assert!(data.len() > 16);
     assume(data.len() > 16);
 
-    let mut a = 0;
-    let mut b = 0;
-    let mut slice = data;
+    // This branch is a hack against the function prologue/epilogue:
+    // - It slows down aarch64, where there is no stack spill.
+    // - It speeds up x86_64 by removing the stack spill on the <48 path.
+    // - It makes minimal difference on WASM.
+    // #[cfg(not(target_arch = "aarch64"))]
+    // if likely(data.len() <= 48) {
+    //     // SAFETY: data.len() is guaranteed to be >16
+    //     return rapidhash_final_48::<AVALANCHE, PROTECTED>(seed, secrets, data, data);
+    // }
 
-    if unlikely(slice.len() > 48) {
-        if unlikely(slice.len() > 288) {
-            // SAFETY: we have just checked the length is >288
+    let mut slice = data;
+    if unlikely(data.len() > 48) {
+        if unlikely(data.len() > COLD_PATH_CUTOFF) {
+            // SAFETY: data.len() is guaranteed to be >COLD_PATH_CUTOFF
             return rapidhash_core_cold::<AVALANCHE, COMPACT, PROTECTED>(seed, secrets, data);
         }
 
-        // most CPUs appear to benefit from this unrolled loop
         let mut see1 = seed;
         let mut see2 = seed;
 
@@ -107,18 +119,8 @@ const unsafe fn rapidhash_core_17_288<const AVALANCHE: bool, const COMPACT: bool
         seed ^= see1 ^ see2;
     }
 
-    if slice.len() > 16 {
-        seed = rapid_mix_np::<PROTECTED>(read_u64_np(slice, 0) ^ secrets[0], read_u64_np(slice, 8) ^ seed);
-        if slice.len() > 32 {
-            seed = rapid_mix_np::<PROTECTED>(read_u64_np(slice, 16) ^ secrets[1], read_u64_np(slice, 24) ^ seed);
-        }
-    }
-
-    a ^= read_u64_np(data, data.len() - 16);
-    b ^= read_u64_np(data, data.len() - 8);
-
-    seed = seed.wrapping_add(data.len() as u64);
-    rapidhash_finish::<AVALANCHE, PROTECTED>(a, b , seed, secrets)
+    // SAFETY: data.len() is guaranteed to be >48, and therefore >16
+    rapidhash_final_48::<AVALANCHE, PROTECTED>(seed, secrets, slice, data)
 }
 
 /// The long path, intentionally kept cold because at this length of data the function call is
@@ -128,15 +130,11 @@ const unsafe fn rapidhash_core_17_288<const AVALANCHE: bool, const COMPACT: bool
 #[inline(never)]
 #[must_use]
 const unsafe fn rapidhash_core_cold<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> u64 {
-    // SAFETY: we promise to never call this with <=288 length data to omit some bounds checks
-    debug_assert!(data.len() > 288);
-    assume(data.len() > 288);
+    // SAFETY: we promise to never call this with <=COLD_PATH_CUTOFF length data to omit some bounds checks
+    assume(data.len() > COLD_PATH_CUTOFF);
 
-    let mut a = 0;
-    let mut b = 0;
     let mut slice = data;
 
-    // most CPUs appear to benefit from this unrolled loop
     let mut see1 = seed;
     let mut see2 = seed;
     let mut see3 = seed;
@@ -166,7 +164,7 @@ const unsafe fn rapidhash_core_cold<const AVALANCHE: bool, const COMPACT: bool, 
             slice = split;
         }
 
-        if slice.len() >= 112 {
+        if likely(slice.len() >= 112) {
             seed = rapid_mix_np::<PROTECTED>(read_u64_np(slice, 0) ^ secrets[0], read_u64_np(slice, 8) ^ seed);
             see1 = rapid_mix_np::<PROTECTED>(read_u64_np(slice, 16) ^ secrets[1], read_u64_np(slice, 24) ^ see1);
             see2 = rapid_mix_np::<PROTECTED>(read_u64_np(slice, 32) ^ secrets[2], read_u64_np(slice, 40) ^ see2);
@@ -224,24 +222,32 @@ const unsafe fn rapidhash_core_cold<const AVALANCHE: bool, const COMPACT: bool, 
     seed ^= see5;
     seed ^= see3;
 
-    if slice.len() > 16 {
-        seed = rapid_mix_np::<PROTECTED>(read_u64_np(slice, 0) ^ secrets[2], read_u64_np(slice, 8) ^ seed);
-        if slice.len() > 32 {
-            seed = rapid_mix_np::<PROTECTED>(read_u64_np(slice, 16) ^ secrets[2], read_u64_np(slice, 24) ^ seed);
+    rapidhash_final_48::<AVALANCHE, PROTECTED>(seed, secrets, slice, data)
+}
+
+#[inline(always)]
+#[must_use]
+const unsafe fn rapidhash_final_48<const AVALANCHE: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], slice: &[u8], data: &[u8]) -> u64 {
+    // SAFETY: the final 48 byte handling is only called with >16 length data
+    assume(data.len() > 16);
+
+    if likely(slice.len() > 16) {
+        seed = rapid_mix_np::<PROTECTED>(read_u64_np(slice, 0) ^ secrets[0], read_u64_np(slice, 8) ^ seed);
+        if likely(slice.len() > 32) {
+            seed = rapid_mix_np::<PROTECTED>(read_u64_np(slice, 16) ^ secrets[0], read_u64_np(slice, 24) ^ seed);
         }
     }
 
-    a ^= read_u64_np(data, data.len() - 16);
-    b ^= read_u64_np(data, data.len() - 8);
-
+    let a = read_u64_np(data, data.len() - 16);
+    let b = read_u64_np(data, data.len() - 8);
     seed = seed.wrapping_add(data.len() as u64);
-    rapidhash_finish::<AVALANCHE, PROTECTED>(a, b , seed, secrets)
+    rapidhash_finish::<AVALANCHE, PROTECTED>(a, b, seed, secrets)
 }
 
 #[inline(always)]
 #[must_use]
 const fn rapidhash_finish<const AVALANCHE: bool, const PROTECTED: bool>(mut a: u64, mut b: u64, seed: u64, secrets: &[u64; 7]) -> u64 {
-    a ^= secrets[1];
+    a ^= secrets[0];
     b ^= seed;
 
     (a, b) = rapid_mum_np::<PROTECTED>(a, b);

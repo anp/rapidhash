@@ -63,22 +63,30 @@ mod tests {
 
     #[derive(Hash)]
     struct Object {
-        bytes: std::vec::Vec<u8>,
+        string: &'static str,
     }
 
     /// `#[derive(Hash)]` writes a length prefix first, check understanding.
     #[cfg(target_endian = "little")]
     #[test]
     fn derive_hash_works() {
-        let object = Object { bytes: b"hello world".to_vec() };
+        #[cfg(not(feature = "nightly"))]
+        const EXPECTED: u64 = 7608958509739739138;
+
+        #[cfg(feature = "nightly")]
+        const EXPECTED: u64 = 8977256838778740407;
+
+        let object = Object { string: "hello world" };
         let mut hasher = RapidHasher::default();
         object.hash(&mut hasher);
-        assert_eq!(hasher.finish(), 9938606849760368330);
+        assert_eq!(hasher.finish(), EXPECTED);
 
         let mut hasher = RapidHasher::default();
-        hasher.write_usize(b"hello world".len());
-        hasher.write(b"hello world");
-        assert_eq!(hasher.finish(), 9938606849760368330);
+        hasher.write(object.string.as_bytes());
+        #[cfg(not(feature = "nightly"))] {
+            hasher.write_u8(0xFF);
+        }
+        assert_eq!(hasher.finish(), EXPECTED);
     }
 
     /// Check RapidHasher is equivalent to the raw rapidhash for a single byte stream.

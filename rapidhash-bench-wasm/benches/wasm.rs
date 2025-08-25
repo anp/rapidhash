@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::hint::black_box;
 use std::path::Path;
 use std::process::Command;
+use std::time::Duration;
 use criterion::{criterion_group, criterion_main, Bencher, Criterion};
 use wasmtime::*;
 
@@ -28,6 +29,7 @@ pub fn wasm_bench(c: &mut Criterion) {
         let group_name = format!("wasm/{}", hash);
         let mut group = c.benchmark_group(&group_name);
         group.sampling_mode(criterion::SamplingMode::Flat);
+        group.warm_up_time(Duration::from_secs(1));
 
         group.bench_function("tuple", profile_hash(hash, "tuple"));
         group.bench_function("4kb", profile_hash(hash, "4kb"));
@@ -99,6 +101,11 @@ fn compile_wasm() {
         "--package", "rapidhash-bench-wasm",
         "--target", "wasm32-unknown-unknown",
     ]);
+    #[cfg(feature = "nightly")] {
+        args.extend_from_slice(&[
+            "--features", "nightly"
+        ]);
+    }
 
     // Run cargo build --target
     let status = Command::new("cargo")
