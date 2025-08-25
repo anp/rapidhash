@@ -22,9 +22,10 @@ pub mod v3;
 pub mod inner;
 pub mod fast;
 pub mod quality;
+#[cfg(any(feature = "std", docsrs))]
+mod collections;
 
 pub mod rng;
-mod collections;
 
 #[doc(inline)]
 #[cfg(any(feature = "std", docsrs))]

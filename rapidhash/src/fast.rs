@@ -49,14 +49,18 @@ pub type RandomState = inner::RandomState<AVALANCHE, SPONGE, COMPACT, PROTECTED>
 /// Use [crate::quality::SeedableState] for a higher quality but slower hash output where desirable.
 pub type SeedableState<'secrets> = inner::SeedableState<'secrets, AVALANCHE, SPONGE, COMPACT, PROTECTED>;
 
+#[cfg(any(feature = "std", docsrs))]
 #[deprecated(since = "0.4.0", note = "Please use the top-level rapidhash::RapidHashMap instead")]
 pub use crate::RapidHashMap;
 
+#[cfg(any(feature = "std", docsrs))]
 #[deprecated(since = "0.4.0", note = "Please use the top-level rapidhash::RapidHashSet instead")]
 pub use crate::RapidHashSet;
 
+#[cfg(any(feature = "std", docsrs))]
 #[deprecated(since = "0.4.0", note = "Please use the top-level rapidhash::HashMapExt instead")]
 pub use crate::HashMapExt;
 
+#[cfg(any(feature = "std", docsrs))]
 #[deprecated(since = "0.4.0", note = "Please use the top-level rapidhash::HashSetExt instead")]
 pub use crate::HashSetExt;
