@@ -27,8 +27,6 @@
 //! crate versions.
 
 
-#[cfg(any(feature = "std", docsrs))]
-mod collections;
 mod rapid_const;
 mod rapid_hasher;
 mod state;
@@ -39,9 +37,6 @@ mod read_np;
 
 #[doc(inline)]
 pub use rapid_hasher::*;
-#[doc(inline)]
-#[cfg(any(feature = "std", docsrs))]
-pub use collections::*;
 #[doc(inline)]
 pub use state::*;
 #[doc(inline)]
@@ -58,27 +53,35 @@ mod tests {
     use super::seed::{DEFAULT_RAPID_SECRETS, DEFAULT_SEED};
     use super::rapid_const::{rapidhash_rs, rapidhash_rs_seeded};
 
-    type RapidHasher = super::RapidHasher<true, true, true>;
-    type RapidBuildHasher = super::RapidBuildHasher<true, true, true>;
+    type RapidHasher = super::RapidHasher<'static, true, true, true>;
+    type SeedableState = super::SeedableState<'static, true, true, true>;
 
     #[derive(Hash)]
     struct Object {
-        bytes: std::vec::Vec<u8>,
+        string: &'static str,
     }
 
     /// `#[derive(Hash)]` writes a length prefix first, check understanding.
     #[cfg(target_endian = "little")]
     #[test]
     fn derive_hash_works() {
-        let object = Object { bytes: b"hello world".to_vec() };
+        #[cfg(not(feature = "nightly"))]
+        const EXPECTED: u64 = 7608958509739739138;
+
+        #[cfg(feature = "nightly")]
+        const EXPECTED: u64 = 8977256838778740407;
+
+        let object = Object { string: "hello world" };
         let mut hasher = RapidHasher::default();
         object.hash(&mut hasher);
-        assert_eq!(hasher.finish(), 9938606849760368330);
+        assert_eq!(hasher.finish(), EXPECTED);
 
         let mut hasher = RapidHasher::default();
-        hasher.write_usize(b"hello world".len());
-        hasher.write(b"hello world");
-        assert_eq!(hasher.finish(), 9938606849760368330);
+        hasher.write(object.string.as_bytes());
+        #[cfg(not(feature = "nightly"))] {
+            hasher.write_u8(0xFF);
+        }
+        assert_eq!(hasher.finish(), EXPECTED);
     }
 
     /// Check RapidHasher is equivalent to the raw rapidhash for a single byte stream.
@@ -209,7 +212,7 @@ mod tests {
                     c_hash = rapid_mix_np::<false>(c_hash, DEFAULT_RAPID_SECRETS.secrets[1]);
                     assert_eq!(rust_hash, c_hash, "Mismatch with input {} byte {} bit {}", len, byte, bit);
 
-                    let mut rust_hasher = RapidBuildHasher::default().build_hasher();
+                    let mut rust_hasher = SeedableState::fixed().build_hasher();
                     rust_hasher.write(&data);
                     let rust_hasher_hash = rust_hasher.finish();
                     assert_eq!(rust_hash, rust_hasher_hash, "Hasher mismatch with input {} byte {} bit {}", len, byte, bit);
@@ -222,7 +225,7 @@ mod tests {
     fn disambiguation_check() {
         use std::vec::Vec;
 
-        let hasher = RapidBuildHasher::default();
+        let hasher = SeedableState::default();
 
         let a = [std::vec![1], std::vec![2, 3]];
         let b = [std::vec![1, 2], std::vec![3]];

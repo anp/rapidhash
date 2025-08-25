@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [ "rapidhash", "rapidhash-bench", "rapidhash-bench-wasm", "rapidhash-c"]
+exclude = [ "rapidhash-msrv" ]
 
 [workspace.dependencies]
 rapidhash = { path = "rapidhash", default-features = false }

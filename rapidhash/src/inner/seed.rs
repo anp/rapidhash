@@ -10,7 +10,7 @@ use crate::util::mix::rapid_mix;
 pub(crate) const DEFAULT_SEED: u64 = 0;
 
 /// Used only for generating random secrets.
-const DEFAULT_SECRETS: [u64; 7] = [
+pub(crate) const DEFAULT_SECRETS: [u64; 7] = [
     0x2d358dccaa6c78a5,
     0x8bb84b93962eacc9,
     0x4b33a62ed433d4a3,

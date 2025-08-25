@@ -57,7 +57,11 @@
  # ifndef RAPIDHASH_INLINE
  #   define RAPIDHASH_INLINE RAPIDHASH_ALWAYS_INLINE
  # endif
- # define RAPIDHASH_INLINE_CONSTEXPR RAPIDHASH_ALWAYS_INLINE constexpr
+ # if __cplusplus >= 201402L && !defined(_MSC_VER)
+ #   define RAPIDHASH_INLINE_CONSTEXPR RAPIDHASH_ALWAYS_INLINE constexpr
+ # else
+ #   define RAPIDHASH_INLINE_CONSTEXPR RAPIDHASH_ALWAYS_INLINE
+ # endif
  #else
  # define RAPIDHASH_NOEXCEPT
  # define RAPIDHASH_CONSTEXPR static const
@@ -177,9 +181,11 @@
      #endif
    #endif
  #else
-   uint64_t ha=*A>>32, hb=*B>>32, la=(uint32_t)*A, lb=(uint32_t)*B, hi, lo;
+   uint64_t ha=*A>>32, hb=*B>>32, la=(uint32_t)*A, lb=(uint32_t)*B;
    uint64_t rh=ha*hb, rm0=ha*lb, rm1=hb*la, rl=la*lb, t=rl+(rm0<<32), c=t<rl;
-   lo=t+(rm1<<32); c+=lo<t; hi=rh+(rm0>>32)+(rm1>>32)+c;
+   uint64_t lo=t+(rm1<<32);
+   c+=lo<t;
+   uint64_t hi=rh+(rm0>>32)+(rm1>>32)+c;
    #ifdef RAPIDHASH_PROTECTED
    *A^=lo;  *B^=hi;
    #else
@@ -367,8 +373,8 @@ RAPIDHASH_INLINE_CONSTEXPR uint64_t rapidhash_internal(const void *key, size_t l
           b = rapid_read64(plast);
         } else {
           const uint8_t* plast = p + len - 4;
-          b = rapid_read32(p);
-          a = rapid_read32(plast);
+          a = rapid_read32(p);
+          b = rapid_read32(plast);
         }
       } else if (len > 0) {
         a = (((uint64_t)p[0])<<45)|p[len-1];
@@ -437,8 +443,8 @@ RAPIDHASH_INLINE_CONSTEXPR uint64_t rapidhash_internal(const void *key, size_t l
           b = rapid_read64(plast);
         } else {
           const uint8_t* plast = p + len - 4;
-          b = rapid_read32(p);
-          a = rapid_read32(plast);
+          a = rapid_read32(p);
+          b = rapid_read32(plast);
         }
       } else if (len > 0) {
         a = (((uint64_t)p[0])<<45)|p[len-1];

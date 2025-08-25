@@ -9,7 +9,7 @@ mod tests {
         #[test]
         fn test_hashmap_size() {
             // only enable when std is available
-            assert_eq!(core::mem::size_of::<rapidhash::fast::RapidHashMap<u32, u32>>(), 40);
+            assert_eq!(core::mem::size_of::<rapidhash::RapidHashMap<u32, u32>>(), 40);
             assert_eq!(core::mem::size_of::<foldhash::HashMap<u32, u32>>(), 40);
         }
 
@@ -18,7 +18,7 @@ mod tests {
         fn test_hasher_size() {
             // only enable when std is available
             assert_eq!(core::mem::size_of::<rapidhash::fast::RapidHasher>(), 48);
-            assert_eq!(core::mem::size_of::<foldhash::fast::FoldHasher>(), 64);
+            assert_eq!(core::mem::size_of::<foldhash::fast::FoldHasher>(), 48);
         }
     }
 
@@ -39,7 +39,7 @@ mod tests {
         let hash_builder = foldhash::fast::FixedState::default();
         let mut flips = std::vec![];
 
-        for len in 1..=256 {
+        for len in 1..=512 {
             let mut data = std::vec![0; len];
             rand::rng().fill(&mut data[..]);
 

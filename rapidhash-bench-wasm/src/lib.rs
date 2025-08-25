@@ -44,18 +44,18 @@ bench_wasm_4kb!(bench_wasm_foldhash_f_4kb, foldhash::fast::RandomState);
 bench_wasm_4kb!(bench_wasm_default_4kb, std::hash::RandomState);
 bench_wasm_4kb!(bench_wasm_fxhash_4kb, fxhash::FxBuildHasher);
 
-/// Simulate hashing fictional (id, email) pairs, where email is len 6..30 bytes.
+/// Simulate hashing fictional (id, email) pairs, where email is len 6..60 bytes.
 fn profile_hash_tuple<B: BuildHasher + Default>() -> u64 {
     let builder = B::default();
 
     let mut seed = 0;
     let mut total = 0;
 
-    let mut buffer = [0u64; 4];
+    let mut buffer = [0u64; 8];
 
     for _ in 0..1_000 {
         let ratio = f64::from(rapidrng_fast_not_portable(&mut seed) as u32) / f64::from(u32::MAX);
-        let len = usize::max(6, (ratio * 30.0) as usize);
+        let len = usize::max(6, (ratio * 60.0) as usize);
 
         buffer.fill_with(|| rapidrng_fast_not_portable(&mut seed));
 

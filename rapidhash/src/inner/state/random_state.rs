@@ -53,7 +53,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
     #[inline]
     pub fn new() -> Self {
         Self {
-            seed: super::seeding::seed::get_seed(),
+            seed: crate::inner::seeding::seed::get_seed(),
             secrets: GlobalSecrets::new(),
         }
     }
@@ -68,7 +68,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
 }
 
 impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool>  BuildHasher for RandomState<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
-    type Hasher = RapidHasher<AVALANCHE, SPONGE, COMPACT, PROTECTED>;
+    type Hasher = RapidHasher<'static, AVALANCHE, SPONGE, COMPACT, PROTECTED>;
 
     #[inline(always)]
     fn build_hasher(&self) -> Self::Hasher {

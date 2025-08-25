@@ -1,3 +1,4 @@
+use crate::util::hints::{assume, likely, unlikely};
 use crate::util::mix::{rapid_mix, rapid_mum};
 use crate::util::read::{read_u32, read_u64};
 use super::{DEFAULT_RAPID_SECRETS, RapidSecrets};
@@ -78,7 +79,7 @@ pub(super) const fn rapidhash_core<const AVALANCHE: bool, const COMPACT: bool, c
     let mut b;
 
     let remainder;
-    if data.len() <= 16 {
+    if likely(data.len() <= 16) {
         a = 0;
         b = 0;
 
@@ -99,7 +100,10 @@ pub(super) const fn rapidhash_core<const AVALANCHE: bool, const COMPACT: bool, c
         }
         remainder = data.len() as u64;
     } else {
-        return rapidhash_core_cold::<AVALANCHE, COMPACT, PROTECTED>(seed, secrets, data);
+        // SAFETY: we have just verified that data.len() > 16
+        unsafe {
+            return rapidhash_core_cold::<AVALANCHE, COMPACT, PROTECTED>(seed, secrets, data);
+        }
     }
 
     a ^= secrets[1];
@@ -121,13 +125,17 @@ pub(super) const fn rapidhash_core<const AVALANCHE: bool, const COMPACT: bool, c
 // through inlining and optimising away the 7 data-independent execution paths. The RapidHasher
 // deviates from the V3 implementation here because of this!
 #[inline]
-const fn rapidhash_core_cold<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> u64 {
+const unsafe fn rapidhash_core_cold<const AVALANCHE: bool, const COMPACT: bool, const PROTECTED: bool>(mut seed: u64, secrets: &[u64; 7], data: &[u8]) -> u64 {
+    // SAFETY: we promise to never call this with <=16 length data to omit some bounds checks.
+    // This is really intended for codegen-units >1 and/or no LTO.
+    assume(data.len() > 16);
+
     let mut a = 0;
     let mut b = 0;
 
     let mut slice = data;
 
-    if slice.len() > 112 {
+    if unlikely(slice.len() > 112) {
         // most CPUs appear to benefit from this unrolled loop
         let mut see1 = seed;
         let mut see2 = seed;
@@ -230,7 +238,7 @@ const fn rapidhash_micro_core<const AVALANCHE: bool, const PROTECTED: bool>(mut 
     let mut b = 0;
 
     let remainder;
-    if data.len() <= 16 {
+    if likely(data.len() <= 16) {
         if data.len() >= 4 {
             seed ^= data.len() as u64;
             if data.len() >= 8 {
@@ -239,8 +247,8 @@ const fn rapidhash_micro_core<const AVALANCHE: bool, const PROTECTED: bool>(mut 
                 b ^= read_u64(data, plast);
             } else {
                 let plast = data.len() - 4;
-                b ^= read_u32(data, 0) as u64;
-                a ^= read_u32(data, plast) as u64;
+                a ^= read_u32(data, 0) as u64;
+                b ^= read_u32(data, plast) as u64;
             }
         } else if !data.is_empty() {
             a ^= ((data[0] as u64) << 45) | data[data.len() - 1] as u64;
@@ -249,7 +257,7 @@ const fn rapidhash_micro_core<const AVALANCHE: bool, const PROTECTED: bool>(mut 
         remainder = data.len() as u64;
     } else {
         let mut slice = data;
-        if slice.len() > 80 {
+        if unlikely(slice.len() > 80) {
             let mut see1 = seed;
             let mut see2 = seed;
             let mut see3 = seed;
@@ -306,7 +314,7 @@ const fn rapidhash_nano_core<const AVALANCHE: bool, const PROTECTED: bool>(mut s
     let mut b = 0;
 
     let remainder;
-    if data.len() <= 16 {
+    if likely(data.len() <= 16) {
         if data.len() >= 4 {
             seed ^= data.len() as u64;
             if data.len() >= 8 {
@@ -315,8 +323,8 @@ const fn rapidhash_nano_core<const AVALANCHE: bool, const PROTECTED: bool>(mut s
                 b ^= read_u64(data, plast);
             } else {
                 let plast = data.len() - 4;
-                b ^= read_u32(data, 0) as u64;
-                a ^= read_u32(data, plast) as u64;
+                a ^= read_u32(data, 0) as u64;
+                b ^= read_u32(data, plast) as u64;
             }
         } else if !data.is_empty() {
             a ^= ((data[0] as u64) << 45) | data[data.len() - 1] as u64;
@@ -325,7 +333,7 @@ const fn rapidhash_nano_core<const AVALANCHE: bool, const PROTECTED: bool>(mut s
         remainder = data.len() as u64;
     } else {
         let mut slice = data;
-        if slice.len() > 48 {
+        if unlikely(slice.len() > 48) {
             let mut see1 = seed;
             let mut see2 = seed;
 

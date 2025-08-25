@@ -1,11 +1,32 @@
 # Changelog
 
+## 4.0.0 (20250901)
+
+https://github.com/hoxxep/rapidhash/pull/43
+
+### Breaking changes
+- **`rapidhash::v3` micro/nano output change:** input lengths 5-7 were mismatching the intended C++ V3 output. The C++ rapidhash V3 has been [yanked and re-released as V3](https://github.com/Nicoshev/rapidhash/issues/33) to fix the bug, and this rust implementation will follow. This changes the hash outputs for `rapidhash_v3_micro_inline` and `rapidhash_v3_nano_inline` for inputs of size 5, 6, and 7 bytes.
+- **`RapidBuildHasher` renamed and refactored** to `SeedableState`.
+- **`RapidHasher<'s>` new lifetime parameter** added to support user-defined secrets via `SeedableState`.
+- **`RapidHashMap` and `RapidHashSet` moved to crate top level** for convenience. The top level uses the `fast::` variants, and the `quality::` and `inner::` hashmaps have been removed. They can still be built manually using `inner::RandomState` if required. The `fast::` collection variants have been deprecated to be removed in a future major release.
+
+### Additions
+- **`nightly` feature** which improves str hashing performance by omitting the `0xFF` suffix write and adds likely/unlikely hints.
+- **`SeedableState`**: a hasher builder which can be seeded with fixed or user-defined secrets. This replaces `RapidBuildHasher`, but still defaults to random seeds. It is slightly slower than `RandomState`.
+
+### Performance improvements
+- **Bounds check elision**: Improved `RapidHasher` by eliding extra bounds checks in some cases by using `assert_unchecked`.
+- **Likely/unlikely hints**: Added stable likely/unlikely hints in various places to ensure small inputs are favoured.
+
+### MSRV
+- **MSRV reduced to 1.71.0** from 1.77.0 by removing const usage of `first_chunk`.
+
 ## 3.1.0 (20250809)
 
-## Performance improvements
+### Performance improvements
 - Improved `RapidHasher` small string hashing performance by 1.5-15% depending on the benchmark, by reducing the small string hashing code size and allowing the compiler to inline more. Performance was also improved on big-endian platforms by reading native-endian bytes. The portable hashers (`rapidhash::v3` etc. modules) are unaffected by this change. [#37](https://github.com/hoxxep/rapidhash/pull/37)
 
-## Fixes
+### Fixes
 - Fixed compilation on targets without atomic pointers. [#38](https://github.com/hoxxep/rapidhash/issues/38), [#39](https://github.com/hoxxep/rapidhash/pull/39)
 
 ## 3.0.0 (20250730)

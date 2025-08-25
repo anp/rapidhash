@@ -1,0 +1,13 @@
+[package]
+name = "rapidhash-msrv"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[features]
+std = ["rapidhash/std"]
+rng = ["rapidhash/rng"]
+rand = ["rapidhash/rand"]
+
+[dependencies]
+rapidhash = { path = "../rapidhash", default-features = false }

@@ -2,32 +2,20 @@
 //!
 //! This is a non-portable implementation specifically designed for `RapidHasher`.
 
-/// Hacky const-friendly memory-safe unaligned bytes to u64. Compiler can't seem to remove the
-/// bounds check, and so we have an unsafe version behind the `unsafe` feature flag.
-#[cfg(not(feature = "unsafe"))]
-#[inline(always)]
-pub(crate) const fn read_u64_np(slice: &[u8], offset: usize) -> u64 {
-    // equivalent to slice[offset..offset+8].try_into().unwrap(), but const-friendly
-    let maybe_buf = slice.split_at(offset).1.first_chunk::<8>();
-    let buf = match maybe_buf {
-        Some(buf) => *buf,
-        None => panic!("read_u64: slice too short"),
-    };
-    u64::from_ne_bytes(buf)
-}
+/// A macro for assertions that can be disabled with the `unsafe` feature. These should all be
+/// elided at compile-time anyway.
+macro_rules! unsafe_assert {
+    ($cond:expr) => {
+        #[cfg(feature = "unsafe")]
+        {
+            debug_assert!($cond);
+        }
 
-/// Hacky const-friendly memory-safe unaligned bytes to u64. Compiler can't seem to remove the
-/// bounds check, and so we have an unsafe version behind the `unsafe` feature flag.
-#[cfg(not(feature = "unsafe"))]
-#[inline(always)]
-pub(crate) const fn read_u32_np(slice: &[u8], offset: usize) -> u32 {
-    // equivalent to slice[offset..offset+4].try_into().unwrap(), but const-friendly
-    let maybe_buf = slice.split_at(offset).1.first_chunk::<4>();
-    let buf = match maybe_buf {
-        Some(buf) => *buf,
-        None => panic!("read_u32: slice too short"),
+        #[cfg(not(feature = "unsafe"))]
+        {
+            assert!($cond);
+        }
     };
-    u32::from_ne_bytes(buf)
 }
 
 /// Unsafe but const-friendly unaligned bytes to u64. The compiler can't seem to remove the bounds
@@ -35,12 +23,11 @@ pub(crate) const fn read_u32_np(slice: &[u8], offset: usize) -> u32 {
 ///
 /// SAFETY: `slice` must be at least `offset+8` bytes long, which we guarantee in this rapidhash
 /// implementation.
-#[cfg(feature = "unsafe")]
 #[inline(always)]
 pub(crate) const fn read_u64_np(slice: &[u8], offset: usize) -> u64 {
-    debug_assert!(offset as isize >= 0);
-    debug_assert!(slice.len() >= 8 + offset);
-    unsafe { core::ptr::read_unaligned(slice.as_ptr().offset(offset as isize) as *const u64) }
+    unsafe_assert!(slice.len() >= 8 + offset);
+    // SAFETY: read_u64_np must always be called in a manner that guarantees the above assertions
+    unsafe { core::ptr::read_unaligned(slice.as_ptr().add(offset) as *const u64) }
 }
 
 /// Unsafe but const-friendly unaligned bytes to u32. The compiler can't seem to remove the bounds
@@ -48,12 +35,11 @@ pub(crate) const fn read_u64_np(slice: &[u8], offset: usize) -> u64 {
 ///
 /// SAFETY: `slice` must be at least `offset+8` bytes long, which we guarantee in this rapidhash
 /// implementation.
-#[cfg(feature = "unsafe")]
 #[inline(always)]
 pub(crate) const fn read_u32_np(slice: &[u8], offset: usize) -> u32 {
-    debug_assert!(offset as isize >= 0);
-    debug_assert!(slice.len() >= 4 + offset);
-    unsafe { core::ptr::read_unaligned(slice.as_ptr().offset(offset as isize) as *const u32) }
+    unsafe_assert!(slice.len() >= 4 + offset);
+    // SAFETY: read_u64_np must always be called in a manner that guarantees the above assertions
+    unsafe { core::ptr::read_unaligned(slice.as_ptr().add(offset) as *const u32) }
 }
 
 #[cfg(test)]
@@ -64,12 +50,6 @@ mod tests {
     #[test]
     fn test_read_u32_np() {
         let bytes = &[23, 145, 3, 34];
-
-        let split_result = bytes.split_at(0).1;
-        assert_eq!(split_result.len(), 4);
-        let maybe_buf = split_result.first_chunk::<4>();
-        assert_eq!(maybe_buf, Some(&[23, 145, 3, 34]));
-
         assert_eq!(read_u32_np(bytes, 0), 570659095);
 
         let bytes = &[24, 54, 3, 23, 145, 3, 34];

@@ -70,7 +70,7 @@ where
 fn bench_group<H: BuildHasher + Default>(c: &mut Criterion, group_name: &str) {
     let mut group = c.benchmark_group(group_name.to_string());
     group.warm_up_time(std::time::Duration::from_millis(250));
-    group.measurement_time(std::time::Duration::from_millis(1000));
+    group.measurement_time(std::time::Duration::from_millis(2000));
 
     // macro benchmarks
     let sizes = [2usize, 8, 16, 25, 50, 64, 80, 160, 256, 350, 1024, 4096, 65536, 1024 * 1024 * 500];
@@ -83,16 +83,20 @@ fn bench_group<H: BuildHasher + Default>(c: &mut Criterion, group_name: &str) {
     profile_int::<H, u32>("u32", &mut group);
     profile_int::<H, u64>("u64", &mut group);
     profile_int::<H, u128>("u128", &mut group);
+
+    // 50B increments up to 4kB
+    for size in 0usize..=80 {
+        profile_bytes::<H>(size * 50, "medium", &mut group);
+    }
 }
 
 fn bench_group_small<H: BuildHasher + Default>(c: &mut Criterion, group_name: &str) {
     let mut group = c.benchmark_group(group_name.to_string());
-    group.warm_up_time(std::time::Duration::from_millis(250));
-    group.measurement_time(std::time::Duration::from_millis(1000));
+    group.warm_up_time(std::time::Duration::from_millis(100));
+    group.measurement_time(std::time::Duration::from_millis(500));
 
     // micro benchmarks
-    let sizes = 0usize..=256;
-    for size in sizes {
+    for size in 0usize..=300 {
         profile_bytes::<H>(size, "small", &mut group);
     }
 }
@@ -100,9 +104,12 @@ fn bench_group_small<H: BuildHasher + Default>(c: &mut Criterion, group_name: &s
 fn profile_bytes_raw<H: Fn(&[u8], u64) -> u64>(
     hash: &H,
     bytes_len: usize,
+    prefix: &str,
     group: &mut BenchmarkGroup<'_, WallTime>,
 ) {
-    let name = format!("str_{bytes_len}");
+    let name = format!("{prefix}_{bytes_len}");
+    group.warm_up_time(std::time::Duration::from_millis(250));
+    group.measurement_time(std::time::Duration::from_millis(2000));
 
     if bytes_len > 1024 * 1024 {
         group.sample_size(10);
@@ -132,14 +139,26 @@ fn bench_group_raw<H: Fn(&[u8], u64) -> u64>(c: &mut Criterion, group_name: &str
     let mut group = c.benchmark_group(group_name.to_string());
     let sizes = [2usize, 8, 16, 25, 50, 64, 80, 160, 256, 350, 1024, 4096, 65536, 1024 * 1024 * 500];
     for size in sizes {
-        profile_bytes_raw(hash, size, &mut group);
+        profile_bytes_raw(hash, size, "str", &mut group);
+    }
+}
+
+fn bench_group_small_raw<H: Fn(&[u8], u64) -> u64>(c: &mut Criterion, group_name: &str, hash: &H) {
+    let mut group = c.benchmark_group(group_name.to_string());
+    group.warm_up_time(std::time::Duration::from_millis(250));
+    group.measurement_time(std::time::Duration::from_millis(1000));
+
+    // micro benchmarks
+    let sizes = 0usize..=256;
+    for size in sizes {
+        profile_bytes_raw(hash, size, "small", &mut group);
     }
 }
 
 pub fn bench(c: &mut Criterion) {
     bench_group_small::<rapidhash::fast::RandomState>(c, "hash/rapidhash-f");
-    bench_group_small::<foldhash::fast::RandomState>(c, "hash/rapidhash-f");
-    bench_group_small::<fxhash::FxBuildHasher>(c, "hash/rapidhash-f");
+    bench_group_small::<foldhash::fast::RandomState>(c, "hash/foldhash-f");
+    bench_group_small::<fxhash::FxBuildHasher>(c, "hash/fxhash");
 
     bench_group::<rapidhash::fast::RandomState>(c, "hash/rapidhash-f");
     bench_group::<rapidhash::quality::RandomState>(c, "hash/rapidhash-q");
@@ -165,6 +184,10 @@ pub fn bench(c: &mut Criterion) {
     bench_group::<highway::HighwayBuildHasher>(c, "hash/highwayhash");
     bench_group::<rustc_hash::FxBuildHasher>(c, "hash/rustc-hash");
     bench_group::<museair::bfast::FixedState>(c, "hash/museair-f");
+
+    bench_group_small_raw(c, "hash/rapidhash_raw", &v3_bench);
+    bench_group_small_raw(c, "hash/rapidhash_cc_v3", &rapidhash_c::rapidhashcc_v3);
+    // bench_group_small_raw(c, "hash/rapidhash_cc_v3_1", &rapidhash_c::rapidhashcc_v3_1);
 
     bench_group_raw(c, "hash/rapidhash_raw", &v3_bench);
     bench_group_raw(c, "hash/rapidhash_cc_v1", &rapidhash_c::rapidhashcc_v1);
