@@ -22,10 +22,10 @@ Following rust's `std::hash` traits, the underlying hash function may change bet
 - `RapidHasher`: A `std::hash::Hasher` compatible hasher that uses the rapidhash algorithm.
 - `RandomState`: A `std::hash::BuildHasher` for initialising the hasher with a random seed and secrets.
 - `SeedableState`: A `std::hash::BuildHasher` for initialising the hasher with the custom seed and secrets.
-- `RapidHashMap` and `RapidHashSet`: Helper types for using `RapidHasher` with `HashMap` and `HashSet`.
+- `RapidHashMap` and `RapidHashSet`: Helper types for using `fast::RandomState` with `HashMap` and `HashSet`.
 
 ```rust
-use rapidhash::fast::RapidHashMap;
+use rapidhash::RapidHashMap;
 
 // A HashMap using RapidHasher for fast in-memory hashing.
 let mut map = RapidHashMap::default();
