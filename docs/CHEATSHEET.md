@@ -50,16 +50,16 @@ Benchmarks are run using `cargo-criterion` in the `rapidhash-bench` crate to sep
 cd rapidhash-bench
 
 # Run all benchmarks (assumes cargo-criterion is installed)
-RUSTFLAGS="-C target-cpu=native" cargo criterion --bench bench --features bench
+RUSTFLAGS="-C target-cpu=native" cargo criterion --plotting-backend disabled --bench bench --features bench
 
 # Run all benchmarks, but unsafe=disabled
-RUSTFLAGS="-C target-cpu=native" cargo criterion --bench bench --features bench
+RUSTFLAGS="-C target-cpu=native" cargo criterion --plotting-backend disabled --bench bench --features bench
 
 # Run all benchmarks, with nightly
-RUSTFLAGS="-C target-cpu=native" cargo +nightly criterion --bench bench --features bench,nightly
+RUSTFLAGS="-C target-cpu=native" cargo +nightly criterion --plotting-backend disabled --bench bench --features bench,nightly
 
 # Run the realworld benchmark, which is a modification of the foldhash benchmarks
-RUSTFLAGS="-C target-cpu=native" cargo criterion --bench realworld --features bench
+RUSTFLAGS="-C target-cpu=native" cargo criterion --plotting-backend disabled --bench realworld --features bench
 
 # Run quality tests across various hash functions
 RUSTFLAGS="-C target-cpu=native" cargo bench --bench quality --features bench
@@ -73,10 +73,10 @@ RUSTFLAGS="-C target-cpu=native" cargo bench --bench iai-callgrind --features be
 RUSTFLAGS="-C target-cpu=native" cargo instruments -t time --profile=bench --bench realworld --features bench -- --bench hashonly-struuid-rapidhash-v2
 
 # Benchmark WASM targets, which will automatically build the WASM target
-RUSTFLAGS="-C target-cpu=native" cargo criterion --bench wasm --features bench
+RUSTFLAGS="-C target-cpu=native" cargo criterion --plotting-backend disabled --bench wasm --features bench
 
 # Benchmark WASM targets, nightly
-RUSTFLAGS="-C target-cpu=native" cargo +nightly criterion --bench wasm --features nightly
+RUSTFLAGS="-C target-cpu=native" cargo +nightly criterion --plotting-backend disabled --bench wasm --features nightly
 ```
 
 ## Fuzzing
