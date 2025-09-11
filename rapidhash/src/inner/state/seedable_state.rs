@@ -35,6 +35,17 @@ impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const P
 }
 
 impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> SeedableState<'s, AVALANCHE, SPONGE, COMPACT, PROTECTED> {
+    /// Create a new seedable state with a custom seed and automatically generated secrets.
+    ///
+    /// The seed will be pre-mixed to improve entropy. The global secrets are randomly generated
+    /// once at program start, and then will be re-used for all subsequent calls to this function.
+    pub fn new(seed: u64) -> Self {
+        Self {
+            seed: crate::inner::seed::rapidhash_seed(seed),
+            secrets: GlobalSecrets::new().get(),
+        }
+    }
+
     /// Create a new seedable state with a random seed.
     #[inline]
     pub fn random() -> Self {
@@ -56,12 +67,29 @@ impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const P
     }
 
     /// Create a new seedable state with a custom seed and secrets.
+    ///
+    /// ## Warning
+    /// These seeds and secrets will not be pre-mixed and must be pseudo-randomly generated.
+    ///
+    /// It's very important that the seed and secrets are pseudo-random. The seed must not be 0, and
+    /// seeds for subsequent hashers should be unrelated to each other. It's very important the bits
+    /// in the seed and secrets have high entropy, that the probability of any single bit in the
+    /// seed or secrets being 1 is close to 50%.
+    ///
+    /// If you can't pre-mix the seed, please use [`SeedableState::new`] instead.
     #[inline]
-    pub fn with_seed(seed: u64, secrets: &'s [u64; 7]) -> Self {
+    pub fn custom(seed: u64, secrets: &'s [u64; 7]) -> Self {
         Self {
             seed,
             secrets,
         }
+    }
+
+    /// Deprecated and renamed to [`SeedableState::custom`].
+    #[deprecated(since = "4.0.1", note = "Use custom() or new() instead.")]
+    #[inline]
+    pub fn with_seed(seed: u64, secrets: &'s [u64; 7]) -> Self {
+        Self::custom(seed, secrets)
     }
 }
 
