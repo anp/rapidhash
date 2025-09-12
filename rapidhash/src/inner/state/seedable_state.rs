@@ -127,7 +127,7 @@ impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const P
     }
 
     /// Deprecated and renamed to [`SeedableState::custom`].
-    #[deprecated(since = "4.0.1", note = "Use custom() or new() instead.")]
+    #[deprecated(since = "4.1.0", note = "Use custom() or new() instead.")]
     #[inline]
     pub fn with_seed(seed: u64, secrets: &'s [u64; 7]) -> Self {
         Self::custom(seed, secrets)

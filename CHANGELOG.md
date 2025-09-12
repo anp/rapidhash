@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.1.0 (20250912)
 
 ### Additions
 - Added `SeedableState::new` and `SeedableState::custom` to create hasher builders with user-defined seeds and secrets.
