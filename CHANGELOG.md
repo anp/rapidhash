@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Additions
+- Added `SeedableState::new` and `SeedableState::custom` to create hasher builders with user-defined seeds and secrets.
+
+### Deprecations
+- `SeedableState::with_seed` has been deprecated in favour of `SeedableState::custom` for better naming and improved warnings in the documentation.
+
 ## 4.0.0 (20250901)
 
 https://github.com/hoxxep/rapidhash/pull/43
