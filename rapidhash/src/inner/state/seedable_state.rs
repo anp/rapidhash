@@ -35,7 +35,31 @@ impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const P
 }
 
 impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> SeedableState<'s, AVALANCHE, SPONGE, COMPACT, PROTECTED> {
+    /// Create a new seedable state with a custom seed and automatically generated secrets.
+    ///
+    /// The seed will be pre-mixed to improve entropy. The global secrets are randomly generated
+    /// once at program start, and then will be re-used for all subsequent calls to this function.
+    ///
+    /// # Example
+    /// ```
+    /// use core::hash::BuildHasher;
+    /// use rapidhash::quality::SeedableState;
+    ///
+    /// let state = SeedableState::new(0);
+    ///
+    /// let hash: u64 = state.hash_one(b"hello");
+    /// println!("hash: {hash}");
+    /// ```
+    pub fn new(seed: u64) -> Self {
+        Self {
+            seed: crate::inner::seed::rapidhash_seed(seed),
+            secrets: GlobalSecrets::new().get(),
+        }
+    }
+
     /// Create a new seedable state with a random seed.
+    ///
+    /// This is slower than using [`crate::inner::RandomState`], please use that instead.
     #[inline]
     pub fn random() -> Self {
         Self {
@@ -46,7 +70,12 @@ impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const P
 
     /// Create a new seedable state with the default seed and secrets.
     ///
-    /// Using the default secrets does not offer HashDoS resistance.
+    /// Using the default secrets does not offer HashDoS resistance, but they will be fixed between
+    /// different runs of the program.
+    ///
+    /// Please note that `fast::RapidHasher` and `quality::RapidHasher` are **not guaranteed** to
+    /// produce the same hash outputs between different crate versions, compiler versions, or
+    /// platforms.
     #[inline]
     pub fn fixed() -> Self {
         Self {
@@ -56,12 +85,52 @@ impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const P
     }
 
     /// Create a new seedable state with a custom seed and secrets.
+    ///
+    /// ## Warning
+    /// This constructor uses the provided `seed` and `secrets` as the initial state
+    /// **without any pre-mixing or validation**. Supplying low-entropy or structured
+    /// values (e.g., `0`, all-zero arrays, counters, timestamps) can produce
+    /// degenerate hashing (high collision rates or identical outputs).
+    ///
+    /// ### Requirements
+    /// - `seed` and `secrets` **must not** be zero; avoid any all-zero/near-zero state.
+    /// - Generate `seed` and `secrets` with a **cryptographically secure PRNG** and
+    ///   treat them as **independent** for each hasher instance.
+    /// - Do not derive successive seeds from predictable data (time, PID/TID, memory
+    ///   addresses) or by simple incrementation.
+    ///
+    /// ### Recommendation
+    /// If you cannot pre-mix the seed yourself, use [`SeedableState::new`] instead.
+    ///
+    /// ### Example (secure generation)
+    /// ```rust
+    /// use core::hash::BuildHasher;
+    /// use rapidhash::quality::SeedableState;
+    ///
+    /// // randomly generate secrets
+    /// let seed: u64 = rand::random();
+    /// let secrets: [u64; 7] = rand::random();
+    ///
+    /// // create the state
+    /// let state = SeedableState::custom(seed, &secrets);
+    ///
+    /// // hash using the state
+    /// let hash: u64 = state.hash_one(b"hello");
+    /// println!("hash: {hash}");
+    /// ```
     #[inline]
-    pub fn with_seed(seed: u64, secrets: &'s [u64; 7]) -> Self {
+    pub fn custom(seed: u64, secrets: &'s [u64; 7]) -> Self {
         Self {
             seed,
             secrets,
         }
+    }
+
+    /// Deprecated and renamed to [`SeedableState::custom`].
+    #[deprecated(since = "4.0.1", note = "Use custom() or new() instead.")]
+    #[inline]
+    pub fn with_seed(seed: u64, secrets: &'s [u64; 7]) -> Self {
+        Self::custom(seed, secrets)
     }
 }
 
