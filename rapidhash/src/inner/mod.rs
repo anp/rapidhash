@@ -53,8 +53,8 @@ mod tests {
     use super::seed::{DEFAULT_RAPID_SECRETS, DEFAULT_SEED};
     use super::rapid_const::{rapidhash_rs, rapidhash_rs_seeded};
 
-    type RapidHasher = super::RapidHasher<'static, true, true, true>;
-    type SeedableState = super::SeedableState<'static, true, true, true>;
+    type RapidHasher = super::RapidHasher<'static, true, true, true, false>;
+    type SeedableState = super::SeedableState<'static, true, true, true, false>;
 
     #[derive(Hash)]
     struct Object {
@@ -148,6 +148,41 @@ mod tests {
             hasher.write_u8(*byte);
         }
         hasher.finish()
+    }
+
+    /// Ensure various subsequent `write_u8` calls produce a stable result.
+    ///
+    /// Used to help diagnose an issue using rapidhash for PHF.
+    #[test]
+    fn sponge_buffer_stability() {
+        use std::collections::HashSet;
+
+        /// Simulate the UniCase Ascii/Unicode string hashing
+        fn manual_string_hash(data: &[u8]) -> u64 {
+            // ensure avalanche is disabled, sponge enabled to match PHF
+            let mut hasher = crate::inner::SeedableState::<'static, false, true, false, false>::fixed().build_hasher();
+            for byte in data {
+                hasher.write_u8(*byte);
+            }
+            hasher.write_u8(0xFF); // prefix freedom
+            hasher.finish()
+        }
+
+        let mut hashes = HashSet::new();
+
+        for len in 1..=64 {
+            for byte in 0u8..=255 {
+                // don't randomise the data, simply extend an extra byte each time
+                let data = std::vec![byte; len];
+
+                let hash1 = manual_string_hash(&data);
+                let hash2 = manual_string_hash(&data);
+                assert_eq!(hash1, hash2, "Mismatch for length {}", len);
+
+                assert!(!hashes.contains(&hash1), "Duplicate hash at length {}", len);
+                hashes.insert(hash1);
+            }
+        }
     }
 
     /// The same as [flip_bit_trial], but against our streaming implementation, to ensure that
