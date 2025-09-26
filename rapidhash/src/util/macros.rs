@@ -66,6 +66,33 @@ macro_rules! flip_bit_trial {
 
             let average = flips.iter().sum::<u64>() as f64 / flips.len() as f64;
             assert!(average > 31.95 && average < 32.05, "Did not flip an average of half the bits. average: {average}, expected: 32.0");
+
+            let mut hashes_seen = std::collections::HashSet::new();
+
+            // "ray casting" -> flip a single bit across the whole range, using a repeating pattern
+            // which simulates swapped bits. The previous part of the test uses randomised data
+            // which would not simulate bytes swapping positions.
+            for len in 1..=512 {
+                // should ensure that the patterns won't collide when we flip a bit, eg. 0x00 and
+                // 0x01 will naturally collide when we flip the last bit of 0x00
+                for pattern in [0x00, 0xAA, 0x53] {
+                    let mut data = std::vec![pattern; len];
+                    let hash = $hash(&data, &DEFAULT_RAPID_SECRETS);
+
+                    for byte in 0..len {
+                        for bit in 0..8 {
+                            // cast a single bit along the whole data
+                            let mut data = data.clone();
+                            data[byte] ^= 1 << bit;
+
+                            // ensure hash is unique
+                            let new_hash = $hash(&data, &DEFAULT_RAPID_SECRETS);
+                            assert!(!hashes_seen.contains(&new_hash), "Hash collision detected for input len vec![{pattern}; {len}] at pos {byte}:{bit}: hash {new_hash} already seen");
+                            hashes_seen.insert(new_hash);
+                        }
+                    }
+                }
+            }
         }
     };
 }
