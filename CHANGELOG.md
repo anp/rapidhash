@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.1.1 (20251021)
+
+### Fixes
+- Fixed docsrs build flags, replacing `doc_auto_cfg` with `doc_cfg`. (https://github.com/hoxxep/rapidhash/pull/55)
+- Fixed broken docsrs links. (https://github.com/hoxxep/rapidhash/pull/57)
+
 ## 4.1.0 (20250912)
 
 ### Additions
