@@ -1,6 +1,6 @@
 //! Portable hashing: rapidhash V1 algorithm.
 //!
-//! For new code, please use [`rapidhash::v3`] instead, as it is a superior hashing algorithm.
+//! For new code, please use [`crate::v3`] instead, as it is a superior hashing algorithm.
 
 mod rapid_const;
 #[cfg(any(feature = "std", docsrs))]

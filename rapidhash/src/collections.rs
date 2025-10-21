@@ -1,6 +1,6 @@
 use crate::fast::RandomState;
 
-/// A [std::collections::HashMap] that uses the [fast::RandomState] hasher.
+/// A [std::collections::HashMap] that uses the [crate::fast::RandomState] hasher.
 ///
 /// # Example
 /// ```
@@ -15,7 +15,7 @@ use crate::fast::RandomState;
 /// ```
 pub type RapidHashMap<K, V> = std::collections::HashMap<K, V, RandomState>;
 
-/// A [std::collections::HashSet] that uses the [fast::RandomState] hasher.
+/// A [std::collections::HashSet] that uses the [crate::fast::RandomState] hasher.
 ///
 /// # Example
 /// ```
@@ -30,12 +30,12 @@ pub type RapidHashMap<K, V> = std::collections::HashMap<K, V, RandomState>;
 /// ```
 pub type RapidHashSet<K> = std::collections::HashSet<K, RandomState>;
 
-/// A trait for creating a `RapidHashMap` with a specified capacity and hasher.
+/// A trait for creating a [`RapidHashMap`] with a specified capacity and hasher.
 pub trait HashMapExt {
-    /// Create a new `RapidHashMap` with the default capacity and hasher.
+    /// Create a new [`RapidHashMap`] with the default capacity and hasher.
     fn new() -> Self;
 
-    /// Create a new `RapidHashMap` with the given capacity and hasher.
+    /// Create a new [`RapidHashMap`] with the given capacity and hasher.
     fn with_capacity(capacity: usize) -> Self;
 }
 
@@ -51,12 +51,12 @@ impl<K, V> HashMapExt for RapidHashMap<K, V> {
     }
 }
 
-/// A trait for creating a `RapidHashSet` with a specified capacity and hasher.
+/// A trait for creating a [`RapidHashSet`] with a specified capacity and hasher.
 pub trait HashSetExt {
-    /// Create a new `RapidHashSet` with the default capacity and hasher.
+    /// Create a new [`RapidHashSet`] with the default capacity and hasher.
     fn new() -> Self;
 
-    /// Create a new `RapidHashSet` with the given capacity and hasher.
+    /// Create a new [`RapidHashSet`] with the given capacity and hasher.
     fn with_capacity(capacity: usize) -> Self;
 }
 

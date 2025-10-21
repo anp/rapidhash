@@ -51,9 +51,7 @@ macro_rules! write_num {
 /// objects, but should be benchmarked for your specific use case. If you have HashMaps for many
 /// different types this may come at the cost of some binary size increase.
 ///
-/// See [crate::RapidHasher] for default non-forced inline methods.
-///
-/// See [RapidHashBuilder] for usage with [std::collections::HashMap].
+/// See [crate::fast::RandomState] for usage with [std::collections::HashMap].
 ///
 /// # Example
 /// ```
@@ -79,7 +77,7 @@ impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const P
 
     /// Create a new [RapidHasher] with a custom seed.
     ///
-    /// See instead [src::quality::RandomState::new] or [src::fast::RandomState::new] for a random
+    /// See instead [crate::quality::RandomState::new] or [crate::fast::RandomState::new] for a random
     /// seed and random secret initialisation, for minimal DoS resistance.
     #[inline(always)]
     #[must_use]
@@ -111,7 +109,7 @@ impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const P
 impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Default for RapidHasher<'_, AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     /// Create a new [RapidHasher] with the default seed.
     ///
-    /// See [crate::RapidRandomState] for a [std::hash::BuildHasher] that initialises with a random
+    /// See [crate::inner::RandomState] for a [std::hash::BuildHasher] that initialises with a random
     /// seed.
     #[inline(always)]
     fn default() -> Self {

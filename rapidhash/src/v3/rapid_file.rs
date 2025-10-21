@@ -7,7 +7,7 @@ use super::{DEFAULT_RAPID_SECRETS, RapidSecrets, rapidhash_finish};
 /// Rapidhash a file, matching the C++ implementation.
 ///
 /// This method will check the metadata for a file length, and then stream the file with a
-/// [BufReader] to compute the hash. This avoids loading the entire file into memory.
+/// a chunked stream reader to compute the hash. This avoids loading the entire file into memory.
 #[inline]
 pub fn rapidhash_v3_file<R: Read>(data: R) -> std::io::Result<u64> {
     rapidhash_v3_file_inline::<R, false>(data, &DEFAULT_RAPID_SECRETS)
@@ -16,7 +16,7 @@ pub fn rapidhash_v3_file<R: Read>(data: R) -> std::io::Result<u64> {
 /// Rapidhash a file, matching the C++ implementation, with a custom seed.
 ///
 /// This method will check the metadata for a file length, and then stream the file with a
-/// [BufReader] to compute the hash. This avoids loading the entire file into memory.
+/// chunked stream reader to compute the hash. This avoids loading the entire file into memory.
 #[inline]
 pub fn rapidhash_v3_file_seeded<R: Read>(data: R, secrets: &RapidSecrets) -> std::io::Result<u64> {
     rapidhash_v3_file_inline::<R, false>(data, secrets)
@@ -25,12 +25,7 @@ pub fn rapidhash_v3_file_seeded<R: Read>(data: R, secrets: &RapidSecrets) -> std
 /// Rapidhash a file, matching the C++ implementation.
 ///
 /// This method will check the metadata for a file length, and then stream the file with a
-/// [BufReader] to compute the hash. This avoids loading the entire file into memory.
-///
-/// We could easily add more ways to read other streams that can be converted to a [BufReader],
-/// but the length must be known at the start of the stream due to how rapidhash is seeded using
-/// the data length. Raise a [GitHub](https://github.com/hoxxep/rapidhash) issue if you have a
-/// use case to support other stream types.
+/// chunked stream reader to compute the hash. This avoids loading the entire file into memory.
 ///
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
 /// Can provide large performance uplifts for inputs where the length is known at compile time.

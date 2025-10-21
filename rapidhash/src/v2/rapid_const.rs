@@ -6,7 +6,7 @@ use super::{DEFAULT_RAPID_SECRETS, RapidSecrets};
 ///
 /// See [rapidhash_v2_inline] to compute the hash value using V2.0 or V2.2.
 ///
-/// Fixed length inputs will greatly benefit from inlining with [rapidhash_inline] instead.
+/// Fixed length inputs will greatly benefit from inlining with [rapidhash_v2_inline] instead.
 #[inline]
 pub const fn rapidhash_v2_2(data: &[u8]) -> u64 {
     rapidhash_v2_inline::<2, true, false, false>(data, &DEFAULT_RAPID_SECRETS)
@@ -16,7 +16,7 @@ pub const fn rapidhash_v2_2(data: &[u8]) -> u64 {
 ///
 /// See [rapidhash_v2_inline] to compute the hash value using V2.0 or V2.2.
 ///
-/// Fixed length inputs will greatly benefit from inlining with [rapidhash_inline] instead.
+/// Fixed length inputs will greatly benefit from inlining with [rapidhash_v2_inline] instead.
 #[inline]
 pub const fn rapidhash_v2_2_seeded(data: &[u8], secrets: &RapidSecrets) -> u64 {
     rapidhash_v2_inline::<2, true, false, false>(data, secrets)

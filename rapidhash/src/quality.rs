@@ -1,6 +1,6 @@
 //! In-memory hashing: RapidHasher with a focus on hash quality.
 //!
-//! This is a specific instantiation of the [rapidhash::inner] module with the following settings:
+//! This is a specific instantiation of the [crate::inner] module with the following settings:
 //! - `AVALANCHE` is enabled.
 //! - `SPONGE` is enabled.
 //! - `COMPACT` is disabled, unless building for WASM targets.
@@ -13,7 +13,7 @@ const PROTECTED: bool = false;
 
 use crate::inner;
 
-/// A [Hasher] inspired by [rapidhash::v3::rapidhash_v3] with a focus on speed and throughput.
+/// A [std::hash::Hasher] inspired by [crate::v3::rapidhash_v3] with a focus on speed and throughput.
 ///
 /// This is an alias for [inner::RapidHasher] with the following settings:
 /// - `AVALANCHE` is enabled.

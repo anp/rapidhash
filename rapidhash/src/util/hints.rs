@@ -41,7 +41,7 @@ const fn cold_path() {}
 /// This is particularly relevant when LLVM isn't able to specialise the >16 input functions. This
 /// often happens with the default release profile, which uses a large number of codegen units and
 /// LTO off.
-#[rustversion::since(1.81)]
+#[cfg_attr(not(docsrs), rustversion::since(1.81))]
 #[inline(always)]
 pub(crate) const unsafe fn assume(cond: bool) {
     debug_assert!(cond);
@@ -50,7 +50,8 @@ pub(crate) const unsafe fn assume(cond: bool) {
 
 /// Provides a stable `assume` function that uses `core::hint::assert_unchecked` when the stable
 /// rust compiler supports it.
-#[rustversion::before(1.81)]
+#[cfg_attr(not(docsrs), rustversion::before(1.81))]
+#[cfg_attr(docsrs, cfg(not(docsrs)))]
 #[inline(always)]
 pub(crate) const unsafe fn assume(cond: bool) {
     debug_assert!(cond);
