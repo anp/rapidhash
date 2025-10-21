@@ -168,7 +168,7 @@ impl Default for RapidRng {
     ///
     /// With `std` enabled, the seed is generated using the current system time via [rapidrng_time].
     ///
-    /// Without `std`, the seed is set to [RAPID_SEED].
+    /// Without `std`, the seed is set to the default seed.
     #[inline]
     fn default() -> Self {
         let mut seed = RAPID_SEED;

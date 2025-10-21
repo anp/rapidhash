@@ -1,22 +1,22 @@
 //! In-memory hashing: RapidHasher with full configurability via compile-time arguments.
 //!
 //! This module contains the Hasher, BuildHasher, HashMap, HashSet, and RandomState
-//! implementations. It is recomended to use [rapidhash::fast] or [rapidhash::quality], but for the
-//! advanced user, [rapidhash::inner] can be used directly to customise the compile time options to
+//! implementations. It is recommended to use [crate::fast] or [crate::quality], but for the
+//! advanced user, [crate::inner] can be used directly to customise the compile time options to
 //! modify the hash function.
 //!
 //! Each structure may have the compile time const generics:
 //! - `AVALANCHE`: Whether to use a final avalanche mix step, required to pass SMHasher3. This
-//!   option changes the hash output. Enabled on [rapidhash::quality], disabled on [rapidhash::fast].
+//!   option changes the hash output. Enabled on [crate::quality], disabled on [crate::fast].
 //! - `SPONGE`: Allow RapidHasher to cache integers into a 128-bit buffer to perform a single
 //!   folded multiply step on the entire buffer. If disabled, a mix step is performed on each
 //!   individual integer. This changes the hash output when hashing integers. Enabled on both
-//!   [rapidhash::quality] and [rapidhash::fast].
+//!   [crate::quality] and [crate::fast].
 //! - `COMPACT`: Reduce the code size of the hasher by preventing manually unrolled loops. This does
-//!   _not_ affect the hash output. Disabled on both [rapidhash::quality] and [rapidhash::fast].
+//!   _not_ affect the hash output. Disabled on both [crate::quality] and [crate::fast].
 //! - `PROTECTED`: When performing the folded multiply mix step, XOR the a and b back into their
 //!   original values to make it harder for an attacker to generate collisions. This changes the
-//!   hash ouput. Disabled on both [rapidhash::quality] and [rapidhash::fast].
+//!   hash ouput. Disabled on both [crate::quality] and [crate::fast].
 //!
 //! The `RapidHasher` struct is _inspired by_ rapidhash, but is not a direct port and will output
 //! different hash values. It keeps the same hasher quality but uses various optimisations to

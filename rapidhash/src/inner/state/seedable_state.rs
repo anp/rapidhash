@@ -27,7 +27,7 @@ pub struct SeedableState<'s, const AVALANCHE: bool, const SPONGE: bool, const CO
 }
 
 impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Default for SeedableState<'s, AVALANCHE, SPONGE, COMPACT, PROTECTED> {
-    /// Create a new [SeedableState] with a random seed. See [crate::fast::RandomState::random] for more details.
+    /// Create a new [SeedableState] with a random seed. See [SeedableState::random] for more details.
     #[inline]
     fn default() -> Self {
         Self::random()

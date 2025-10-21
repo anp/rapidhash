@@ -5,7 +5,7 @@ use super::{DEFAULT_RAPID_SECRETS, RapidSecrets};
 
 /// Rapidhash V3 a single byte stream, matching the C++ implementation, with the default seed.
 ///
-/// Fixed length inputs will greatly benefit from inlining with [rapidhash_inline] instead.
+/// Fixed length inputs will greatly benefit from inlining with [rapidhash_v3_inline] instead.
 #[inline]
 pub const fn rapidhash_v3(data: &[u8]) -> u64 {
     rapidhash_v3_inline::<true, false, false>(data, &DEFAULT_RAPID_SECRETS)
@@ -13,7 +13,7 @@ pub const fn rapidhash_v3(data: &[u8]) -> u64 {
 
 /// Rapidhash V3 a single byte stream, matching the C++ implementation, with a custom seed.
 ///
-/// Fixed length inputs will greatly benefit from inlining with [rapidhash_inline] instead.
+/// Fixed length inputs will greatly benefit from inlining with [rapidhash_v3_inline] instead.
 #[inline]
 pub const fn rapidhash_v3_seeded(data: &[u8], secrets: &RapidSecrets) -> u64 {
     rapidhash_v3_inline::<true, false, false>(data, secrets)
