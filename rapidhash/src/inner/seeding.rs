@@ -101,6 +101,13 @@ pub(crate) mod secrets {
         pub fn get(self) -> &'static [u64; 7] {
             get_secrets()
         }
+
+        /// Get the fixed seed, which is guaranteed to be initialized.
+        #[inline(always)]
+        pub fn get_global_seed(self) -> u64 {
+            // rapidhash v1 seed as default
+            0xbdd89aa982704029
+        }
     }
 }
 
