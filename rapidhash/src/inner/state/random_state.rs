@@ -59,7 +59,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
     }
 }
 
-#[cfg(target_has_atomic = "ptr")]
+/// Warning that `RandomState` only randomises the seed on platforms that support atomic pointers.
 impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Default for RandomState<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     #[inline]
     fn default() -> Self {

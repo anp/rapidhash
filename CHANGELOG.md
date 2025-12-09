@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.2.0 (20251209)
+
+### Additions
+- Added `GlobalState` for a global `RapidHasher` state with random secrets for convenient use cases where a single global state is sufficient.
+
 ## 4.1.1 (20251021)
 
 ### Fixes

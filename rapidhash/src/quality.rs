@@ -46,3 +46,14 @@ pub type RandomState = inner::RandomState<AVALANCHE, SPONGE, COMPACT, PROTECTED>
 ///
 /// Use [crate::fast::SeedableState] for a lower quality but faster hash output where desirable.
 pub type SeedableState<'secrets> = inner::SeedableState<'secrets, AVALANCHE, SPONGE, COMPACT, PROTECTED>;
+
+/// A [std::hash::BuildHasher] trait compatible hasher that uses the [crate::fast::RapidHasher] algorithm.
+///
+/// This initialises a [crate::quality::RapidHasher] with the following settings:
+/// - `AVALANCHE` is disabled.
+/// - `SPONGE` is enabled.
+/// - `COMPACT` is disabled.
+/// - `PROTECTED` is disabled.
+///
+/// Use [crate::fast::GlobalState] for a lower quality but faster hash output where desirable.
+pub type GlobalState = inner::GlobalState<AVALANCHE, SPONGE, COMPACT, PROTECTED>;

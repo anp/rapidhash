@@ -115,6 +115,7 @@ pub(crate) mod secrets {
     /// `seed.rs` which includes some similar bodges.
     struct SecretStorage {
         state: AtomicUsize,
+        seed: UnsafeCell<u64>,
         secrets: UnsafeCell<[u64; 7]>,
     }
 
@@ -122,6 +123,7 @@ pub(crate) mod secrets {
 
     static SECRET_STORAGE: SecretStorage = SecretStorage {
         state: AtomicUsize::new(0),
+        seed: UnsafeCell::new(0),
         secrets: UnsafeCell::new([0; 7]),
     };
 
@@ -154,6 +156,14 @@ pub(crate) mod secrets {
             // as we cannot construct this struct without first calling `new()`
             unsafe { &*SECRET_STORAGE.secrets.get() }
         }
+
+        /// Get the fixed seed, which is guaranteed to be initialized.
+        #[inline(always)]
+        pub fn get_global_seed(self) -> u64 {
+            // SAFETY: The secrets are guaranteed to be initialized before being accessed
+            // as we cannot construct this struct without first calling `new()`
+            unsafe { *SECRET_STORAGE.seed.get() }
+        }
     }
 
     /// Get the global secrets, slow(ish).
@@ -167,7 +177,9 @@ pub(crate) mod secrets {
     #[cold]
     #[inline(never)]
     fn initialize_secrets() {
-        let secrets = create_secrets();
+        let seed = generate_random();
+        let secrets = create_secrets(seed);
+
         const INITIALIZED: usize = SecretStorageStates::Initialized as usize;
 
         loop {
@@ -180,6 +192,7 @@ pub(crate) mod secrets {
                 // This thread is the first to initialize, so we can safely set the secrets
                 Ok(_) => {
                     unsafe {
+                        *SECRET_STORAGE.seed.get() = seed;
                         *SECRET_STORAGE.secrets.get() = secrets;
                     }
                     SECRET_STORAGE.state.store(SecretStorageStates::Initialized as usize, Ordering::Release);
@@ -199,9 +212,8 @@ pub(crate) mod secrets {
         }
     }
 
-    fn create_secrets() -> [u64; 7] {
+    fn create_secrets(mut seed: u64) -> [u64; 7] {
         let mut secrets = [0u64; 7];
-        let mut seed = generate_random();
 
         for i in 0..secrets.len() {
             const HI: u64 = 0xFFFF << 48;
@@ -281,7 +293,7 @@ pub(crate) mod secrets {
         extern crate std;
 
         use std::collections::BTreeSet;
-        use super::get_secrets;
+        use super::*;
 
         #[test]
         fn test_get_secrets() {
@@ -291,12 +303,23 @@ pub(crate) mod secrets {
         }
 
         #[test]
+        fn test_get_global_seed() {
+            let global_secrets = GlobalSecrets::new();
+            let seed1 = global_secrets.get_global_seed();
+            let seed2 = global_secrets.get_global_seed();
+            assert_eq!(seed1, seed2, "get_fixed_seed should return the same value on subsequent calls");
+        }
+
+        #[test]
         fn test_create_secrets() {
-            let secrets1 = super::create_secrets();
+            let seed = super::generate_random();
+            let secrets1 = super::create_secrets(seed);
+            let secrets2 = super::create_secrets(seed);
+            assert_eq!(secrets1, secrets2, "create_secrets should return the same value for the same seed");
 
             #[cfg(feature = "std")] {
-                let secrets2 = super::create_secrets();
-                assert_ne!(secrets1, secrets2, "create_secrets should not return the same value on subsequent calls");
+                let secrets3 = super::create_secrets(seed + 1);
+                assert_ne!(secrets1, secrets3, "create_secrets should not return the same value for different seeds");
             }
 
             // Check that the secrets are well-formed

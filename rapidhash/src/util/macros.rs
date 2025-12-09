@@ -76,8 +76,7 @@ macro_rules! flip_bit_trial {
                 // should ensure that the patterns won't collide when we flip a bit, eg. 0x00 and
                 // 0x01 will naturally collide when we flip the last bit of 0x00
                 for pattern in [0x00, 0xAA, 0x53] {
-                    let mut data = std::vec![pattern; len];
-                    let hash = $hash(&data, &DEFAULT_RAPID_SECRETS);
+                    let data = std::vec![pattern; len];
 
                     for byte in 0..len {
                         for bit in 0..8 {
