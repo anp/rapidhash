@@ -20,8 +20,8 @@ fn cli_stdin() {
     let input = "test input\n";
     let expected = rapidhash_v3("test input\n".as_bytes()).to_string();
 
-    let mut cmd = Command::cargo_bin("rapidhash").unwrap();
-    cmd.args(&["--v3"])
+    Command::new(assert_cmd::cargo_bin!("rapidhash"))
+        .args(&["--v3"])
         .write_stdin(input)
         .assert()
         .success()
@@ -41,8 +41,8 @@ fn cli_file() {
     file.write_all(input.as_bytes()).unwrap();
     file.flush().unwrap();
 
-    let mut cmd = Command::cargo_bin("rapidhash").unwrap();
-    cmd.args(&["--v3", file_path.to_str().unwrap()])
+    Command::new(assert_cmd::cargo_bin!("rapidhash"))
+        .args(&["--v3", file_path.to_str().unwrap()])
         .assert()
         .success()
         .stdout(format!("{expected}\n"));
@@ -63,8 +63,8 @@ fn cli_versions() {
     ];
 
     for (flag, expected) in versions {
-        let mut cmd = Command::cargo_bin("rapidhash").unwrap();
-        cmd.args(&[flag])
+        Command::new(assert_cmd::cargo_bin!("rapidhash"))
+            .args(&[flag])
             .write_stdin(input)
             .assert()
             .success()
