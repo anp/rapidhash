@@ -70,7 +70,7 @@ macro_rules! flip_bit_trial {
             let mut hashes_seen = std::collections::HashSet::new();
 
             // "ray casting" -> flip a single bit across the whole range, using a repeating pattern
-            // which simulates swapped bits. The previous part of the test uses randomised data
+            // which simulates swapped bits. The previous part of the test uses randomized data
             // which would not simulate bytes swapping positions.
             for len in 1..=512 {
                 // should ensure that the patterns won't collide when we flip a bit, eg. 0x00 and

@@ -4,7 +4,7 @@ A rust implementation of [rapidhash](https://github.com/Nicoshev/rapidhash), the
 
 - **High quality**, the fastest hash passing all tests in the SMHasher and SMHasher3 benchmarks. Collision-based study showed a collision probability that's close to ideal.
 - **Very fast**, the fastest passing hash in SMHasher3. Significant peak throughput improvement over wyhash and foldhash. Fastest platform-independent hash. Fastest const hash.
-- **Platform independent and no-std compatible**, works on all platforms, no dependency on machine-specific vectorized or cryptographic hardware instructions. Optimised for both AMD64 and AArch64.
+- **Platform independent and no-std compatible**, works on all platforms, no dependency on machine-specific vectorized or cryptographic hardware instructions. Optimized for both AMD64 and AArch64.
 - **Memory safe**, when the `unsafe` feature is disabled (default). This implementation has also been fuzz-tested with `cargo fuzz`.
 - **Official successor to wyhash** with improved speed, quality, and compatibility.
 - **Run-time and compile-time hashing** as the hash implementation is fully `const`.
@@ -17,7 +17,7 @@ A rust implementation of [rapidhash](https://github.com/Nicoshev/rapidhash), the
 
 ## Usage
 ### In-Memory Hashing
-Following rust's `std::hash` traits, the underlying hash function may change between minor versions, and is only suitable for in-memory hashing. These types are optimised for speed and minimal DoS resistance, available in the `rapidhash::fast` and `rapidhash::quality` flavours.
+Following rust's `std::hash` traits, the underlying hash function may change between minor versions, and is only suitable for in-memory hashing. These types are optimized for speed and minimal DoS resistance, available in the `rapidhash::fast` and `rapidhash::quality` flavours.
 
 - `RapidHasher`: A `std::hash::Hasher` compatible hasher that uses the rapidhash algorithm.
 - `RandomState`: A `std::hash::BuildHasher` for initialising the hasher with a random seed and secrets.
@@ -49,7 +49,7 @@ use std::hash::{BuildHasher, Hasher};
 use rapidhash::v3::{rapidhash_v3_seeded, rapidhash_v3_file_seeded, RapidSecrets};
 
 /// Set your global hashing secrets.
-/// - For HashDoS resistance, choose a randomised secret.
+/// - For HashDoS resistance, choose a randomized secret.
 /// - For C++ compatibility, use the `seed_cpp` method or `DEFAULT_RAPID_SECRETS`.
 const RAPID_SECRETS: RapidSecrets = RapidSecrets::seed(0x123456);
 
@@ -90,7 +90,7 @@ echo "example" | rapidhash --v3
 
 - `default`: `std`
 - `std`: Enables the `RapidHashMap` and `RapidHashSet` helper types.
-- `rand`: Enables using the `rand` library to more securely initialise `RandomState`. Includes the `rand` crate dependency.
+- `rand`: Enables using the `rand` library to more securely initialize `RandomState`. Includes the `rand` crate dependency.
 - `rng`: Enables `RapidRng`, a fast, non-cryptographic PRNG based on rapidrng. Includes the `rand_core` crate dependency.
 - `unsafe`: Uses unsafe pointer arithmetic to skip some unnecessary bounds checks for a small 3-4% performance improvement.
 - `nightly`: Enable nightly-only features for even faster hashing, such as overriding `Hasher::write_str` and likely hints.
@@ -257,7 +257,7 @@ Rapidhash is a keyed hash function and the rust implementation deviates from its
 
 We believe rapidhash is a minimally DoS resistant hash function, such that a non-interactive attacker cannot trivially create collisions if they do not know the seed or secrets. The adverb "minimally" is used to describe that rapidhash is not a cryptographic hash, it is possible to construct collisions if the seed or secrets are known, and it may be possible for an interactive attacker to learn the seed by observing hash outputs or application response times over a large number of inputs.
 
-Provided rapidhash has been instantiated through `RandomState` or `RapidSecrets` using a randomised secret seed, we believe rapidhash is minimally resistant to hash DoS attacks.
+Provided rapidhash has been instantiated through `RandomState` or `RapidSecrets` using a randomized secret seed, we believe rapidhash is minimally resistant to hash DoS attacks.
 
 ## Rapidhash Versioning
 

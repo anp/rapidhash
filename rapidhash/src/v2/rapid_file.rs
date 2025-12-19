@@ -40,7 +40,7 @@ pub fn rapidhash_v2_2_file_seeded(data: &mut File, secrets: &RapidSecrets) -> st
 /// the data length. Raise a [GitHub](https://github.com/hoxxep/rapidhash) issue if you have a
 /// use case to support other stream types.
 ///
-/// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
+/// Is marked with `#[inline(always)]` to force the compiler to inline and optimize the method.
 /// Can provide large performance uplifts for inputs where the length is known at compile time.
 ///
 /// `MINOR` is the minor version of the rapidhash algorithm:
