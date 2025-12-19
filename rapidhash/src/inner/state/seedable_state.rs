@@ -2,10 +2,14 @@ use core::hash::BuildHasher;
 use crate::inner::RapidHasher;
 use crate::inner::seeding::secrets::GlobalSecrets;
 
-/// A [std::hash::BuildHasher] trait compatible hasher that uses the [RapidHasher] algorithm.
+/// A [`std::hash::BuildHasher`] that initializes a [`RapidHasher`] with a user-provided seed and
+/// secrets.
 ///
-/// Note there that [crate::fast::RandomState] can be used instead for a [std::hash::BuildHasher]
-/// that initialises with a random seed.
+/// `SeedableState` should rarely be used as providing DoS resistance requires a randomized seed and
+/// secrets. Users should instead prefer either:
+/// * [`crate::inner::GlobalState`], which uses a global random seed and secrets initialized once at
+///   program start.
+/// * [`crate::inner::RandomState`], which uses a random seed per instance and global random secrets.
 ///
 /// The lifetime `'s` is for the reference to the secrets. When using [`SeedableState::random`] or
 /// [`SeedableState::fixed`] secrets, this lifetime will be `'static`.
@@ -77,8 +81,8 @@ impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const P
     /// produce the same hash outputs between different crate versions, compiler versions, or
     /// platforms.
     ///
-    /// Also see [`GlobalState`] for a zero-sized alternative that uses global secrets that are
-    /// fixed only for the lifetime of the program.
+    /// Also see [`GlobalState`] for a faster zero-sized alternative that uses global secrets that
+    /// are fixed only for the lifetime of the program.
     #[inline]
     pub fn fixed() -> Self {
         Self {

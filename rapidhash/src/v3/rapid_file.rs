@@ -27,7 +27,7 @@ pub fn rapidhash_v3_file_seeded<R: Read>(data: R, secrets: &RapidSecrets) -> std
 /// This method will check the metadata for a file length, and then stream the file with a
 /// chunked stream reader to compute the hash. This avoids loading the entire file into memory.
 ///
-/// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
+/// Is marked with `#[inline(always)]` to force the compiler to inline and optimize the method.
 /// Can provide large performance uplifts for inputs where the length is known at compile time.
 #[inline(always)]
 pub fn rapidhash_v3_file_inline<R: Read, const PROTECTED: bool>(data: R, secrets: &RapidSecrets) -> std::io::Result<u64> {

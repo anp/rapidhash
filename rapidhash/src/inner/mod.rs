@@ -172,7 +172,7 @@ mod tests {
 
         for len in 1..=64 {
             for byte in 0u8..=255 {
-                // don't randomise the data, simply extend an extra byte each time
+                // don't randomized the data, simply extend an extra byte each time
                 let data = std::vec![byte; len];
 
                 let hash1 = manual_string_hash(&data);

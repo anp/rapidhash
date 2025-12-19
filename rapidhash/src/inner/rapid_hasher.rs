@@ -109,7 +109,7 @@ impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const P
 impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Default for RapidHasher<'_, AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     /// Create a new [RapidHasher] with the default seed.
     ///
-    /// See [crate::inner::RandomState] for a [std::hash::BuildHasher] that initialises with a random
+    /// See [crate::inner::RandomState] for a [std::hash::BuildHasher] that initializes with a random
     /// seed.
     #[inline(always)]
     fn default() -> Self {

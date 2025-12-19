@@ -36,7 +36,7 @@ pub fn rapidhash_v1_file_seeded(data: &mut File, secrets: &RapidSecrets) -> std:
 /// the data length. Raise a [GitHub](https://github.com/hoxxep/rapidhash) issue if you have a
 /// use case to support other stream types.
 ///
-/// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
+/// Is marked with `#[inline(always)]` to force the compiler to inline and optimize the method.
 /// Can provide large performance uplifts for inputs where the length is known at compile time.
 #[inline(always)]
 #[deprecated(note = "Rapidhash V1 is not a streaming algorithm. We recommend using V3 instead.")]

@@ -32,7 +32,7 @@ pub(crate) const fn rapidhash_rs_seeded(data: &[u8], secrets: &RapidSecrets) -> 
 
 /// Rapidhash a single byte stream, matching the C++ implementation.
 ///
-/// Is marked with `#[inline(always)]` to force the compiler to inline and optimise the method.
+/// Is marked with `#[inline(always)]` to force the compiler to inline and optimize the method.
 /// Can provide large performance uplifts for fixed-length inputs at compile time.
 #[inline(always)]
 #[cfg(test)]

@@ -12,7 +12,7 @@ const RAPID_SECRET: [u64; 3] = [0x2d358dccaa6c78a5, 0x8bb84b93962eacc9, 0x4b33a6
 
 /// Generate a random number using rapidhash mixing.
 ///
-/// This RNG is deterministic and optimised for throughput. It is not a cryptographic random number
+/// This RNG is deterministic and optimized for throughput. It is not a cryptographic random number
 /// generator.
 ///
 /// This implementation is equivalent in logic and performance to
@@ -135,10 +135,10 @@ pub fn rapidrng_time(seed: &mut u64) -> u64 {
 
 /// A random number generator that uses the rapidhash mixing algorithm.
 ///
-/// This deterministic RNG is optimised for speed and throughput. This is not a cryptographic random
+/// This deterministic RNG is optimized for speed and throughput. This is not a cryptographic random
 /// number generator.
 ///
-/// This RNG is compatible with [rand_core::RngCore] and [rand_core::SeedableRng].
+/// This RNG is compatible with [`rand_core::RngCore`] and [`rand_core::SeedableRng`].
 ///
 /// # Example
 /// ```rust

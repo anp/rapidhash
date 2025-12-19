@@ -2,8 +2,8 @@ use core::hash::{BuildHasher};
 use crate::inner::RapidHasher;
 use crate::inner::seeding::secrets::GlobalSecrets;
 
-/// A [std::collections::hash_map::RandomState] compatible hasher that initializes the [RapidHasher]
-/// algorithm with a random seed and random global secrets.
+/// A [`std::hash::RandomState`] compatible hasher that initializes a [`RapidHasher`] with a random
+/// seed and random global secrets.
 ///
 /// This is designed to provide some HashDoS resistance by using a random seed per hashmap, and
 /// a global random set of secrets.
@@ -14,7 +14,7 @@ use crate::inner::seeding::secrets::GlobalSecrets;
 /// lifetime of the program using a mix of ASLR and other entropy sources. The seed is randomly
 /// initialized for each new instance of `RandomState` using only ASLR and a mixing step.
 ///
-/// On targets without atomic pointer support, the global secrets will not be randomised, and
+/// On targets without atomic pointer support, the global secrets will not be randomized, and
 /// instead will fall back to the default secrets. This means these platforms will not have minimal
 /// HashDoS resistance guarantees. If this is important for your application, please raise a GitHub
 /// issue to improve support for these platforms.
@@ -40,15 +40,15 @@ pub struct RandomState<const AVALANCHE: bool, const SPONGE: bool, const COMPACT:
 impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> RandomState<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     /// Create a new random state with a random seed.
     ///
-    /// The seed is always randomised by using ASLR on every new instance of RandomState.
+    /// The seed is always randomized by using ASLR on every new instance of RandomState.
     ///
-    /// With the `rand` feature enabled, the secrets will be randomised using [rand::random].
+    /// With the `rand` feature enabled, the secrets will be randomized using [rand::random].
     /// Otherwise, a mix of ASLR and some other poorer sources of entropy will be mixed together to
     /// generate the secrets. The secrets are statically cached for the lifetime of the program
     /// after their initial generation.
     ///
     /// On platforms that do not support atomic pointers, the secrets will be the default rapidhash
-    /// secrets, which are not randomised. Therefore, **targets without atomic pointer support will
+    /// secrets, which are not randomized. Therefore, **targets without atomic pointer support will
     /// not have minimal HashDoS resistance guarantees**.
     #[inline]
     pub fn new() -> Self {
@@ -59,7 +59,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
     }
 }
 
-/// Warning that `RandomState` only randomises the seed on platforms that support atomic pointers.
+/// Warning that `RandomState` only randomizeds the seed on platforms that support atomic pointers.
 impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Default for RandomState<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     #[inline]
     fn default() -> Self {

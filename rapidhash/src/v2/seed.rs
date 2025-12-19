@@ -34,7 +34,7 @@ pub const DEFAULT_RAPID_SECRETS: RapidSecrets = RapidSecrets::seed_cpp(DEFAULT_S
 ///
 /// # Minimal HashDoS Protection
 /// We recommend changing the default seed and secrets must be changed to avoid trivial collision
-/// attacks. For persistent hashing, you can hard code your own randomised seed at compile time.
+/// attacks. For persistent hashing, you can hard code your own randomized seed at compile time.
 ///
 /// ```rust
 /// use rapidhash::v2::RapidSecrets;
@@ -57,9 +57,9 @@ pub struct RapidSecrets {
 }
 
 impl RapidSecrets {
-    /// Generate secrets from a given randomised seed.
+    /// Generate secrets from a given randomized seed.
     ///
-    /// Note the chosen seed will be pre-mixed to further randomise it, and the secrets will be
+    /// Note the chosen seed will be pre-mixed to further randomized it, and the secrets will be
     /// computed based on the seed.
     ///
     /// If compatibility with the C++ implementation is required, use the `seed_cpp` method instead.
