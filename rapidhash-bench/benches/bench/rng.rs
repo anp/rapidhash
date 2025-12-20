@@ -1,5 +1,3 @@
-use std::hash::BuildHasher;
-use std::hint::black_box;
 use criterion::{Bencher, Criterion};
 use rand_core::{RngCore, SeedableRng};
 
@@ -21,10 +19,6 @@ pub fn bench(c: &mut Criterion) {
     bench_rng!(c, "rapidrng_fast_not_portable", bench_rapidhash_ultra_fast);
     bench_rng!(c, "rapidrng_time", bench_rapidhash_time);
     bench_rng!(c, "wyrng", bench_wyhash);
-
-    let mut group = c.benchmark_group("random_state");
-    group.bench_function("random_state", bench_state::<rapidhash::quality::RandomState>);
-    group.bench_function("seedable_state", bench_state::<rapidhash::quality::SeedableState>);
 }
 
 pub fn bench_rapidhash(count: usize) -> Box<dyn FnMut(&mut Bencher)> {
@@ -97,12 +91,4 @@ pub fn bench_wyhash(count: usize) -> Box<dyn FnMut(&mut Bencher)> {
             out
         }, criterion::BatchSize::SmallInput);
     })
-}
-
-pub fn bench_state<T: BuildHasher + Default>(b: &mut Bencher) {
-    b.iter_batched(|| {
-        ()
-    }, |()| {
-        black_box(T::default())
-    }, criterion::BatchSize::SmallInput);
 }
