@@ -19,10 +19,10 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
     /// The seed and secrets will be randomized on the first instantiation of `GlobalState`, but all
     /// subsequent instances will share the same seed and secrets.
     ///
-    /// On platforms that do not support atomic pointers, the secrets will be the default rapidhash
+    /// On platforms which do not support atomic pointers, the secrets will be the default rapidhash
     /// secrets, which are not randomized. Therefore, **targets without atomic pointer support will
     /// not have minimal HashDoS resistance guarantees**.
-    #[inline]
+    #[inline(always)]
     pub fn new() -> Self {
         Self {
             secrets: GlobalSecrets::new(),
@@ -30,9 +30,9 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
     }
 }
 
-/// Warning that `GlobalState` only randomizeds the seed on platforms that support atomic pointers.
+/// Warning that `GlobalState` only randomizes the seed on platforms that support atomic pointers.
 impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Default for GlobalState<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
-    #[inline]
+    #[inline(always)]
     fn default() -> Self {
         Self::new()
     }

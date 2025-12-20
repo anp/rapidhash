@@ -20,8 +20,9 @@ A rust implementation of [rapidhash](https://github.com/Nicoshev/rapidhash), the
 Following rust's `std::hash` traits, the underlying hash function may change between minor versions, and is only suitable for in-memory hashing. These types are optimized for speed and minimal DoS resistance, available in the `rapidhash::fast` and `rapidhash::quality` flavours.
 
 - `RapidHasher`: A `std::hash::Hasher` compatible hasher that uses the rapidhash algorithm.
-- `RandomState`: A `std::hash::BuildHasher` for initialising the hasher with a random seed and secrets.
-- `SeedableState`: A `std::hash::BuildHasher` for initialising the hasher with the custom seed and secrets.
+- `RandomState`: A `std::hash::BuildHasher` for initializing the hasher with a random seed and secrets.
+- `GlobalState`: A `std::hash::BuildHasher` for initializing the hasher with global seed and secrets, randomized once per process.
+- `SeedableState`: A `std::hash::BuildHasher` for initializing the hasher with a custom seed and secrets.
 - `RapidHashMap` and `RapidHashSet`: Helper types for using `fast::RandomState` with `HashMap` and `HashSet`.
 
 ```rust
