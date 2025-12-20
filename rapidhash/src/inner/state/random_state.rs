@@ -59,7 +59,7 @@ impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTE
     }
 }
 
-/// Warning that `RandomState` only randomizeds the seed on platforms that support atomic pointers.
+/// Warning that `RandomState` only randomizes the seed on platforms that support atomic pointers.
 impl<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> Default for RandomState<AVALANCHE, SPONGE, COMPACT, PROTECTED> {
     #[inline]
     fn default() -> Self {

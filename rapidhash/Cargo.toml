@@ -1,6 +1,6 @@
 [package]
 name = "rapidhash"
-version = "4.1.1"
+version = "4.2.0"
 edition = "2021"
 publish = true
 rust-version = "1.71.0"  # const split_at and read_unaligned is our limitation
@@ -25,7 +25,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 [features]
 default = ["std"]
 std = []  # enable std library for RapidHashMap and RapidHashSet helpers
-rand = ["dep:rand", "std"]  # enable the rand library for initialising RandomState
+rand = ["dep:rand", "std"]  # enable the rand library for initializing RandomState
 rng = ["dep:rand_core"]  # enable RapidRng, a rand Rng-compatible fast PRNG using rapidrng
 nightly = []  # enable nightly features, faster str hashing and likely/unlikely hints
 unsafe = []  # enable unsafe pointer arithmetic; this is used to check for bounds-check regressions

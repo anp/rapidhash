@@ -66,7 +66,7 @@ macro_rules! write_num {
 #[derive(Copy, Clone)]
 pub struct RapidHasher<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool = false, const PROTECTED: bool = false> {
     seed: u64,
-    secrets: &'s [u64; 7],  // FUTURE: non-static secrets?
+    secrets: &'s [u64; 7],
     sponge: u128,
     sponge_len: u8,
 }
@@ -78,11 +78,11 @@ impl<'s, const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const P
     /// Create a new [RapidHasher] with a custom seed.
     ///
     /// See instead [crate::quality::RandomState::new] or [crate::fast::RandomState::new] for a random
-    /// seed and random secret initialisation, for minimal DoS resistance.
+    /// seed and random secret initialization, for minimal DoS resistance.
     #[inline(always)]
     #[must_use]
     pub const fn new(mut seed: u64) -> Self {
-        // do most of the rapidhash_seed initialisation here to avoid doing it on each int
+        // do most of the rapidhash_seed initialization here to avoid doing it on each int
         seed = rapidhash_seed(seed);
         Self::new_precomputed_seed(seed, &DEFAULT_RAPID_SECRETS.secrets)
     }

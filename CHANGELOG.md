@@ -1,9 +1,9 @@
 # Changelog
 
-## 4.2.0 (20251209)
+## 4.2.0 (20251220)
 
 ### Additions
-- Added `GlobalState` for a global `RapidHasher` state with random secrets for convenient use cases where a single global state is sufficient.
+- Added `GlobalState` which initializes a `RapidHasher` with a global seed and secrets that are randomized once on application start.
 
 ## 4.1.1 (20251021)
 
@@ -136,7 +136,7 @@ Ownership kindly transferred by Justin Bradford to [Liam Gray](https://github.co
 - Added `RapidHasher` and `RapidHasherInline` for hashing via a `std::hash::Hasher` compatible interface.
 - Added `RapidHashMap`, `RapidInlineHashMap`, `RapidHashSet`, and `RapidInlineHashSet` helper types.
 - Added `RapidHashBuilder` and `RapidInlineHashBuilder` for `std::hash::BuildHasher` implementing types compatible with `HashMap` and `HashSet`.
-- Added `RapidRandomState` for random seed initialisation.
+- Added `RapidRandomState` for random seed initialization.
 - Added `RapidRng`, `rapidrng_fast`, and `rapidrng_time` for random number generation inspired by the [wyhash crate](https://docs.rs/wyhash/latest/wyhash/) but based on `rapid_mix`.
 - Added `std`, `rand`, `rng`, and `unsafe` features.
 - Extensive benchmarking and optimisation.
