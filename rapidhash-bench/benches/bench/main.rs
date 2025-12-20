@@ -4,6 +4,7 @@ mod basic;
 mod emails;
 mod rng;
 mod compiled;
+mod state;
 
 criterion_group!(
     benches,
@@ -11,5 +12,6 @@ criterion_group!(
     emails::bench,
     rng::bench,
     compiled::bench,
+    state::bench,
 );
 criterion_main!(benches);
