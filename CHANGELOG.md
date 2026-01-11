@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.2.1 (20260111)
+
+### Fixes
+- Updated `v3::rapidhash_v3_file` documentation to better describe the streaming interface.
+
 ## 4.2.0 (20251220)
 
 ### Additions
