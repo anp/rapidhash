@@ -4,31 +4,30 @@ use crate::util::mix::{rapid_mix, rapid_mum};
 use crate::util::read::{read_u32, read_u64};
 use super::{DEFAULT_RAPID_SECRETS, RapidSecrets, rapidhash_finish};
 
-/// Rapidhash a file, matching the C++ implementation.
+/// Rapidhash a stream or file, matching the C++ implementation.
 ///
-/// This method will check the metadata for a file length, and then stream the file with a
-/// a chunked stream reader to compute the hash. This avoids loading the entire file into memory.
+/// This is a streaming implementation of rapidhash v3. It will produce exactly the same output as
+/// [`crate::v3::rapidhash_v3`], but accepts a streaming `Read` interface.
 #[inline]
 pub fn rapidhash_v3_file<R: Read>(data: R) -> std::io::Result<u64> {
     rapidhash_v3_file_inline::<R, false>(data, &DEFAULT_RAPID_SECRETS)
 }
 
-/// Rapidhash a file, matching the C++ implementation, with a custom seed.
+/// Rapidhash a stream or file, matching the C++ implementation, with a custom seed.
 ///
-/// This method will check the metadata for a file length, and then stream the file with a
-/// chunked stream reader to compute the hash. This avoids loading the entire file into memory.
+/// This is a streaming implementation of rapidhash v3. It will produce exactly the same output as
+/// [`crate::v3::rapidhash_v3_seeded`], but accepts a streaming `Read` interface.
 #[inline]
 pub fn rapidhash_v3_file_seeded<R: Read>(data: R, secrets: &RapidSecrets) -> std::io::Result<u64> {
     rapidhash_v3_file_inline::<R, false>(data, secrets)
 }
 
-/// Rapidhash a file, matching the C++ implementation.
+/// Rapidhash a stream or file, matching the C++ implementation.
 ///
-/// This method will check the metadata for a file length, and then stream the file with a
-/// chunked stream reader to compute the hash. This avoids loading the entire file into memory.
+/// This is a streaming implementation of rapidhash v3. It will produce exactly the same output as
+/// [`crate::v3::rapidhash_v3_inline`], but accepts a streaming `Read` interface.
 ///
 /// Is marked with `#[inline(always)]` to force the compiler to inline and optimize the method.
-/// Can provide large performance uplifts for inputs where the length is known at compile time.
 #[inline(always)]
 pub fn rapidhash_v3_file_inline<R: Read, const PROTECTED: bool>(data: R, secrets: &RapidSecrets) -> std::io::Result<u64> {
     let mut reader = ChunkedStreamReader::new(data, 16);
