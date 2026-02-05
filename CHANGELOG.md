@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.2.2 (20260205)
+
+### Fixes
+- Include LICENSE files in the published crate. (@anp in https://github.com/hoxxep/rapidhash/pull/77)
+
 ## 4.2.1 (20260111)
 
 ### Fixes
