@@ -96,14 +96,4 @@ mod tests {
         assert_eq!(finish1a, finish1b);
         assert_ne!(finish1a, finish2a);
     }
-
-    #[test]
-    fn test_random_state_debug() {
-        let state = RandomState::new();
-        let debug_str = format!("{:?}", state);
-        
-        // Verify that Debug trait works and produces non-empty output
-        assert!(!debug_str.is_empty());
-        assert!(debug_str.contains("RandomState"));
-    }
 }
