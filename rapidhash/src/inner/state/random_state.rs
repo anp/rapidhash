@@ -29,7 +29,7 @@ use crate::inner::seeding::secrets::GlobalSecrets;
 /// let mut map = HashMap::with_hasher(RandomState::default());
 /// map.insert(42, "the answer");
 /// ```
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct RandomState<const AVALANCHE: bool, const SPONGE: bool, const COMPACT: bool, const PROTECTED: bool> {
     seed: u64,
 
@@ -95,5 +95,15 @@ mod tests {
 
         assert_eq!(finish1a, finish1b);
         assert_ne!(finish1a, finish2a);
+    }
+
+    #[test]
+    fn test_random_state_debug() {
+        let state = RandomState::new();
+        let debug_str = format!("{:?}", state);
+        
+        // Verify that Debug trait works and produces non-empty output
+        assert!(!debug_str.is_empty());
+        assert!(debug_str.contains("RandomState"));
     }
 }
